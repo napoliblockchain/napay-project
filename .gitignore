@@ -1,0 +1,27 @@
+.env
+*.env.local
+
+# Composer vendor dirs (ogni subrepo ha il suo /vendor, ma per sicurezza)
+*/vendor/
+vendor/
+
+# Node modules
+*/node_modules/
+node_modules/
+
+# Yii 1.x framework legacy - escluso interamente (48MB, dismissione prevista TIP-012)
+yii-1.1.22/
+
+# Runtime e cache applicativi
+*/runtime/cache/
+*/runtime/logs/
+*/web/assets/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
