@@ -393,3 +393,10 @@ Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
 - Verifiche: test isolato 16/16 (incluso endpoint 410 → iscrizione rimossa); catena reale MySQL + Redis + ws-notify + wallet (ws-notify riceve l'evento); test ws-notify 4/4; test sicurezza 20/20.
 - Correzione: il `vendor` locale non era stato aggiornato dal fix dipendenze (composer senza zip nel container cli); riallineato al lock. Le immagini Docker erano corrette.
 - `minishlink/web-push` 6.0.7 → 10.1.0 (poawallet `fix(deps)`): rimossi `web-token/jwt-*` v2 e `fgrosse/phpasn1` abbandonati; `psr/log` tenuto a 2.0.0 per evitare downgrade dei contratti symfony. Test 16/16 e 20/20, build dev/prod OK.
+
+### Follow-up: sicurezza accessi e libreria web3 (2026-10-23)
+
+- Accessi (poawallet `2453ecb`): `AccessControl` con `only` in camelCase lasciava pubbliche azioni critiche (verificato con richieste anonime): `wallet|wizard/crypt|decrypt` (oracolo di cifratura con la chiave app), `send/generate-transaction|validate-transaction|gas-limit`, `blockchain/check-latest` come utente 1. Ora login obbligatorio su tutte le azioni di Wallet, Wizard, Send, Blockchain, Receive, Spawn, Settings; rimossi i fallback all'utente 1 (anche `Settings::poa`); `ethtx` usa l'utente loggato. Test `tests/security/access-control.php` (83 controlli, fallisce sul codice precedente).
+- Aperto (IDOR): `TransactionsController`/`UsersController::findModel` non verificano il proprietario; un utente loggato puo fabbricare ID cifrati con `wallet/crypt`. Serve controllo record-level e rimozione dell'oracolo `crypt/decrypt`.
+- Libreria web3 (poawallet `fix(deps)`): `sc0vu/web3.php` dev-master → `web3p/web3.php` 0.1.6 (stessa API, tag stabile, niente ReactPHP). phpseclib resta 2.x (richiesto anche da `web3p/ethereum-util`): usato solo `Math\BigInteger`, advisory residue non applicabili. Dockerfile: `--ignore-platform-req=php` al posto di `--ignore-platform-reqs`.
+- Verifica: `tests/chain/erc20-integration.php` 13/13 sulla chain di sviluppo (TIP-017) prima e dopo la sostituzione.
