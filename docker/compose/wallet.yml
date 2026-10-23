@@ -21,6 +21,9 @@ services:
       DB_PASSWORD: "${MYSQL_PASSWORD}"
       WEBSOCKET_URL: "${WEBSOCKET_URL}"
       WEBSOCKET_URL_LOCALHOST: "${WEBSOCKET_URL_LOCALHOST}"
+      # realtime: NotificationService pubblica su Redis, ws-notify inoltra ai browser
+      REDIS_HOST: redis-main
+      NOTIFY_CHANNEL: poawallet:notify
     depends_on:
       - mysql-main
       - redis-main

@@ -384,3 +384,12 @@ Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
   - `WalletsController`, `Inbox/Outbox`, componenti `Crypt/isValid/Show/Times/Push/Log/user`: equivalenti gia presenti o bridge.
 - tokenpay → ARCHIVED (TIP-015): rimosso servizio `tokenpay-staging` da `docker/compose/wallet.yml`, README del repo con avviso archived.
 - Aperti fuori da questa TIP: web-push 6.x → 10.x; `sc0vu/web3.php` (phpseclib 3).
+
+### Follow-up: NotificationService (2026-10-23)
+
+- `components/Messages` sostituito da `components/NotificationService` (modello tradarb, senza Telegram: non utile per questo progetto). Canali: database, web push VAPID, realtime Redis → ws-notify.
+- Bug corretti: subject VAPID era la descrizione della notifica; ciclo invio iterava le proprieta di un oggetto; `openUrl` non letto dal service worker; nessuna pubblicazione su Redis (ws-notify non riceveva mai eventi); `ws-notify` senza `package-lock.json` (build `npm ci` fallita, anche profilo `realtime` dell'orchestratore).
+- Nuove variabili: `VAPID_SUBJECT`, `REDIS_HOST/PORT/DATABASE/PASSWORD`, `NOTIFY_CHANNEL`; orchestratore: `wallet-web` con `REDIS_HOST=redis-main`.
+- Verifiche: test isolato 16/16 (incluso endpoint 410 → iscrizione rimossa); catena reale MySQL + Redis + ws-notify + wallet (ws-notify riceve l'evento); test ws-notify 4/4; test sicurezza 20/20.
+- Correzione: il `vendor` locale non era stato aggiornato dal fix dipendenze (composer senza zip nel container cli); riallineato al lock. Le immagini Docker erano corrette.
+- Proposto, non fatto: `minishlink/web-push` 6 → 10 (rimuove `web-token/jwt-*` abbandonati).
