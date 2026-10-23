@@ -392,4 +392,4 @@ Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
 - Nuove variabili: `VAPID_SUBJECT`, `REDIS_HOST/PORT/DATABASE/PASSWORD`, `NOTIFY_CHANNEL`; orchestratore: `wallet-web` con `REDIS_HOST=redis-main`.
 - Verifiche: test isolato 16/16 (incluso endpoint 410 → iscrizione rimossa); catena reale MySQL + Redis + ws-notify + wallet (ws-notify riceve l'evento); test ws-notify 4/4; test sicurezza 20/20.
 - Correzione: il `vendor` locale non era stato aggiornato dal fix dipendenze (composer senza zip nel container cli); riallineato al lock. Le immagini Docker erano corrette.
-- Proposto, non fatto: `minishlink/web-push` 6 → 10 (rimuove `web-token/jwt-*` abbandonati).
+- `minishlink/web-push` 6.0.7 → 10.1.0 (poawallet `fix(deps)`): rimossi `web-token/jwt-*` v2 e `fgrosse/phpasn1` abbandonati; `psr/log` tenuto a 2.0.0 per evitare downgrade dei contratti symfony. Test 16/16 e 20/20, build dev/prod OK.
