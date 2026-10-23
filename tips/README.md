@@ -29,6 +29,7 @@ Questo README e indice operativo. Ogni scheda e nel file dedicato `TIP-XXX-*.md`
 | [TIP-016](TIP-016-porte-container-e-repo-orchestratore.md) | Piano porte container non standard e repo orchestratore unico | Platform Governance / DevOps | IN_PROGRESS |
 | [TIP-017](TIP-017-blockchain-poa-besu-ttstoken.md) | Blockchain POA: Hyperledger Besu IBFT 2.0 + TTS Token deploy | Blockchain Infrastructure | OPEN |
 | [SIP-018](SIP-018-napay-migrazione-tabler.md) | Napay: migrazione AdminLTE a Tabler, riferimento Aura | Backoffice / UI | IN_PROGRESS |
+| [TIP-019](TIP-019-napay-mysql-persistenza-migrazione.md) | Napay: MySQL dedicato, persistenza e ripristino dati v2 | Backoffice / Database | IN_PROGRESS |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 
