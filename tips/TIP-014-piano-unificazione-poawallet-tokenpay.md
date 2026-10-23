@@ -352,3 +352,15 @@ push o invio ETH/POA effettuata in questo intervento.
   - immagine con `display_errors` attivo (nessun `php.ini-production`).
   - `secrets.php`/`encrypt.json` restano sul disco locale: eliminarli dopo aver verificato `.env`; i valori per i domini di produzione (GitHub/Telegram) sono ancora solo li.
   - chiavi sealer usate dal faucet: sostituire con un account dedicato a fondi limitati e ruotare le chiavi sealer esposte nelle immagini precedenti.
+
+### Immagine autosufficiente dev/prod + fix PHP 8 (2026-10-23)
+
+- PHP 8.3.36 riverificato su php.net: ultima release di sicurezza del ramo 8.3 (2026-10-21).
+- `Dockerfile` multi-stage: composer `2.10.3` nella build (nessun PHP o `vendor` richiesto sull'host); target `prod` (default) e `dev`.
+  - prod: `php.ini-production`, `YII_ENV=prod`, debug/gii/`requirements.php` assenti, composer assente, codice di proprieta root; scrivibili solo `runtime`, `html/assets`, `logs`.
+  - dev: dipendenze dev, `php.ini-development`, debug/gii.
+- `web/index.php`, `yii`: `YII_ENV`/`YII_DEBUG` da env, default `prod`; in prod debug sempre spento.
+- `.dockerignore`: escluso `web/info.php` (`phpinfo()` pubblico: con i segreti in env li avrebbe esposti tutti), `web/index-test.php`, `vendor` locale.
+- Fix PHP 8 (errori fatali "Non-static method ... cannot be called statically", sfuggiti allo scan del 2026-05-16): `Logo::footer` (login in 500), `Messages::push/saveReader/log/appTitle` (invio tx e notifiche), `WebApp::si_formatter/si_classifier`.
+- Verifiche con MySQL 8.4 temporaneo + migration: login, home, reset password 200; wallet/send redirect al login; prod: gii/debug 404, `display_errors` off, senza env risposta 500 vuota; dev: gii/debug 200. Lint completo OK, test sicurezza 20/20 PASS.
+- Aperti: `web/info.php` va eliminato dal repo; `Logo::header` usa API Yii1 (`Yii::app()`), non chiamato; `Messages::log` scriverebbe la chiave VAPID se riattivato; flussi autenticati (send ETH/POA, push) non provati.
