@@ -1,6 +1,6 @@
 # TIP-014 - Piano unificazione: base Poawallet + moduli Tokenpay
 
-- Stato: IN_PROGRESS
+- Stato: COMPLETED
 - Area: Wallet Delivery
 - Repo: poawallet, tokenpay
 - Branch target: feature/v2-yii2-php83-docker
@@ -373,3 +373,14 @@ Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
 - Effetti: utenti da riloggare (cookie); iscrizioni push da rinnovare (chiave pubblica cambiata). In produzione impostare gli stessi tre valori nuovi nel suo `.env`.
 - Verifiche: migration applicata su MySQL 8.4 temporaneo; login/home 200 su dev e prod; test sicurezza 20/20 PASS; gitleaks sul codice attuale: solo falso positivo `lightwallet.min.js`.
 - Fuori poawallet: chiavi Besu in `docs/Besu/*.md` (repo pubblico `napay-docs`, non coincidono con i sealer in uso: da rimuovere e considerare bruciate); stash locale napay `eaa529dd` con `secrets.php`.
+
+### Chiusura e dismissione tokenpay (2026-10-23)
+
+- Estrazione moduli conclusa: network/admin, mailbox/push, websocket, logs, profiles, ruoli base portati in poawallet (step 1.2-1.4b).
+- Analisi finale tokenpay vs poawallet: tokenpay prototipo di 4 mesi (22 commit, gen-mag 2023), invio token non funzionante (manca `SendController`); poawallet wallet completo (282 commit, 2021-2023).
+- Non portati, per scelta:
+  - `ContractTypesController` (CRUD tipi contratto): poawallet ha il modello `ContractType`, non le schermate; da riaprire solo se serve.
+  - `VapidController`: superato, chiavi VAPID in `.env`.
+  - `WalletsController`, `Inbox/Outbox`, componenti `Crypt/isValid/Show/Times/Push/Log/user`: equivalenti gia presenti o bridge.
+- tokenpay → ARCHIVED (TIP-015): rimosso servizio `tokenpay-staging` da `docker/compose/wallet.yml`, README del repo con avviso archived.
+- Aperti fuori da questa TIP: web-push 6.x → 10.x; `sc0vu/web3.php` (phpseclib 3).

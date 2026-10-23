@@ -12,7 +12,7 @@ Per ridurre dispersione sviluppo, servono regole chiare su quali repo restano at
 ## Proposta
 Policy operativa:
 - `poawallet` = ACTIVE (repo base wallet)
-- `tokenpay` = STAGING_SOURCE → DISMISSIONE (dopo estrazione moduli utili, nessuna feature autonoma)
+- `tokenpay` = ARCHIVED (2026-10-23: estrazione moduli conclusa, vedi TIP-014; sostituito da `poawallet`)
 - `bolt` = ARCHIVE_NOW (freeze immediato, solo riferimento storico)
 - `packages` = DISMISSIONE (eliminare accoppiamento submodule filesystem; librerie versionate via composer/npm - vedi TIP-007)
 - `store-wallet` = DA_VALUTARE (vedi sezione sotto)

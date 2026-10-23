@@ -24,7 +24,7 @@ Questo README e indice operativo. Ogni scheda e nel file dedicato `TIP-XXX-*.md`
 | [TIP-011](TIP-011-documentazione-operativa.md) | Documentazione tecnica e operativa della nuova piattaforma | Docs | OPEN |
 | [TIP-012](TIP-012-dismissione-yii1-runtime.md) | Dismissione runtime Yii 1.1.22 | Decommission | OPEN |
 | [TIP-013](TIP-013-selezione-base-wallet-eth-poa.md) | Scelta base wallet ETH/POA tra Bolt, Poawallet e Tokenpay | Wallet Architecture | COMPLETED |
-| [TIP-014](TIP-014-piano-unificazione-poawallet-tokenpay.md) | Piano unificazione: base Poawallet + moduli Tokenpay | Wallet Delivery | IN_PROGRESS |
+| [TIP-014](TIP-014-piano-unificazione-poawallet-tokenpay.md) | Piano unificazione: base Poawallet + moduli Tokenpay | Wallet Delivery | COMPLETED |
 | [TIP-015](TIP-015-policy-archiviazione-repository.md) | Policy archiviazione repository non core | Governance | COMPLETED |
 | [TIP-016](TIP-016-porte-container-e-repo-orchestratore.md) | Piano porte container non standard e repo orchestratore unico | Platform Governance / DevOps | IN_PROGRESS |
 | [TIP-017](TIP-017-blockchain-poa-besu-ttstoken.md) | Blockchain POA: Hyperledger Besu IBFT 2.0 + TTS Token deploy | Blockchain Infrastructure | OPEN |
@@ -40,7 +40,7 @@ Perimetro software rilevato in `/var/www/napay-project`:
 - `store-wallet` (Yii1, bootstrap `index.php` con `../yii-1.1.22/framework/yii.php`)
 - `bolt` (Yii1, bootstrap `index.php` con `../yii-1.1.22/framework/yii.php`, candidato archive)
 - `poawallet` (Yii2, wallet con flow send completo e supporto POA, base attiva)
-- `tokenpay` (Yii2, evoluzione architetturale con moduli admin/network, sorgente merge selettivo)
+- `tokenpay` (Yii2, prototipo; ARCHIVED 2026-10-23, moduli utili portati in `poawallet`)
 - `packages` (monorepo di librerie e submodule)
 - `docs` (manuali e note funzionali)
 - `yii-1.1.22` (framework legacy usato dai repo Yii1)

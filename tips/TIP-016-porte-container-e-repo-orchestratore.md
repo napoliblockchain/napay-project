@@ -43,7 +43,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
   - `13000` grafana
   - `18110` websocket notifiche
 - Servizi app web non pubblicano porte host; accesso via reverse proxy interno.
-- `tokenpay` resta repo sorgente merge (staging source), non target di nuove feature autonome.
+- `tokenpay` archiviato il 2026-10-23 (TIP-015): servizio `tokenpay-staging` rimosso dal compose.
 
 ## Log esecuzione
 
@@ -89,7 +89,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 - Motivo: un solo file compose/Caddyfile modificato da piu agenti (napay, wallet) in parallelo.
 - `docker-compose.base.yml` sostituito da `docker-compose.yml` con `include` (Compose >= 2.20), `project_directory: .` (percorsi e `.env` dalla root):
   - `docker/compose/infra.yml`: gateway, mysql, redis, adminer, mailhog, prometheus, grafana, rete e volumi
-  - `docker/compose/wallet.yml`: wallet-web, ws-notify, tokenpay-staging
+  - `docker/compose/wallet.yml`: wallet-web, ws-notify (tokenpay-staging rimosso il 2026-10-23)
   - `docker/compose/napay.yml`: napay-web, pos-web, store-wallet-web
 - `Caddyfile`: opzioni globali e default `:80`; siti in `conf.d/napay.caddy` e `conf.d/wallet.caddy` (`import conf.d/*.caddy`).
 - `wallet-web`: `env_file: ./poawallet/.env` (`required: false`); `environment` dell'orchestratore ha la precedenza (DB).

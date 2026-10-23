@@ -1,4 +1,4 @@
-# Wallet: poawallet + tokenpay staging. Percorsi relativi alla root del repo (vedi docker-compose.yml).
+# Wallet: poawallet. Percorsi relativi alla root del repo (vedi docker-compose.yml).
 # Instradamento HTTP/WebSocket: docker/gateway/conf.d/wallet.caddy
 services:
   wallet-web:
@@ -24,15 +24,6 @@ services:
     depends_on:
       - mysql-main
       - redis-main
-    networks:
-      - napay_net
-
-  tokenpay-staging:
-    image: napay/tokenpay:staging-source
-    container_name: tokenpay-staging
-    profiles: ["staging"]
-    expose:
-      - "80"
     networks:
       - napay_net
 
