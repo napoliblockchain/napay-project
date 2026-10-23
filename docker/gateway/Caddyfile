@@ -1,29 +1,11 @@
+# Gateway Napay v2. Opzioni globali e default qui; i siti di ogni app in conf.d/<app>.caddy.
 {
     local_certs
     admin off
-}
-
-http://napay.local, http://napay.test, http://localhost {
-    redir https://{host}{uri} permanent
-}
-
-http://wallet.local, http://poawallet.local, http://wallet.test {
-    redir https://{host}{uri} permanent
 }
 
 :80 {
     redir https://napay.local{uri} permanent
 }
 
-https://napay.local, https://napay.test, https://localhost {
-    reverse_proxy napay-web:80
-}
-
-https://wallet.local, https://poawallet.local, https://wallet.test {
-    handle /ws-notify {
-        reverse_proxy ws-notify:14800
-    }
-    handle {
-        reverse_proxy wallet-web:80
-    }
-}
+import conf.d/*.caddy

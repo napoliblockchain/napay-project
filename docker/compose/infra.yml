@@ -1,5 +1,4 @@
-name: "${COMPOSE_PROJECT_NAME:-napay_v2}"
-
+# Infrastruttura condivisa. Percorsi relativi alla root del repo (vedi docker-compose.yml).
 services:
   gateway:
     image: caddy:2.8.4-alpine
@@ -9,87 +8,12 @@ services:
       - "${GATEWAY_HTTPS_PORT}:443"
     volumes:
       - ./docker/gateway/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./docker/gateway/conf.d:/etc/caddy/conf.d:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
       - napay-web
       - wallet-web
-    networks:
-      - napay_net
-
-  napay-web:
-    image: napay/napay:dev
-    container_name: napay-web
-    expose:
-      - "80"
-    environment:
-      APP_ENV: "${APP_ENV}"
-    networks:
-      - napay_net
-
-  wallet-web:
-    image: napay/poawallet:dev
-    container_name: wallet-web
-    expose:
-      - "80"
-    environment:
-      APP_ENV: "${APP_ENV}"
-      DB_DSN: "mysql:host=mysql-main;dbname=${MYSQL_DATABASE}"
-      DB_USERNAME: "${MYSQL_USER}"
-      DB_PASSWORD: "${MYSQL_PASSWORD}"
-      WEBSOCKET_URL: "${WEBSOCKET_URL}"
-      WEBSOCKET_URL_LOCALHOST: "${WEBSOCKET_URL_LOCALHOST}"
-    depends_on:
-      - mysql-main
-      - redis-main
-    networks:
-      - napay_net
-
-  pos-web:
-    image: napay/pos:legacy-migrating
-    container_name: pos-web
-    profiles: ["legacy"]
-    expose:
-      - "80"
-    networks:
-      - napay_net
-
-  store-wallet-web:
-    image: napay/store-wallet:legacy-migrating
-    container_name: store-wallet-web
-    profiles: ["legacy"]
-    expose:
-      - "80"
-    networks:
-      - napay_net
-
-  tokenpay-staging:
-    image: napay/tokenpay:staging-source
-    container_name: tokenpay-staging
-    profiles: ["staging"]
-    expose:
-      - "80"
-    networks:
-      - napay_net
-
-  ws-notify:
-    build:
-      context: ./poawallet/ws-notify
-      dockerfile: Dockerfile
-    container_name: wallet-ws-notify
-    profiles: ["realtime"]
-    environment:
-      NOTIFY_WS_PORT: 14800
-      REDIS_URL: redis://redis-main:6379
-      NOTIFY_CHANNEL: poawallet:notify
-      NOTIFY_BACKEND_URL: http://wallet-web
-      NOTIFY_INTERNAL_SECRET: "${NOTIFY_INTERNAL_SECRET}"
-      NOTIFY_ALLOWED_ORIGINS: "${NOTIFY_ALLOWED_ORIGINS}"
-    ports:
-      - "${WS_NOTIFY_HOST_PORT}:14800"
-    depends_on:
-      - wallet-web
-      - redis-main
     networks:
       - napay_net
 

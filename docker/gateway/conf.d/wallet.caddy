@@ -1,0 +1,13 @@
+# Wallet poawallet: HTTP app + WebSocket notifiche.
+http://wallet.local, http://poawallet.local, http://wallet.test {
+    redir https://{host}{uri} permanent
+}
+
+https://wallet.local, https://poawallet.local, https://wallet.test {
+    handle /ws-notify {
+        reverse_proxy ws-notify:14800
+    }
+    handle {
+        reverse_proxy wallet-web:80
+    }
+}

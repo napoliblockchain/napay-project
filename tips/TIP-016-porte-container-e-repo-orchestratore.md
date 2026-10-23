@@ -17,13 +17,14 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 3. Usare `napay-project` come repo orchestratore unico (compose, env, script, docs, CI di integrazione), mantenendo codice applicativo nei repo dedicati.
 
 ## Criteri di accettazione
-- Esiste file compose base unico con porte parametrizzate e non standard.
+- Esiste compose orchestratore unico (`docker-compose.yml` + `include` per area) con porte parametrizzate e non standard.
 - Esiste `.env.example` centrale con valori porta allineati.
 - `tips/README.md` include TIP-016 in indice.
 - Policy repo definita: orchestrazione centralizzata in `napay-project`, sviluppo applicativo nei singoli repo.
 
 ## Impatto
-- `napay-project/docker-compose.base.yml`
+- `napay-project/docker-compose.yml` + `docker/compose/{infra,wallet,napay}.yml`
+- `napay-project/docker/gateway/conf.d/{napay,wallet}.caddy`
 - `napay-project/docker/gateway/Caddyfile`
 - `napay-project/.env.example`
 - `napay-project/tips/README.md`
@@ -84,8 +85,21 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 - Configurare issuer stage/prod (ACME pubblico o PKI aziendale).
 - Automatizzare rotazione cert in pipeline deploy.
 
+### Step 2.5 - Compose e gateway separati per area (COMPLETED, 2026-10-23)
+- Motivo: un solo file compose/Caddyfile modificato da piu agenti (napay, wallet) in parallelo.
+- `docker-compose.base.yml` sostituito da `docker-compose.yml` con `include` (Compose >= 2.20), `project_directory: .` (percorsi e `.env` dalla root):
+  - `docker/compose/infra.yml`: gateway, mysql, redis, adminer, mailhog, prometheus, grafana, rete e volumi
+  - `docker/compose/wallet.yml`: wallet-web, ws-notify, tokenpay-staging
+  - `docker/compose/napay.yml`: napay-web, pos-web, store-wallet-web
+- `Caddyfile`: opzioni globali e default `:80`; siti in `conf.d/napay.caddy` e `conf.d/wallet.caddy` (`import conf.d/*.caddy`).
+- `wallet-web`: `env_file: ./poawallet/.env` (`required: false`); `environment` dell'orchestratore ha la precedenza (DB).
+- Regola: ogni agente/app modifica solo il proprio file in `docker/compose/` e `conf.d/`; `infra.yml` e `Caddyfile` solo con accordo.
+- Avvio: `docker compose up -d` (non serve piu `-f docker-compose.base.yml`).
+- Verifica: `docker compose config` (tutti i profili) identico al precedente salvo il mount `conf.d`; `caddy adapt` JSON identico; `caddy validate` OK.
+
 ## Verifica repository
-- `/var/www/napay-project/docker-compose.base.yml`
+- `/var/www/blockchain-napoli/napay-project/docker-compose.yml`
+- `/var/www/blockchain-napoli/napay-project/docker/compose/`
 - `/var/www/napay-project/docker/gateway/Caddyfile`
 - `/var/www/napay-project/.env.example`
 - `/var/www/napay-project/tips/README.md`

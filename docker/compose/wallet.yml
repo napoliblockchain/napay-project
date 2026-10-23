@@ -1,0 +1,54 @@
+# Wallet: poawallet + tokenpay staging. Percorsi relativi alla root del repo (vedi docker-compose.yml).
+# Instradamento HTTP/WebSocket: docker/gateway/conf.d/wallet.caddy
+services:
+  wallet-web:
+    image: napay/poawallet:dev
+    container_name: wallet-web
+    expose:
+      - "80"
+    # configurazione e segreti app (vedi poawallet/.env.example); environment sotto ha la precedenza
+    env_file:
+      - path: ./poawallet/.env
+        required: false
+    environment:
+      APP_ENV: "${APP_ENV}"
+      DB_DSN: "mysql:host=mysql-main;dbname=${MYSQL_DATABASE}"
+      DB_USERNAME: "${MYSQL_USER}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+      WEBSOCKET_URL: "${WEBSOCKET_URL}"
+      WEBSOCKET_URL_LOCALHOST: "${WEBSOCKET_URL_LOCALHOST}"
+    depends_on:
+      - mysql-main
+      - redis-main
+    networks:
+      - napay_net
+
+  tokenpay-staging:
+    image: napay/tokenpay:staging-source
+    container_name: tokenpay-staging
+    profiles: ["staging"]
+    expose:
+      - "80"
+    networks:
+      - napay_net
+
+  ws-notify:
+    build:
+      context: ./poawallet/ws-notify
+      dockerfile: Dockerfile
+    container_name: wallet-ws-notify
+    profiles: ["realtime"]
+    environment:
+      NOTIFY_WS_PORT: 14800
+      REDIS_URL: redis://redis-main:6379
+      NOTIFY_CHANNEL: poawallet:notify
+      NOTIFY_BACKEND_URL: http://wallet-web
+      NOTIFY_INTERNAL_SECRET: "${NOTIFY_INTERNAL_SECRET}"
+      NOTIFY_ALLOWED_ORIGINS: "${NOTIFY_ALLOWED_ORIGINS}"
+    ports:
+      - "${WS_NOTIFY_HOST_PORT}:14800"
+    depends_on:
+      - wallet-web
+      - redis-main
+    networks:
+      - napay_net

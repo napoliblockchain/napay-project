@@ -1,0 +1,30 @@
+# Backoffice napay e app legacy. Percorsi relativi alla root del repo (vedi docker-compose.yml).
+# Instradamento HTTP: docker/gateway/conf.d/napay.caddy
+services:
+  napay-web:
+    image: napay/napay:dev
+    container_name: napay-web
+    expose:
+      - "80"
+    environment:
+      APP_ENV: "${APP_ENV}"
+    networks:
+      - napay_net
+
+  pos-web:
+    image: napay/pos:legacy-migrating
+    container_name: pos-web
+    profiles: ["legacy"]
+    expose:
+      - "80"
+    networks:
+      - napay_net
+
+  store-wallet-web:
+    image: napay/store-wallet:legacy-migrating
+    container_name: store-wallet-web
+    profiles: ["legacy"]
+    expose:
+      - "80"
+    networks:
+      - napay_net
