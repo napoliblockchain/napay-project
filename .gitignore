@@ -1,6 +1,16 @@
 .env
 *.env.local
 
+# Repository applicativi: ognuno ha il proprio git e remote, non vanno MAI in questo repo
+/bolt/
+/docs/
+/napay/
+/packages/
+/poawallet/
+/pos/
+/store-wallet/
+/tokenpay/
+
 # Composer vendor dirs (ogni subrepo ha il suo /vendor, ma per sicurezza)
 */vendor/
 vendor/
