@@ -93,6 +93,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
   - `docker/compose/napay.yml`: napay-web, pos-web, store-wallet-web
 - `Caddyfile`: opzioni globali e default `:80`; siti in `conf.d/napay.caddy` e `conf.d/wallet.caddy` (`import conf.d/*.caddy`).
 - `wallet-web`: `env_file: ./poawallet/.env` (`required: false`); `environment` dell'orchestratore ha la precedenza (DB).
+- `wallet-web`: `build` da `./poawallet` target `dev` (`docker compose build wallet-web`); immagini di rilascio con `docker build --target prod`.
 - Regola: ogni agente/app modifica solo il proprio file in `docker/compose/` e `conf.d/`; `infra.yml` e `Caddyfile` solo con accordo.
 - Avvio: `docker compose up -d` (non serve piu `-f docker-compose.base.yml`).
 - Verifica: `docker compose config` (tutti i profili) identico al precedente salvo il mount `conf.d`; `caddy adapt` JSON identico; `caddy validate` OK.

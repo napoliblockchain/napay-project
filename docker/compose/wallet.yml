@@ -3,6 +3,10 @@
 services:
   wallet-web:
     image: napay/poawallet:dev
+    # immagine costruita da poawallet/Dockerfile; target prod per i rilasci (docker build --target prod)
+    build:
+      context: ./poawallet
+      target: dev
     container_name: wallet-web
     expose:
       - "80"
