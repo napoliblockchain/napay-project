@@ -336,3 +336,19 @@ push o invio ETH/POA effettuata in questo intervento.
   - `symfony/dom-crawler`, `symfony/yaml` (low): solo dev, trascinati da codeception 4 e `symfony/browser-kit <=4.2.4`.
 - Verificato dopo update: test sicurezza 20/20 PASS, smoke mailer/mime/guzzle/phpseclib OK. Non verificati: invio email reale, flusso send ETH/POA.
 - `Dockerfile-wss` (PHP 7.2) resta nel repo ma e morto: avvia `server/start`, comando rimosso in Step 1.5. Da eliminare.
+
+### Segreti fuori dall'immagine (2026-10-23)
+
+- `config/secrets.php` e `config/encrypt.json` non sono piu letti. Tutta la configurazione arriva da variabili d'ambiente (`.env` passato con `env_file`), lette da `config/env.php`: variabile obbligatoria mancante → avvio bloccato, messaggio con il solo nome.
+- `config/db.php`, `params.php`, `web.php`: valori da env. OAuth GitHub/Telegram non piu mappati per `SERVER_NAME`: un valore per ambiente.
+- `WebApp::encrypt/decrypt`: chiave/IV da `ENCRYPT_*`, stessi valori di `encrypt.json` (i dati gia cifrati restano leggibili).
+- `Erc20` faucet zerogas: se `SEALER_ACCOUNT_3`/`SEALER_PRVKEY_3` non sono configurati non invia gas invece di andare in errore.
+- `.dockerignore`: esclusi `.env*`, `secrets.php`, `encrypt.json`, `.git`, test, runtime/logs. `.env.example` con tutte le variabili.
+- `.env` locale generato dai valori esistenti (permessi 600, in `.gitignore` e `.dockerignore`).
+- Verifiche: 29/29 valori config identici ai legacy; cifratura identica all'algoritmo precedente; immagine buildata senza file segreti (0 file con valori segreti); env letto da mod_php sotto Apache; senza env avvio bloccato; test sicurezza 20/20 PASS.
+- Aperti:
+  - compose orchestratore: `wallet-web` deve ricevere `env_file: ./poawallet/.env`.
+  - `web/index.php` forza `YII_ENV=dev` e `YII_DEBUG=true`: con `vendor` `--no-dev` l'app non parte (`yii\debug\Module` assente); in produzione esporrebbe debug/gii.
+  - immagine con `display_errors` attivo (nessun `php.ini-production`).
+  - `secrets.php`/`encrypt.json` restano sul disco locale: eliminarli dopo aver verificato `.env`; i valori per i domini di produzione (GitHub/Telegram) sono ancora solo li.
+  - chiavi sealer usate dal faucet: sostituire con un account dedicato a fondi limitati e ruotare le chiavi sealer esposte nelle immagini precedenti.
