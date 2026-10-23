@@ -1,6 +1,6 @@
 # TIP-003 - Napay Backoffice: hardening Yii2 su PHP 8.3
 
-- Stato: OPEN
+- Stato: IN_PROGRESS
 - Area: Backoffice
 - Repo: `napay`
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -32,3 +32,12 @@
 - `/var/www/napay-project/napay/composer.json`
 - `/var/www/napay-project/napay/docker/Dockerfile`
 - `/var/www/napay-project/napay/docker-compose.yml`
+
+## Log esecuzione
+
+### Pin PHP 8.3.36 (2026-10-23)
+- `docker/Dockerfile`: `php:8.2-apache` → `php:8.3.36-apache`.
+- `docker/Dockerfile_Image`: `VARIANT` di default `8.2` → `8.3.36`.
+- `composer.json`: requisito PHP `>=7.4.0` → `>=8.3`.
+- Verifiche su `php:8.3.36-cli`: lint 162 file OK; build layer di sistema ed estensioni OK; risoluzione dipendenze runtime OK (yii2 2.0.55, mpdf 8.3.1, phpspreadsheet 1.30.7).
+- Aperto: `composer.lock` escluso da `.gitignore` (build non riproducibili); `require-dev` non risolvibile (`phpunit ~9.5.0` bloccato da security advisory); Dockerfile installa tool non necessari (htop, nano, certbot, nvm); credenziali MySQL passate come build arg e salvate nei layer dell'immagine (vedi TIP-008).

@@ -13,7 +13,7 @@ Questo README e indice operativo. Ogni scheda e nel file dedicato `TIP-XXX-*.md`
 | -- | ------ | ---- | ----- |
 | [TIP-001](TIP-001-inventario-perimetro-software.md) | Inventario software e perimetro tecnico Napay | Architettura | COMPLETED |
 | [TIP-002](TIP-002-piattaforma-docker-unificata.md) | Piattaforma Docker unificata | DevOps / Runtime | OPEN |
-| [TIP-003](TIP-003-napay-yii2-php83-hardening.md) | Napay Backoffice: hardening Yii2 su PHP 8.3 | Backoffice | OPEN |
+| [TIP-003](TIP-003-napay-yii2-php83-hardening.md) | Napay Backoffice: hardening Yii2 su PHP 8.3 | Backoffice | IN_PROGRESS |
 | [TIP-004](TIP-004-pos-porting-yii1-yii2.md) | POS: porting da Yii1 a Yii2 | POS | OPEN |
 | [TIP-005](TIP-005-store-wallet-porting-yii1-yii2.md) | Store Wallet: porting da Yii1 a Yii2 | Wallet Merchant | OPEN |
 | [TIP-006](TIP-006-bolt-porting-yii1-yii2.md) | Bolt: porting da Yii1 a Yii2 | Wallet Cittadino Legacy | REJECTED |

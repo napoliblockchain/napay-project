@@ -20,5 +20,10 @@ https://napay.local, https://napay.test, https://localhost {
 }
 
 https://wallet.local, https://poawallet.local, https://wallet.test {
-    reverse_proxy wallet-web:80
+    handle /ws-notify {
+        reverse_proxy ws-notify:14800
+    }
+    handle {
+        reverse_proxy wallet-web:80
+    }
 }

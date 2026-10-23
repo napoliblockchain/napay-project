@@ -30,7 +30,51 @@ Pacchetti di integrazione consigliati:
 - Step 1.2: pannello network/admin (blockchains, nodes, smartcontracts, standard values) (COMPLETED).
 - Step 1.3: mailbox + push + websocket notifiche (IN_PROGRESS).
 - Step 1.4: logs/profiles e rifiniture UI AdminLTE solo se servono al dominio wallet.
-- Step 1.5: hardening PHP 8.3, upgrade dipendenze Yii2, dockerizzazione unificata.
+- Step 1.5: hardening PHP 8.3, upgrade dipendenze Yii2, dockerizzazione unificata. (COMPLETED, 2026-05-16)
+
+### Log Step 1.5 (IN_PROGRESS, 2026-05-16)
+
+Completato:
+
+- Dockerfile: `php:7.2-apache` → `php:8.3-apache`, estensioni complete (intl, zip, sockets, opcache, gd, gmp, bcmath, pdo_mysql), composer installato nell'immagine, apache.conf creato
+- `config/db.php`: env vars `DB_DSN/DB_USERNAME/DB_PASSWORD` con fallback a secrets.php (rimuove db-docker.php trick)
+- `composer.json`: requisito PHP `>=5.6.0` → `>=8.1`
+- `ws-notify/`: creato in `poawallet/ws-notify/` (Node.js, canale `poawallet:notify`), indipendente da tradarb
+- `docker-compose.base.yml`: context ws-notify → `./poawallet/ws-notify`, env vars DB passate a wallet-web
+- Rimossa dipendenza `consik/yii2-websocket` da composer.json
+- Rimossi `daemons/NotificationsServer.php` e `commands/ServerController.php` (broken + legacy PHP ws)
+- `commands/WebsocketController.php`: rimosso `actionIndex` PHP ws, mantenuto solo `actionTrades`
+
+Chiuso:
+
+- `swiftmailer` → `yiisoft/yii2-symfonymailer ^2.0`; config aggiornata in `web.php` e `test.php` con DSN symfony
+- `sc0vu/web3.php`: constraint `php ^7.1` è solo metadata, il codice gira su 8.3; `composer install` richiede `--ignore-platform-reqs` (documentato nel Dockerfile) — accepted risk, rimpiazzo rimandato a refactor core wallet
+- Image scan: `php:8.3-apache` ha CVE nel base Debian — accettabile in dev, in prod usare digest pinned o CI scan
+
+### PHP 8.3 compat scan (COMPLETED, 2026-05-16)
+
+Risultati:
+
+- Zero funzioni rimosse in PHP 8.x nel codebase (each, create_function, strftime, ecc.)
+- Zero `${var}` interpolation deprecata
+- Zero errori PHP lint su tutto il codebase
+
+### composer update (COMPLETED, 2026-05-16)
+
+Aggiornamenti applicati:
+
+- `yiisoft/yii2`: 2.0.43 → **2.0.55** (PHP 8.3 compat completa)
+- `yiisoft/yii2-swiftmailer`: 2.1.2 → 2.1.3
+- Vendor allineato
+
+Problemi aperti rilevati:
+
+| Pacchetto | Problema | Priorità |
+| -- | -- | -- |
+| `sc0vu/web3.php` | `dev-master` + `php ^7.1` — aggirato con `--ignore-platform-reqs` | Aperto |
+| `brainfoolong/cryptojs-aes-php` | **RISOLTO** → `brainfoolong/js-aes-php` 1.0.5, namespace `Nullix\JsAesPhp\JsAesPhp` | DONE |
+| `swiftmailer/swiftmailer` | Abandoned, rimpiazzo `symfony/mailer` rimandato | Aperto |
+| `web-token/jwt-*` | Abandoned ma funzionali su PHP 8.3 (>=7.2) — rimandato con web-push | Aperto |
 
 Rischi principali:
 - conflitti tra naming model (ContractType vs ContractTypes), controller e route.
@@ -160,19 +204,67 @@ yii-1.1.22/vendor: questo repo (napay-project) ha .gitignore solo con `.env`; se
 la cartella orchestratore, aggiungere `yii-1.1.22/vendor/` al .gitignore di napay-project.
 Da valutare anche: `*/vendor/`, `*/node_modules/`, `*/.env` come regole globali nel napay-project .gitignore.
 
-### Step 1.4 - Logs/profiles e rifiniture UI (OPEN)
+### Step 1.4a - Rifiniture UI (COMPLETED, 2026-05-16)
 
-Obiettivo: portare in poawallet i moduli logs e profiles da tokenpay, solo le parti utili al dominio wallet.
+Obiettivo: allineamento tema, navbar attiva, breadcrumb, responsive check. Nessuna modifica DB.
 
-Candidati da valutare:
+Implementato su poawallet:
 
-- Logs: storico operazioni per admin (da tokenpay controllers/LogsController.php se esiste)
-- Profiles: estensione dati utente wallet (avatar, preferenze display)
-- Rifiniture AdminLTE: allineamento tema, breadcrumb, menu attivo, responsive check
+- navbar active state: `$active()` helper con prefix matching su `Yii::$app->requestedRoute`; tutti gli `<li>` ricevono `class="active"` sulla sezione corrente
+- fix titolo `send/index.php` e `receive/index.php`: `Yii::$app->id` → `Yii::t('app', ...)`
+- breadcrumb non implementato: UI mobile usa back button in `_header.php`, pattern corretto
+
+Verifiche fatte:
+
+- lint PHP su file modificati: OK
+
+Note:
+
+- `languageSwitcher` non presente in poawallet, non necessario.
+- `user::isWebmaster()` dipende da `Profiles` + `privilege_id` su Users - rimandato a Step 1.4b.
+- breadcrumb assente by design: la UI e mobile-first con back button in header.
+
+### Step 1.4b - Logs + Profiles + RBAC base (COMPLETED, 2026-05-16)
+
+Implementato su poawallet:
+
+- migrations: `profiles`, `privilege_id` su `mp_users`, `logs` (da eseguire manualmente)
+- `models/Profiles.php` + `ProfilesQuery` + `ProfilesSearch`
+- `models/Logs.php` + `LogsQuery` + `LogsSearch` + metodo statico `Logs::write()`
+- `components/UserRole.php` (PascalCase, sostituisce `user` tokenpay): `isWebmaster`, `isUser`, `can`, `privilegeLevel`, `privilegeName`
+- `controllers/ProfilesController.php` (CRUD, solo webmaster)
+- `controllers/LogsController.php` (index+view+delete, solo webmaster)
+- views: `profiles/` (index, view, create, update, _form) + `logs/` (index, view)
+- `models/Users.php`: aggiunto `privilege_id`, relation `getProfile()`
+- `controllers/SiteController.php`: `Logs::write()` al login
+- `views/layouts/_navbar.php`: voci Profiles e Logs visibili solo a webmaster
+
+Verifiche fatte:
+
+- lint PHP su tutti i file: OK
+
+Note:
+
+- componente rinominato `UserRole` (non `user` come in tokenpay) per rispettare naming PHP
+- migrations NON eseguite automaticamente — eseguire manualmente: `php yii migrate`
+- log writer aggiunto solo al login; altri eventi (send tx, logout) da aggiungere progressivamente
+
+### Step 1.4b - Logs + Profiles + RBAC base (OPEN)
+
+Obiettivo: portare Logs e Profiles da tokenpay + sistema ruoli minimo.
+
+Richiede:
+
+- Nuova tabella `profiles` (migration)
+- Colonna `privilege_id` su `mp_users` (migration)
+- Porting `app\components\user` (isWebmaster, can, privilegeLevel)
+- Porting `Profiles` model + query + search + controller + views
+- Porting `Logs` model + query + search + controller + views (con writer negli eventi chiave)
+- Rimandato a Step 1.5 per coerenza con hardening RBAC pianificato
 
 Criteri accettazione:
 
-- Wallet core (send/receive/transactions/wizard) non regredisce
+- Wallet core non regredisce
 - Nessun modello non-wallet importato senza necessita
 
 ## Verifica repository
@@ -192,3 +284,49 @@ Criteri accettazione:
 - /var/www/napay-project/tokenpay/controllers/StandardBlockchainValuesController.php
 - /var/www/napay-project/tokenpay/controllers/StandardSmartcontractValuesController.php
 - /var/www/napay-project/tokenpay/daemons/NotificationsServer.php
+
+### Correzione sicurezza Step 1.3 (2026-10-23)
+
+Implementazione corrente: `poawallet/ws-notify` Node.js. Il daemon PHP legacy
+resta rimosso, come previsto dalla migrazione Step 1.5.
+
+- `subscribe` verifica il cookie della sessione tramite `backend/notify`; l'identita
+  viene restituita da Yii. Un eventuale ID dichiarato diverso viene rifiutato.
+- Ogni richiesta notifiche riverifica la sessione. Sessione scaduta, backend
+  indisponibile o risposta inattesa negano accesso e chiudono il socket.
+- Rimosso accesso a `backend/notify` mediante secret interno e `user_id` arbitrario.
+  Redis resta il canale interno per invalidare/aggiornare le notifiche.
+- Backend restituisce il payload legacy, adattato dal servizio Node al protocollo
+  `endnotifications_response`/`html` atteso dal frontend.
+- Ricezione non chiama piu `push/notified`: lo stato letto cambia su click o
+  esplicito "Mark all as read", mediante POST con CSRF e filtro esatto proprietario.
+- Descrizioni notifiche codificate HTML. Endpoint push protetti da autenticazione,
+  POST e CSRF.
+- Gateway espone `/ws-notify` sul dominio wallet; fallback applicativo e `.env.example`
+  usano il percorso relativo. Impostare `WEBSOCKET_URL=/ws-notify` e
+  `WEBSOCKET_URL_LOCALHOST=/ws-notify` anche negli ambienti esistenti e abilitare il
+  profilo Compose `realtime`. I cookie di sessione devono essere disponibili al
+  percorso websocket. Configurare `NOTIFY_ALLOWED_ORIGINS` con l'origine browser
+  completa, inclusa eventuale porta HTTPS non standard.
+
+Verifica ripetibile:
+
+```sh
+cd poawallet/ws-notify
+node --test --test-timeout=15000 tests/security.test.mjs
+cd ..
+php tests/security/notifications.php
+```
+
+Eseguiti: 4 test Node (backend HTTP simulato, websocket reale, frontend VM) e
+20 controlli Yii su SQLite in memoria con PHP 8.3 in Docker, senza DB operativo.
+I test non caricano credenziali applicative. Nessuna verifica browser/manuale
+push o invio ETH/POA effettuata in questo intervento.
+
+### Pin PHP 8.3.36 (2026-10-23)
+
+- `Dockerfile`: `php:8.3-apache` → `php:8.3.36-apache` (patch release con fix di sicurezza, base Debian 13.7).
+- `composer.json`: requisito PHP `>=8.1` → `>=8.3`; `composer.lock` aggiornato solo nel content-hash, nessuna versione cambiata.
+- Verifiche su `php:8.3.36-cli`: lint 248 file OK, build layer di sistema ed estensioni OK, `tests/security/notifications.php` 20/20 PASS.
+- `composer audit`: 26 advisory su 9 pacchetti (guzzle, psr7, phpseclib, symfony mailer/mime/yaml/dom-crawler/polyfill-intl-idn, yii2-gii). Aggiornamento dipendenze da pianificare a parte.
+- `Dockerfile-wss` (PHP 7.2) resta nel repo ma e morto: avvia `server/start`, comando rimosso in Step 1.5. Da eliminare.

@@ -34,6 +34,11 @@ services:
       - "80"
     environment:
       APP_ENV: "${APP_ENV}"
+      DB_DSN: "mysql:host=mysql-main;dbname=${MYSQL_DATABASE}"
+      DB_USERNAME: "${MYSQL_USER}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+      WEBSOCKET_URL: "${WEBSOCKET_URL}"
+      WEBSOCKET_URL_LOCALHOST: "${WEBSOCKET_URL_LOCALHOST}"
     depends_on:
       - mysql-main
       - redis-main
@@ -69,16 +74,17 @@ services:
 
   ws-notify:
     build:
-      context: ../tradarb/ws-notify
+      context: ./poawallet/ws-notify
       dockerfile: Dockerfile
     container_name: wallet-ws-notify
     profiles: ["realtime"]
     environment:
       NOTIFY_WS_PORT: 14800
       REDIS_URL: redis://redis-main:6379
-      NOTIFY_CHANNEL: tradarb:notify
+      NOTIFY_CHANNEL: poawallet:notify
       NOTIFY_BACKEND_URL: http://wallet-web
-      NOTIFY_ALLOWED_ORIGINS: http://localhost:18080,https://localhost:18443,http://wallet.local,https://wallet.local
+      NOTIFY_INTERNAL_SECRET: "${NOTIFY_INTERNAL_SECRET}"
+      NOTIFY_ALLOWED_ORIGINS: "${NOTIFY_ALLOWED_ORIGINS}"
     ports:
       - "${WS_NOTIFY_HOST_PORT}:14800"
     depends_on:
