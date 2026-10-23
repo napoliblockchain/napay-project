@@ -50,3 +50,63 @@ services:
       - redis-main
     networks:
       - napay_net
+
+  # --- Chain di sviluppo (profilo "chain", solo locale) ---
+  # Besu QBFT a nodo singolo, chainId 2118, gas zero, come la rete POA di produzione.
+  # Chiavi generate al primo avvio nel volume chain_data, mai nel repository.
+  # RPC interno: http://besu:8545 ; contratto TTS in /data/tts.json (servizio chain-deploy).
+  chain-init:
+    build: ./docker/chain/tools
+    image: napay/chain-tools:dev
+    profiles: ["chain"]
+    command: ["node", "init.mjs"]
+    environment:
+      CHAIN_ID: "2118"
+    volumes:
+      - chain_data:/data
+    networks:
+      - napay_net
+
+  besu:
+    image: hyperledger/besu:26.9.0
+    container_name: wallet-besu
+    profiles: ["chain"]
+    user: "1000:1000"
+    command:
+      - --data-path=/data/db
+      - --genesis-file=/data/genesis.json
+      - --node-private-key-file=/data/key
+      - --rpc-http-enabled
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-api=ETH,NET,WEB3,QBFT
+      - --host-allowlist=*
+      - --min-gas-price=0
+      # nodo unico: niente discovery, nessun peer da attendere prima di produrre blocchi
+      - --discovery-enabled=false
+      - --sync-mode=FULL
+      - --sync-min-peers=0
+    volumes:
+      - chain_data:/data
+    depends_on:
+      chain-init:
+        condition: service_completed_successfully
+    networks:
+      - napay_net
+
+  chain-deploy:
+    build: ./docker/chain/tools
+    image: napay/chain-tools:dev
+    profiles: ["chain"]
+    command: ["node", "deploy.mjs"]
+    environment:
+      CHAIN_RPC_URL: http://besu:8545
+      CHAIN_ID: "2118"
+    volumes:
+      - chain_data:/data
+    depends_on:
+      - besu
+    networks:
+      - napay_net
+
+volumes:
+  chain_data:

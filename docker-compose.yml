@@ -1,9 +1,9 @@
 # Orchestratore piattaforma Napay v2 (TIP-016).
 # Ogni area ha il suo file in docker/compose/: modificare solo quello della propria app.
 #   infra.yml  -> gateway, database, cache, tool operativi, observability
-#   wallet.yml -> poawallet (wallet-web, ws-notify)
+#   wallet.yml -> poawallet (wallet-web, ws-notify) e chain di sviluppo Besu (profilo chain)
 #   napay.yml  -> backoffice napay e app legacy (pos, store-wallet)
-# Avvio: docker compose up -d   (profili extra: --profile realtime|legacy|ops|observability)
+# Avvio: docker compose up -d   (profili extra: --profile realtime|legacy|ops|observability|chain)
 name: "${COMPOSE_PROJECT_NAME:-napay_v2}"
 
 include:

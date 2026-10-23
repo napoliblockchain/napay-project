@@ -127,3 +127,15 @@ In ambiente Docker (Step 1.5) la connessione al nodo Besu sara configurata via e
 - [ ] Generare nuovi sealers (non usare le chiavi dell'istanza Fidelity in produzione)
 - [ ] Documentare indirizzo contratto TTS Token deployato
 - [ ] Collegare poawallet alla nuova chain tramite pannello admin Blockchains/Nodes
+
+## Chain di sviluppo locale (2026-10-23)
+
+Per testare il wallet senza VPS: profilo compose `chain` in `docker/compose/wallet.yml`.
+
+- `chain-init`: al primo avvio genera chiave del validatore e genesis QBFT a nodo singolo (chainId 2118, gas zero, blocco ogni 2s) nel volume `chain_data`. Nessuna chiave nel repository.
+- `besu`: `hyperledger/besu:26.9.0`, utente uid 1000, RPC solo su rete interna (`http://besu:8545`), niente discovery, `--sync-min-peers=0`.
+- `chain-deploy`: compila TTSToken (sorgente `napoliblockchain/ttstoken`, solc 0.5.17 + OpenZeppelin 2.4.0 come in produzione) e lo pubblica; indirizzo in `/data/tts.json`. Rieseguibile.
+- Avvio: `docker compose --profile chain up -d chain-init besu chain-deploy`.
+- `npm audit` degli strumenti: advisory su OpenZeppelin 2.4.0 (ERC165Checker/Initializable, non usati da TTSToken) e `tmp` (CLI di solc, non usata): accettate, solo uso locale.
+- Test di integrazione poawallet: `tests/chain/erc20-integration.php` (13 controlli su `Erc20`: blocchi, nonce, saldi, stima gas, invio token firmato, faucet gas), riferimento per la sostituzione di `sc0vu/web3.php`.
+- Le chiavi private Besu nei documenti di `napay-docs` sono state rimosse (commit `77e51a1`): restano nella storia pubblica, considerarle compromesse.

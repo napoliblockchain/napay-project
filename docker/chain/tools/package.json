@@ -1,0 +1,12 @@
+{
+  "name": "napay-chain-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Chain di sviluppo: genesis QBFT a nodo singolo e deploy TTSToken (solo uso locale)",
+  "dependencies": {
+    "@openzeppelin/contracts": "2.4.0",
+    "ethers": "6.17.0",
+    "solc": "0.5.17"
+  }
+}
