@@ -328,5 +328,11 @@ push o invio ETH/POA effettuata in questo intervento.
 - `Dockerfile`: `php:8.3-apache` → `php:8.3.36-apache` (patch release con fix di sicurezza, base Debian 13.7).
 - `composer.json`: requisito PHP `>=8.1` → `>=8.3`; `composer.lock` aggiornato solo nel content-hash, nessuna versione cambiata.
 - Verifiche su `php:8.3.36-cli`: lint 248 file OK, build layer di sistema ed estensioni OK, `tests/security/notifications.php` 20/20 PASS.
-- `composer audit`: 26 advisory su 9 pacchetti (guzzle, psr7, phpseclib, symfony mailer/mime/yaml/dom-crawler/polyfill-intl-idn, yii2-gii). Aggiornamento dipendenze da pianificare a parte.
+- `composer audit`: 26 advisory su 9 pacchetti. Aggiornati solo i pacchetti vulnerabili:
+  guzzle 7.10.0 → 7.16.0, promises 2.3.0 → 2.6.0, psr7 2.9.0 → 2.13.2, symfony/mailer 6.4.34 → 6.4.46,
+  symfony/mime 7.4.9 → 7.4.19, polyfill-intl-idn 1.37.0 → 1.43.0, phpseclib 2.0.54 → 2.0.55,
+  yii2-gii 2.1.4 → 2.2.7 (`require-dev` `~2.2.5`). Residui: 6 advisory su 3 pacchetti.
+  - `phpseclib` (medium, X25519): fix solo in 3.0.57+, bloccato da `sc0vu/web3.php` e `web3p/ethereum-util` (`~2.0`). Si chiude col rimpiazzo di sc0vu.
+  - `symfony/dom-crawler`, `symfony/yaml` (low): solo dev, trascinati da codeception 4 e `symfony/browser-kit <=4.2.4`.
+- Verificato dopo update: test sicurezza 20/20 PASS, smoke mailer/mime/guzzle/phpseclib OK. Non verificati: invio email reale, flusso send ETH/POA.
 - `Dockerfile-wss` (PHP 7.2) resta nel repo ma e morto: avvia `server/start`, comando rimosso in Step 1.5. Da eliminare.
