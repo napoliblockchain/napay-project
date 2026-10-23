@@ -364,3 +364,12 @@ push o invio ETH/POA effettuata in questo intervento.
 - Fix PHP 8 (errori fatali "Non-static method ... cannot be called statically", sfuggiti allo scan del 2026-05-16): `Logo::footer` (login in 500), `Messages::push/saveReader/log/appTitle` (invio tx e notifiche), `WebApp::si_formatter/si_classifier`.
 - Verifiche con MySQL 8.4 temporaneo + migration: login, home, reset password 200; wallet/send redirect al login; prod: gii/debug 404, `display_errors` off, senza env risposta 500 vuota; dev: gii/debug 200. Lint completo OK, test sicurezza 20/20 PASS.
 - Aperti: `web/info.php` va eliminato dal repo; `Logo::header` usa API Yii1 (`Yii::app()`), non chiamato; `Messages::log` scriverebbe la chiave VAPID se riattivato; flussi autenticati (send ETH/POA, push) non provati.
+
+### Rotazione chiavi esposte (2026-10-23)
+
+Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
+- `COOKIE_VALIDATION_KEY` in uso = valore committato nel 2021 in `config/web.php` → ruotata (nuovo valore solo in `.env`).
+- Chiave privata VAPID in chiaro nella migration `m210415_085447_create_vapid_table` → coppia nuova in `.env` (`VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`), letta da `Settings::vapid()`; push disattivate se assenti. Migration ripulita; `m261023_100000_clear_vapid_keys` svuota la tabella `vapid`.
+- Effetti: utenti da riloggare (cookie); iscrizioni push da rinnovare (chiave pubblica cambiata). In produzione impostare gli stessi tre valori nuovi nel suo `.env`.
+- Verifiche: migration applicata su MySQL 8.4 temporaneo; login/home 200 su dev e prod; test sicurezza 20/20 PASS; gitleaks sul codice attuale: solo falso positivo `lightwallet.min.js`.
+- Fuori poawallet: chiavi Besu in `docs/Besu/*.md` (repo pubblico `napay-docs`, non coincidono con i sealer in uso: da rimuovere e considerare bruciate); stash locale napay `eaa529dd` con `secrets.php`.
