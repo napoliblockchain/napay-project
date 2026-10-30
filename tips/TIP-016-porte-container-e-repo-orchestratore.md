@@ -97,6 +97,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 - Regola: ogni agente/app modifica solo il proprio file in `docker/compose/` e `conf.d/`; `infra.yml` e `Caddyfile` solo con accordo.
 - Avvio: `docker compose up -d` (non serve piu `-f docker-compose.base.yml`).
 - Verifica: `docker compose config` (tutti i profili) identico al precedente salvo il mount `conf.d`; `caddy adapt` JSON identico; `caddy validate` OK.
+- Healthcheck (2026-10-30): `mysql-main` (mysqladmin ping via TCP, pronto solo a fine inizializzazione), `redis-main` (redis-cli ping), `wallet-web` (Apache, file statico), `besu` (porta RPC). `depends_on` con `service_healthy`: wallet-web su mysql/redis, ws-notify su wallet-web/redis, adminer su mysql, chain-deploy su besu. Evita errori "Connection refused" alle migration al primo avvio.
 
 ## Verifica repository
 - `/var/www/blockchain-napoli/napay-project/docker-compose.yml`

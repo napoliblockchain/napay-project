@@ -25,8 +25,17 @@ services:
       REDIS_HOST: redis-main
       NOTIFY_CHANNEL: poawallet:notify
     depends_on:
-      - mysql-main
-      - redis-main
+      mysql-main:
+        condition: service_healthy
+      redis-main:
+        condition: service_healthy
+    # Apache attivo (file statico, non dipende dal database)
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost/robots.txt"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
     networks:
       - napay_net
 
@@ -46,8 +55,10 @@ services:
     ports:
       - "${WS_NOTIFY_HOST_PORT}:14800"
     depends_on:
-      - wallet-web
-      - redis-main
+      wallet-web:
+        condition: service_healthy
+      redis-main:
+        condition: service_healthy
     networks:
       - napay_net
 
@@ -87,6 +98,13 @@ services:
       - --sync-min-peers=0
     volumes:
       - chain_data:/data
+    # porta JSON-RPC aperta (l'immagine non ha curl)
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8545"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
     depends_on:
       chain-init:
         condition: service_completed_successfully
@@ -104,7 +122,8 @@ services:
     volumes:
       - chain_data:/data
     depends_on:
-      - besu
+      besu:
+        condition: service_healthy
     networks:
       - napay_net
 
