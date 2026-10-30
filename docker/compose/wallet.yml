@@ -21,6 +21,9 @@ services:
       DB_PASSWORD: "${MYSQL_PASSWORD}"
       WEBSOCKET_URL: "${WEBSOCKET_URL}"
       WEBSOCKET_URL_LOCALHOST: "${WEBSOCKET_URL_LOCALHOST}"
+      # gateway Caddy fidato per X-Forwarded-Proto/For: wallet-web non espone porte,
+      # lo raggiungono solo i container della rete interna napay_net
+      TRUSTED_PROXIES: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
       # realtime: NotificationService pubblica su Redis, ws-notify inoltra ai browser
       REDIS_HOST: redis-main
       NOTIFY_CHANNEL: poawallet:notify
