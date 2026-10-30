@@ -403,3 +403,12 @@ Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
 - Verifica: `tests/security/wallet-secrets.php` 28/28; integrazione chain 21/21 con invio reale tramite controller (password nuova e legacy, password di altro utente rifiutata). Da provare nel browser: richiesta PIN, rimozione PIN, mostra seed, invio.
 - Libreria web3 (poawallet `fix(deps)`): `sc0vu/web3.php` dev-master → `web3p/web3.php` 0.1.6 (stessa API, tag stabile, niente ReactPHP). phpseclib resta 2.x (richiesto anche da `web3p/ethereum-util`): usato solo `Math\BigInteger`, advisory residue non applicabili. Dockerfile: `--ignore-platform-req=php` al posto di `--ignore-platform-reqs`.
 - Verifica: `tests/chain/erc20-integration.php` 13/13 sulla chain di sviluppo (TIP-017) prima e dopo la sostituzione.
+
+### Follow-up: PHP 8.3 in sviluppo, firma transazioni, segreti nei log (2026-10-30)
+
+- `web3p/web3.php` 0.1.6 → 0.3.2 (`get_class()` senza argomenti bloccava il wallet in dev); aggiunge ReactPHP/Ratchet.
+- Firma: `web3p/ethereum-tx` 0.4.3 → `kornrunner/ethereum-offline-raw-tx` 0.9.0. La 0.4.3 aveva deprecazioni PHP 8.1, codificava in modo non canonico le firme con r/s a zero iniziale (transazioni rifiutate dal nodo, ~1 su 128) e codificava `gasPrice '1000'` come byte ASCII (825.241.648 wei). Ora `Erc20::signTransaction` unico, gasPrice 1000 wei.
+- Gestore errori: il fallback di Yii scriveva `$_SERVER` (tutti i segreti da env) nei log con `YII_DEBUG`; sostituito da `components/errors/*` senza dump.
+- Incidente: durante i test l'output di un errore ha mostrato in conversazione le chiavi sealer, `COOKIE_VALIDATION_KEY` e la chiave privata VAPID. Cookie key e VAPID ruotate; chiavi sealer da sostituire sulla chain di produzione.
+- `symfony/mime` 7.4.22, `symfony/yaml` 5.4.54 (nuove CVE).
+- Test: firma 1000 campioni (`tests/standalone/sign-transaction.php`); integrazione chain 22/22 in modalita rigorosa; gestore errori con canarino.
