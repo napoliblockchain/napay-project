@@ -144,3 +144,42 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   l'upgrade. L'import legacy garantisce email univoche.
 - Commit napay `a4f4ffe3`. Suite runtime verde (HTTP 134, reset 68,
   registrazione/attivazione 92, con 5 nuovi controlli sul login).
+
+### Passo 3 - Tabelle associazione e import automatico (COMPLETED, 2026-11-11)
+- Migration `m261111_100000_create_association_tables`: `association_roles`,
+  `membership_fees`, `payment_methods`, `member_profiles`, `membership_payments`
+  (importi `DECIMAL`), `assembly_minutes` (PDF nel DB). Ogni tabella ha
+  `legacy_id` univoco. La tabella `users` non cambia: il collegamento passa
+  da `member_profiles`.
+- `components/legacy/LegacyImporter`, eseguito dal job di bootstrap a ogni
+  avvio se `LEGACY_DB_DSN` è impostata:
+  - il legacy è letto in una transazione `READ ONLY` (utente con solo SELECT);
+  - il lato v2 è scritto in una transazione unica, che si chiude solo se
+    conteggi e totali per anno, metodo e stato coincidono;
+  - se qualcosa fallisce: rollback e web bloccato, con messaggi di errore
+    senza dati.
+- Regole applicate:
+  - upsert per ID legacy, che propaga modifiche e cancellazioni;
+  - email ripulite dagli spazi invisibili;
+  - Istituti esclusi, POS disattivati;
+  - cariche di vertice e Segretario diventano admin;
+  - un utente v2 con la stessa email viene solo collegato (password e ruolo
+    v2 restano);
+  - impostazioni importate solo dalla whitelist non segreta;
+  - stati: `new` diventa `pending`, gli stati sconosciuti restano come sono.
+- PDF dei verbali da `NAPAY_LEGACY_FILES_DIR`, montata in sola lettura in
+  `/legacy-files`. Un file già importato resta anche se la cartella non è più montata.
+- Test `tests/db/legacy-import.php` (in `tests/docker/bootstrap.sh`): fixture
+  legacy sintetica con la struttura reale, 31 controlli. Suite runtime verde.
+- Prova sulla copia locale `napay_legacy`:
+  - utenti: 55 creati e 1 collegato (41 soci, 11 commercianti, 4 admin);
+  - 91 pagamenti, con totali per anno identici al legacy
+    (2019 1.160,10 €, 2020 920 €, 2021 350 €, 2022 80 €);
+  - 8 cariche, 3 quote, 6 metodi, 3 verbali (PDF non presenti in locale),
+    16 impostazioni;
+  - un secondo avvio lascia i dati identici.
+- Commit napay `3c141a22`.
+- Da fare prima della produzione:
+  - rete dal container bootstrap al MySQL legacy del VPS;
+  - utente MySQL legacy con solo SELECT;
+  - percorso reale di `protected/verbali`.
