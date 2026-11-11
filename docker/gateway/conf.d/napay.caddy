@@ -6,5 +6,11 @@ http://napay.local, http://napay.test, http://localhost, https://napay.test, htt
 https://napay.local {
     header X-Content-Type-Options nosniff
     header Referrer-Policy no-referrer
+    # API server-to-server dei POS (SIP-021): solo dalla rete interna pos_local_browser
+    @posapi_outside {
+        path /api/pos/*
+        not remote_ip 10.251.0.0/24
+    }
+    respond @posapi_outside 404
     reverse_proxy napay-local-web:80
 }

@@ -15,9 +15,12 @@ services:
     depends_on:
       - wallet-web
     networks:
-      - napay_net
+      napay_net: {}
       # rete interna verso il backoffice napay (sandbox napay/docker/local): solo gateway e web napay
-      - napay_local_browser
+      napay_local_browser: {}
+      # rete interna del server POS (SIP-021): il POS raggiunge napay solo dal gateway, in HTTPS verificato
+      pos_local_browser:
+        aliases: [napay.local]
 
   mysql-main:
     image: mysql:8.0
@@ -107,6 +110,10 @@ networks:
   # creata da start-localhost.sh (docker network create --internal): condivisa con il compose napay
   napay_local_browser:
     name: napay_local_browser
+    external: true
+  # creata da start-localhost.sh (--internal, subnet fissa 10.251.0.0/24 usata dal gateway per /api/pos/*)
+  pos_local_browser:
+    name: pos_local_browser
     external: true
 
 volumes:
