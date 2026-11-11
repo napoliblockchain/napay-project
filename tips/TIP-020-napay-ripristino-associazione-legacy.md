@@ -273,3 +273,19 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   PayPal finto, attivo solo nella suite isolata.
 - Prossimo: 5c, pagamento in Bitcoin con BTCPay Greenfield. Da valutare anche
   la ricevuta scaricabile dal socio.
+
+### Passo 5b-bis - Webhook PayPal, equivalente del vecchio IPN (COMPLETED, 2026-11-12)
+- `POST /api/paypal/v1/webhook`, scelte dell'utente:
+  - firma verificata con l'API PayPal `verify-webhook-signature`;
+  - capture automatica su `CHECKOUT.ORDER.APPROVED`;
+  - nuovi stati "Rimborsata" e "Stornata".
+- Funzionamento:
+  - senza sessione né cookie; formato e header controllati prima di chiamare PayPal;
+  - ogni evento elaborato una sola volta (`paypal_webhook_events`);
+  - stato sempre riletto da PayPal; 500 per far riprovare PayPal;
+  - rate limit per IP.
+- Il vecchio IPN segnava "pagato" senza controllare l'importo: ora conferma del
+  socio e webhook usano lo stesso controllo (`PayPalPayments`).
+- Configurazione: `PAYPAL_WEBHOOK_ID`. Senza, il webhook è disattivato (503).
+  In produzione l'URL deve essere pubblico e registrato nell'app PayPal.
+- Commit napay `cded958a`. Test `paypal-webhook.php`: 34 controlli.
