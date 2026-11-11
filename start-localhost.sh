@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Avvio locale del wallet (poawallet) con chain di sviluppo Besu. Solo sviluppo.
+# Avvio locale di tutto lo stack: wallet (poawallet) con chain Besu e backoffice napay. Solo sviluppo.
 # Non cancella volumi, non esegue migration, non fa git pull: le stampa se servono.
 set -euo pipefail
 
@@ -12,7 +12,8 @@ for argument in "$@"; do
     --check) CHECK=true ;;
     --help|-h)
       printf '%s\n' 'Uso: bash start-localhost.sh [--build] [--check]' \
-        '--build: ricostruisce le immagini (wallet-web, chain-tools) usando la cache Docker.' \
+        '--build: ricostruisce le immagini del wallet (wallet-web, chain-tools) usando la cache Docker.' \
+        '         Il backoffice napay ricostruisce sempre con la cache (napay/docker/local.sh).' \
         '--check: verifica i prerequisiti senza avviare nulla.'
       exit 0 ;;
     *) printf 'Opzione sconosciuta: %s\n' "$argument" >&2; exit 1 ;;
@@ -36,6 +37,10 @@ if $BUILD || ! docker image inspect napay/poawallet:dev napay/chain-tools:dev >/
   docker buildx version >/dev/null 2>&1 || fail 'serve Docker Buildx: sudo apt-get install docker-buildx'
   BUILD=true
 fi
+# backoffice: sandbox privata di napay/docker/local.sh; al primo avvio serve il dataset v2
+NAPAY_STATE="$HOME/.local/share/napay/browser-local"
+[[ -f "$NAPAY_STATE/local.env" || -n "${NAPAY_IMPORT_DIR:-}" ]] \
+  || fail 'primo avvio napay: imposta NAPAY_IMPORT_DIR=<dataset v2 revisionato> (vedi napay/docker/LOCAL-BROWSER.md).'
 HTTPS_PORT="$(env_value GATEWAY_HTTPS_PORT)"
 [[ -n "$HTTPS_PORT" ]] || fail 'GATEWAY_HTTPS_PORT non impostata in .env.'
 compose config --quiet || fail 'configurazione docker compose non valida.'
@@ -47,24 +52,24 @@ if $BUILD; then
   compose build wallet-web chain-deploy
 fi
 
-step '1/4 MySQL e Redis'
+step '1/5 MySQL e Redis'
 compose up -d --wait mysql-main redis-main
 
-step '2/4 Chain di sviluppo Besu + token TTS'
+step '2/5 Chain di sviluppo Besu + token TTS'
 compose up -d --wait besu
 # one-shot rieseguibile: se il token esiste gia' non fa nulla
 compose run --rm chain-deploy >/dev/null
 printf 'Chain pronta.\n'
 
-step '3/4 Wallet'
+step '3/5 Wallet'
 compose up -d --wait --no-deps wallet-web
 # migration mai automatiche (TIP-014): solo avviso
 if ! docker exec wallet-web php yii migrate/new --interactive=0 2>/dev/null | grep -q 'No new migrations'; then
   printf 'ATTENZIONE: migration da applicare. Esegui:\n  docker exec -it wallet-web php yii migrate\n'
 fi
 
-step '4/4 Gateway'
-# --no-deps: napay-web non serve al wallet (il backoffice ha il suo stack)
+step '4/5 Gateway wallet'
+# --no-deps: il backoffice gira nella sua sandbox (passo 5), non in napay-web
 compose up -d --no-deps gateway
 URL="https://wallet.local:$HTTPS_PORT"
 for ((attempt=0; attempt<30; attempt++)); do
@@ -75,5 +80,11 @@ for ((attempt=0; attempt<30; attempt++)); do
 done
 [[ "$code" == 200 ]] || fail "gateway non risponde su $URL (docker logs napay-gateway)."
 
-printf '\nPronto: %s\n' "$URL"
+printf 'Wallet pronto.\n'
+
+step '5/5 Backoffice napay'
+# launcher del progetto napay: build con cache, bootstrap DB, utente locale, CA HTTPS
+bash "$ROOT/napay/docker/local.sh" up
+
+printf '\nPronto:\n  Wallet:     %s\n  Backoffice: https://localhost:18444 (utente browser-admin)\n' "$URL"
 printf 'Stop: bash %s/stop-localhost.sh\n' "$ROOT"
