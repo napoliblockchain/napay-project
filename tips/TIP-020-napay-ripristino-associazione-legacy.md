@@ -76,9 +76,11 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
    - contanti: registrazione manuale del pagamento dal backoffice.
 6. **Transazioni dei commercianti** e il resto dei moduli `np_`, valutati dopo
    le fasi 1–5 in un TIP dedicato se il perimetro cresce.
-7. **Cutover.** Dump finale della produzione online, perché il backup del 22/10
-   non contiene i pagamenti successivi. Finestra di manutenzione, import,
-   riconciliazione, poi spegnimento della vecchia app (TIP-012).
+7. **Cutover automatico** (decisione utente del 2026-11-11): nessun dump
+   manuale. v2 legge il DB legacy all'avvio e migra in automatico, ripetendo
+   l'import a ogni avvio finché la sorgente legacy è configurata. Lo
+   spegnimento del vecchio sistema lo fa l'utente. Design e decisioni:
+   [TIP-020/mapping.md](TIP-020/mapping.md).
 
 ## Criteri di accettazione
 

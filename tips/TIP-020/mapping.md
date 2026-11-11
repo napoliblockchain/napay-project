@@ -67,13 +67,55 @@ ricevute (`progressivo_ricevute_*`), denominazioni.
 nello stesso schema), `np_comuni_italiani` (già presente in v2), moduli
 commercianti/POS/transazioni (fase 6).
 
+## Decisioni utente (2026-11-11)
+
+1. **Login solo con email, per tutti** (soci importati e utenti v2 esistenti).
+   Lo username v2 non serve più per accedere: per gli importati vale l'email.
+2. **Si migrano tutti gli utenti**, anche POS e Istituto: in produzione ci
+   sono, il backup locale ne è privo ma la struttura è identica.
+3. **Segretario = admin.** Nel legacy tutte le cariche di vertice (Presidente,
+   Vice Presidente, Tesoriere, Segretario) sono di tipo Amministratore →
+   privilegio Administrator. La carica resta come titolo del socio
+   (`association_roles`), separata dal privilegio.
+4. **2FA disattivata**: `ga_secret_key` non si migra, la 2FA si riattiva più
+   avanti con nuova registrazione.
+5. **File dei verbali**: nel legacy sono in `<cartella app>/protected/verbali/`
+   (`Yii::app()->basePath . '/verbali/'`), nome file = `url_verbale`
+   (md5 casuale `.pdf`). Sul VPS si trovano con:
+   `find / -type d -path '*/protected/verbali' 2>/dev/null`.
+   La cartella `protected/privatekeys/` contiene le chiavi del vecchio pairing
+   BTCPay (API v1): non si migra, BTCPay passa a Greenfield.
+6. **Nessun dump manuale**: al primo avvio v2 legge direttamente il DB legacy
+   e migra tutto in automatico. Lo spegnimento del vecchio sistema lo fa
+   l'utente quando v2 è pronto.
+
+## Design migrazione automatica (proposta)
+
+- Sorgente da env: `LEGACY_DB_DSN`, `LEGACY_DB_USERNAME`, `LEGACY_DB_PASSWORD`
+  (utente MySQL di **sola lettura** sul DB legacy) e `LEGACY_FILES_DIR`
+  (cartella verbali montata in sola lettura). Senza `LEGACY_DB_DSN` non viene
+  importato nulla.
+- Esecuzione: job di bootstrap, dopo import/upgrade v2. Il web parte solo se
+  il job termina bene, come oggi.
+- **Ripetuto a ogni avvio** finché `LEGACY_DB_DSN` è impostata: upsert per ID
+  legacy, così le novità del vecchio sistema (nuovi soci, pagamenti, stati)
+  arrivano anche se v2 viene avviato prima dello spegnimento del vecchio.
+  Dopo lo spegnimento si toglie `LEGACY_DB_DSN` e resta l'ultima fotografia.
+- Finché l'import è attivo, il legacy è la fonte autorevole per i record
+  importati. Gestione e pagamenti dell'associazione in v2 sono **in sola
+  lettura**, per non avere due sistemi che scrivono (vedi TIP-019).
+- Utente con email già presente in v2: si tiene l'utente v2 (password e
+  privilegio), si collega l'ID legacy e gli si agganciano quote e pagamenti.
+- Ogni esecuzione registra conteggi e totali per anno, tipo e stato, e si
+  ferma se legacy e v2 non quadrano. Il log non contiene dati personali.
+- Prerequisito: oggi il bootstrap v2 fissa l'hash delle migration al primo
+  avvio e poi blocca l'app se ne arrivano di nuove. Serve una fase di
+  **upgrade**: migration nuove applicate in automatico all'avvio, con
+  controllo che i dati esistenti non cambino.
+
 ## Domande aperte
 
-1. Username v2 per i soci importati: uso l'email?
-2. Utenti POS e Istituto: si migrano? Con quale ruolo?
-3. Segretario: nel legacy nasce dalle cariche (`id_carica`), in v2 non esiste.
-   Nuovo privilegio (es. livello 40) o ruolo associativo?
-4. 2FA legacy (`ga_secret_key`): migrarlo o chiedere la riattivazione?
-5. File dei verbali (`url_verbale`): dove sono sul server legacy?
-6. Dump della produzione online: chi lo fa e quando (serve anche per
-   riconciliare quote 2023–2026)?
+1. Utenti POS e Istituto: ruolo v2? Proposta: importati con il tipo legacy
+   conservato nel profilo. Istituto → User. POS → disattivato finché il
+   modulo POS non è portato (TIP-004).
+2. Sola lettura dell'associazione in v2 durante l'import ripetuto: confermare.
