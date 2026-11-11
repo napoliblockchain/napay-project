@@ -373,6 +373,119 @@ separati e senza intervenire sui file condivisi dell'altro agente.
 - Nessun riavvio di Napay o gateway; ricostruito solo POS. Resta da progettare
   il prossimo micro-step catalogo/assegnazioni e poi aperture esclusive.
 
+### Prossimo micro-step: catalogo autorizzato (BOZZA, da approvare)
+
+Ricognizione del 2026-11-11, successiva al logout. Questa sezione e solo
+documentazione: non approva migration, endpoint, grant o import di dati.
+
+#### Evidenze repository e schema locale
+
+- Esistono `models/Stores.php` (`stores.merchant_id`, `description`),
+  `Merchants.php` (`merchants.user_id`) e `Users::getMerchants()`. Quest'ultima
+  relazione identifica aziende possedute, non negozi assegnati a operatori base.
+  `Users::$merchant_id` e un attributo pubblico: non prova un grant persistente.
+- Non trovati modelli/migration di assegnazione esplicita utente-negozio,
+  modello `Pos.php` o tabella terminali nella v2 esaminata. Il riferimento a
+  `app\models\Pos` in `StoresController.php` e residuo, non implementazione riusabile.
+- Verificati in sola lettura i metadati della sandbox attiva: tabelle pertinenti
+  `stores`, `storesettings`, `pos_operator_sessions`; non risultano tabelle POS
+  o assegnazioni. Non letti record utente, dump o credenziali. La verifica
+  riguarda questa sandbox, non certifica ogni dataset legacy disponibile.
+- `storesettings.bps_storeid` identifica uno store BTCPay: non e un terminale
+  POS Napay, non concede accesso e non deve diventare credenziale operatore.
+- Riutilizzare `PosApi::authenticateClient/findActiveSession/throttle` e il
+  modulo `posapi`. Non duplicare autenticazione, impronta password o rate limit.
+- `availability=available|in_use` nell'OpenAPI e ancora bozza: senza registro
+  delle aperture non e possibile dichiarare correttamente la disponibilita.
+
+#### Scomposizione proposta
+
+1. **C1 - Fondazioni dati.** Dopo approvazione, nuova migration additiva per
+   terminali Napay e grant espliciti operatore-negozio. Nomi proposti, non
+   definitivi: `pos_terminals`, `pos_store_operators`; AR dedicati, senza
+   aggiungere relazioni ai modelli condivisi. Riutilizzare `users`, `stores`
+   e `merchants`, mai ricreare anagrafiche o hash password.
+2. **C2 - API in sola lettura.** `GET /api/pos/v1/terminals`, autenticazione
+   servizio + bearer, ricontrollo sessione e grant a ogni richiesta. Scope
+   prima di ordinamento/paginazione. Utente senza grant: 200 con lista vuota.
+   Nessuna apertura o concessione implicita per ruolo admin/merchant/base.
+3. **C3 - Vista POS.** Client server-to-server e lista `descrizione negozio -
+   nome POS`, gestione vuoto/errore/sessione invalidata. Nessun pulsante che
+   dichiari di aprire il terminale prima dell'API di apertura esclusiva.
+4. **C4 separato - Gestione dati dal backoffice.** Definire CRUD terminali e
+   assegnazioni con admin/merchant proprietario, autorizzazione record-level,
+   POST/CSRF e audit. Non considerarlo implicitamente incluso nel GET.
+
+Per C1, proposta minima: terminale con ID interno, identificativo pubblico
+opaco univoco, `store_id`, nome e abilitazione; grant con `user_id`, `store_id`,
+abilitazione e unicita della coppia. FK e tipi devono essere verificati sullo
+schema effettivo prima del codice; revoca grant effettiva dalla richiesta API
+successiva. Nessun SIN, indirizzo wallet o apertura nella tabella grant.
+Nessun seed automatico di autorizzazioni nel DB operativo: fixture solo nel DB
+usa-e-getta. Tabelle nuove inizialmente vuote, senza assumere che ogni negozio
+debba avere un POS o che il proprietario merchant sia automaticamente operatore.
+Non modificare vecchie migration e non importare il legacy in questa fase.
+
+#### Contratto GET da finalizzare prima di C2
+
+- Chiave client e bearer come sessioni; risposta solo JSON, `no-store`, niente
+  cookie/CORS; stessa rete e TLS. Il browser non riceve token o chiave servizio.
+- Riutilizzare la bozza `{items, next_cursor}` con item `{id, store_name, name}`;
+  risolvere esplicitamente il campo `availability` prima di aggiornare OpenAPI.
+- `store_name` deriva da `stores.description`, non da ID o SIN. Nomi vuoti e
+  limiti lunghezza vanno validati nei dati, output sempre codificato nel POS.
+- `limit`: proposta default 50, massimo 100; `cursor` opaco e validato, legato
+  allo scope del chiamante. Ricontrollare grant anche quando cambia il catalogo
+  tra pagine; nessuna cache di autorizzazioni nel POS. Non promettere snapshot
+  stabile o conteggi globali non necessari.
+- Nessun `user_id`, `merchant_id` o `store_id` client come prova di accesso;
+  niente filtri che allarghino lo scope. Proiettare solo i campi pubblici.
+- 400 parametri non validi, 401 servizio/sessione non validi, 405 altri metodi,
+  429 con Retry-After e 503 backend/schema indisponibile. Schema mancante non
+  deve risultare un falso catalogo vuoto. Dettagli/codici e budget rate limit
+  ancora da fissare; nessun payload definitivo implicito da questa bozza.
+- Sessione invalidata: uscita dalla vista protetta; guasto temporaneo: errore
+  generico, niente dati vecchi presentati come grant attuali.
+
+#### Ownership file e conflitti potenziali
+
+| File/area | Ownership proposta | Coordinamento |
+| --- | --- | --- |
+| Nuova migration dedicata POS, nome/timestamp da riservare | Agente POS/API | Concordare ordine con nuove migration dell'altro agente; il bootstrap le applica automaticamente. |
+| Nuovi `models/PosTerminals.php`, `PosStoreOperators.php` | Agente POS/API | Nomi proposti, non file gia esistenti; nessun edit a Users/Stores/Merchants. |
+| Nuovi `modules/posapi/controllers/TerminalsController.php`, `components/pos/TerminalCatalog.php` | Agente POS/API | Prima verificare che nessun altro agente li stia creando. |
+| Nuovo `tests/application/pos-terminals.php` e fixture dedicate | Agente POS/API | Non modificare fixture comuni mentre usate dall'altro agente. |
+| `config/web.php` per la rotta GET | Condiviso, altro agente attivo | Serve una regola esplicita; riservare una modifica minima o consegnare patch all'altro agente. Nessun aggiramento nel modulo. |
+| `components/pos/PosApi.php`, nuovo `components/Throttle.php` | Altro agente | Solo lettura/riuso; nuove modifiche richiedono accordo. |
+| `tests/docker/runtime.sh` | Condiviso, altro agente attivo | Concordare una riga per la suite; in alternativa esecuzione isolata senza edit al runner. |
+| `models/Users.php`, `Stores.php`, `Merchants.php`, relativi controller/menu | Condivisi | Non modificare in C1-C3; C4 richiede nuova assegnazione file. |
+| `pos/v2` client/controller/vista catalogo e test | Agente POS | Nessuna modifica al backoffice per rendere funzionante la UI POS. |
+| SIP-021 e allegati contratto/OpenAPI POS | Agente POS, handoff esplicito | Approvare prima, aggiornare gli allegati e solo dopo implementare. |
+
+Situazione Git osservata: altro agente lavora su PayPal/associazione, routing
+globale, throttling e runner runtime. File nuovi separati riducono conflitti
+testuali, non eliminano dipendenze funzionali o effetti delle migration sullo
+stesso stack. Non avviare bootstrap condivisi ne ricreare Napay durante C1-C3
+senza coordinamento. Branch diversi nella stessa directory non isolano i file;
+eventuali worktree separati richiedono anche stack/DB di test isolati.
+
+#### Test e gate
+
+- Migration su DB usa-e-getta, FK/unicita, dati esistenti preservati, replay
+  bootstrap; nessuna scrittura sul DB della sandbox durante la progettazione.
+- Utente assegnato a due negozi, negozi altrui esclusi; nessun grant = vuoto.
+- Ruolo base/merchant/admin senza grant non ottiene concessioni implicite.
+- Grant revocato, terminale disabilitato, sessione scaduta/revocata, password
+  cambiata e chiave rimossa: effetto alla richiesta successiva.
+- Tentativi di scope/cursor manipolati, limiti, parametri ignoti, metodi e
+  ordine stabile; dati di altri merchant non compaiono neppure nei conteggi.
+- API non espone SIN/credenziali/wallet; nomi malevoli codificati nella vista;
+  token solo sul server; browser mobile/desktop e nessun incasso/apertura.
+- Regressioni login/logout e test di accesso cross-tenant sul DB reale di test.
+- Prima del codice approvare C1-C3, riservare rotta/runner/migration e chiudere:
+  politica grant tra merchant diversi, rappresentazione disponibilita prima
+  dei lock, modalita di gestione iniziale terminali/grant e dettagli GET.
+
 ### Fasi e gate
 
 | Fase | Risultato | Gate prima del codice |
