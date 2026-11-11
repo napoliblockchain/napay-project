@@ -212,3 +212,10 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
 - Prossimo, passo 5: registrazione e modifica dei pagamenti (contanti,
   bonifico) e gestione delle tabelle, attive solo dopo la disattivazione
   dell'import; pagamento quota in app e da pagina pubblica (PayPal e BTCPay).
+
+### Pager unico dell'applicazione (COMPLETED, 2026-11-11)
+- Su richiesta dell'utente, come in Aura: `components/web/LinkPager`
+  (Bootstrap 5/Tabler) registrato nel container DI al posto di
+  `yii\widgets\LinkPager`. Tutte le griglie lo usano senza configurazione.
+  Il backoffice non carica più `yiipager.css` (Yii1).
+- Commit napay `85a8a7c0`. Test nella suite runtime: 40 controlli.
