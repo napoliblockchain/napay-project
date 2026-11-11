@@ -83,6 +83,8 @@ commercianti/POS/transazioni (fase 6).
    (`Yii::app()->basePath . '/verbali/'`), nome file = `url_verbale`
    (md5 casuale `.pdf`). Sul VPS si trovano con:
    `find / -type d -path '*/protected/verbali' 2>/dev/null`.
+   **Percorso sulla VPS (confermato dall'utente il 2026-11-12): `/var/www/napay/protected/verbali`**,
+   da usare come `NAPAY_LEGACY_FILES_DIR` (montata in sola lettura).
    La cartella `protected/privatekeys/` contiene le chiavi del vecchio pairing
    BTCPay (API v1): non si migra, BTCPay passa a Greenfield.
 6. **Nessun dump manuale**: al primo avvio v2 legge direttamente il DB legacy
