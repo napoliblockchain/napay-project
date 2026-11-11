@@ -1,6 +1,6 @@
 # SIP-021 - POS: login operatori, negozi autorizzati e apertura esclusiva
 
-- Stato: IN_PROGRESS (login operatore backend implementato il 2026-11-11; catalogo, aperture e logout da definire).
+- Stato: IN_PROGRESS (login/logout backend e client POS implementati il 2026-11-11; catalogo e aperture da definire).
 - Area: POS / Autenticazione / Autorizzazioni / Integrazione Napay.
 - Repo: `pos`, `napay`; orchestratore per documentazione e integrazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
@@ -273,7 +273,7 @@ X-POS-Operator-IP: <IP del browser dell'operatore>   (facoltativo, consigliato)
   - la password cambia;
   - la chiave client viene rimossa;
   - la usa un client diverso da quello che l'ha creata.
-- `DELETE /sessions` (logout) e la revoca dal backoffice sono il prossimo micro-step.
+- `DELETE /sessions` implementato nel micro-step logout sotto; revoca dal backoffice ancora successiva.
 - Il login non dà accesso a negozi o POS: le assegnazioni le verificano le API successive.
 
 #### Test eseguiti
@@ -321,6 +321,57 @@ L'agente Napay non modifica il repo `pos`.
 - Eseguiti: 18 controlli importi, 13 configurazione, 37 client/sessione simulati,
   2 trasporto TLS reale, 7 percorsi privati, 24 browser anteprima e 21 browser
   con login API reale. Nessun test di lock o autorizzazione negozi dichiarato.
+
+### Micro-step logout centrale approvato (2026-11-11)
+
+L'utente autorizza l'agente POS a implementare anche le API Napay, con commit
+separati e senza intervenire sui file condivisi dell'altro agente.
+
+- `DELETE /api/pos/v1/sessions`, solo server-to-server: `X-POS-Client-Key`
+  e `Authorization: Bearer napos_<43 caratteri base64url>`, corpo vuoto.
+- Client autenticato prima di usare il bearer. Chiave assente/errata: 401
+  `unauthenticated`; bearer assente/malformato: 401 `invalid_token`; corpo non
+  vuoto: 400 `validation_failed`; limite 60/min per client e operazione: 429
+  `rate_limited` con `Retry-After`; configurazione/DB indisponibile: 503
+  `backend_unavailable`. Messaggi fissi, nessun token o chiave nei log.
+- Aggiornamento atomico per digest token, prefisso client e `revoked_at IS NULL`:
+  revoca definitiva con motivo `logout`, senza dipendere da utente ancora attivo
+  o password invariata. Nessuna modifica ad altre sessioni.
+- 204 senza corpo anche per replay, token scaduto, ignoto o appartenente ad
+  altro client: nessun oracolo sull'esistenza; una chiave diversa non revoca
+  il token. Audit solo per una revoca effettivamente registrata.
+- Nessun cookie/CORS, `no-store`, TLS e limiti del client invariati. Altri
+  metodi oltre POST/DELETE: 405. Nessuna apertura esistente da rilasciare in
+  questa fase; il futuro rilascio atomico dei lock richiede il relativo SIP.
+- POS elimina la propria sessione solo dopo 204 verificato. In caso di timeout,
+  errore o risposta inattesa mostra errore generico, mantiene la custodia locale
+  e consente retry. Sessione locale gia assente/scaduta: ritorno al login.
+- File backend coinvolti: controller API `SessionsController`, nuova action
+  `DeleteSessionAction`, test `pos-sessions.php` e nuovo `pos-logout.php`.
+  Riutilizzati autenticazione, rate limit e modello sessioni esistenti; nessuna
+  migration o modifica a configurazione/routing globale, Users o bootstrap.
+- Test richiesti: revoca reale su DB isolato, replay, concorrenza/idempotenza,
+  sessioni di altri client intatte, token scaduti/account cambiati, metodi,
+  errori/limiti, assenza segreti, retry POS e logout browser con CSRF.
+
+#### Esito e handoff all'altro agente Napay
+
+- Implementato `DELETE /sessions` senza modificare `PosApi.php`, configurazione
+  globale, modelli condivisi o file del lavoro PayPal/associazione.
+- Il controller API esistente smista DELETE alla nuova `DeleteSessionAction`;
+  la rotta pubblica resta invariata. Il commento storico in `config/web.php`
+  che parla di solo POST e superato: POST e DELETE sono accettati; altri metodi 405.
+- API verificate con 62 controlli login e 32 logout HTTP/DB su copia isolata,
+  incluse due richieste concorrenti e DB temporaneamente indisponibile nella
+  sola fixture. La suite esistente `pos-sessions.php` include `pos-logout.php`:
+  nessuna modifica al runner condiviso richiesta.
+- Client POS: 18 test simulati logout/controller (custodia su errore e retry),
+  37 regressioni login/sessioni, 22 browser login/logout reale con TLS/CSRF,
+  24 browser anteprima, 18 importi, 13 configurazione e 2 trasporto TLS.
+- OpenAPI/README/contratto POS aggiornati: due operazioni disponibili, cinque
+  bozze. Nessun catalogo o lock implementato, nessuna migration nuova.
+- Nessun riavvio di Napay o gateway; ricostruito solo POS. Resta da progettare
+  il prossimo micro-step catalogo/assegnazioni e poi aperture esclusive.
 
 ### Fasi e gate
 
@@ -390,7 +441,7 @@ definizione e approvazione dei dettagli tecnici ancora aperti.
 - [TIP-004: migrazione e preview gia disponibile](TIP-004-pos-porting-yii1-yii2.md).
 - [Contratto funzionale POS/Napay](../pos/v2/docs/NAPAY-CONTRACT.md).
 - [OpenAPI proposta](../pos/v2/docs/pos-api.openapi.json):
-  `partial-backend-login-implemented`, solo login disponibile; altre sei operazioni bozze.
+  `partial-backend-sessions-implemented`, login/logout disponibili; altre cinque operazioni bozze.
 - [Stato e limiti preview](../pos/v2/README.md).
 - Il test `pos/v2/tests/api-contract.cjs` controlla struttura e riferimenti
   della proposta, non e un test di integrazione del backend.
