@@ -306,6 +306,22 @@ questo contratto:
 
 L'agente Napay non modifica il repo `pos`.
 
+#### Esito micro-step client POS e percorsi locali (2026-11-11)
+
+- Login reale POS/Napay collegato, senza catalogo, aperture o incassi;
+  token solo nella sessione server, logout esplicitamente soltanto locale.
+- Rete POS passata alla sola `pos_local_browser`; CA/hostname verificati,
+  timeout 5 secondi, risposta massima 16 KiB, nessun redirect.
+- Allegati POS allineati al login definitivo; altre sei operazioni ancora bozze.
+- Stato privato configurabile con `POS_LOCAL_STATE`, sorgenti Napay con
+  `NAPAY_LOCAL_STATE`, runtime con `POS_LOCAL_DATA`, senza percorsi personali
+  nel codice. Valori locali e procedura nel README POS. File privati ignorati
+  da Git, permessi 0700/0600; chiave cookie preesistente conservata.
+- Runtime copiato a POS fermo nel percorso esterno; volume originale conservato.
+- Eseguiti: 18 controlli importi, 13 configurazione, 37 client/sessione simulati,
+  2 trasporto TLS reale, 7 percorsi privati, 24 browser anteprima e 21 browser
+  con login API reale. Nessun test di lock o autorizzazione negozi dichiarato.
+
 ### Fasi e gate
 
 | Fase | Risultato | Gate prima del codice |
@@ -356,7 +372,8 @@ definizione e approvazione dei dettagli tecnici ancora aperti.
 ## Note implementative
 
 - Flusso server-to-server approvato; login centralizzato tramite redirect non
-  scelto. Formato del token e autenticazione del servizio ancora da concordare.
+  scelto. Formato del token e autenticazione del servizio definiti nella sezione
+  di implementazione backend; successive API ancora da concordare.
 - Da confermare: formato identificativi, TTL e revoche, chiusura normale/logout,
   ripresa dopo refresh, gestione crash e prove di concorrenza.
 - La proposta di rilascio normale da parte del titolare non equivale allo
@@ -373,7 +390,7 @@ definizione e approvazione dei dettagli tecnici ancora aperti.
 - [TIP-004: migrazione e preview gia disponibile](TIP-004-pos-porting-yii1-yii2.md).
 - [Contratto funzionale POS/Napay](../pos/v2/docs/NAPAY-CONTRACT.md).
 - [OpenAPI proposta](../pos/v2/docs/pos-api.openapi.json):
-  `draft-awaiting-backend-review`, nessun endpoint disponibile certificato.
+  `partial-backend-login-implemented`, solo login disponibile; altre sei operazioni bozze.
 - [Stato e limiti preview](../pos/v2/README.md).
 - Il test `pos/v2/tests/api-contract.cjs` controlla struttura e riferimenti
   della proposta, non e un test di integrazione del backend.
