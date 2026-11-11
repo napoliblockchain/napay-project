@@ -219,3 +219,33 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   `yii\widgets\LinkPager`. Tutte le griglie lo usano senza configurazione.
   Il backoffice non carica più `yiipager.css` (Yii1).
 - Commit napay `85a8a7c0`. Test nella suite runtime: 40 controlli.
+
+### Registro attività come in Aura (COMPLETED, 2026-11-11)
+- Su richiesta dell'utente: `components/Log` con tipo evento (attività, dati,
+  sicurezza, esportazione), `components/audit` (creazioni, modifiche con i soli
+  nomi dei campi, cancellazioni, export, accessi negati, CSRF).
+- Difetti corretti rispetto al vecchio `Log`:
+  - IP falsificabile, ora preso da `TRUSTED_PROXIES`;
+  - IPv6 scartato, ora colonna da 45 caratteri;
+  - anonimi registrati come utente 1, ora senza utente.
+- Il registro salva solo il percorso, mai la query (token di reset). Lo stesso
+  difetto c'era in Aura, corretto lì sul branch `fix/registro-sicurezza-senza-query`.
+- Commit napay `a27bfe5a`. Test `audit.php`: 20 controlli.
+
+### Passo 5a - Gestione dal backoffice (COMPLETED, 2026-11-11)
+- Pagamenti quote:
+  - registrazione, modifica e cancellazione;
+  - numero di ricevuta progressivo per anno assegnato dal server, sotto lock e
+    in transazione, solo ai pagamenti pagati;
+  - due salvataggi concorrenti ottengono numeri distinti.
+- Profilo socio: carica, persona giuridica, indirizzo.
+- Tabelle cariche, quote e metodi: una voce in uso non si cancella.
+- Verbali con upload di un PDF vero (firma `%PDF-` e tipo rilevato), nome generato dal server.
+- Solo amministratori, POST + CSRF, nessuna cancellazione via GET. Tutto
+  bloccato finché `LEGACY_DB_DSN` è impostata. Audit automatico.
+- Commit napay `a3218537`. Test `association-write.php`: 56 controlli.
+- Da verificare: nell'immagine dev di napay il limite di upload effettivo è
+  2 MB (`docker-php.ini` con 64 MB non applicato). I verbali più grandi danno
+  "File troppo grande".
+- Prossimo: 5b, pagamento quota in app e da link esterno con PayPal (Orders v2).
+  Poi 5c, BTCPay Greenfield.
