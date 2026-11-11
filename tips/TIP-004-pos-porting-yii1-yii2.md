@@ -10,6 +10,13 @@
 `pos` avvia con bootstrap Yii1 (`index.php` -> `../yii-1.1.22/framework/yii.php`) e dipende da componenti legacy (`CActiveRecord`, `CController`, estensioni Yii1).
 
 ## Proposta
+
+Per login operatori, scelta POS e apertura esclusiva vale ora
+[SIP-021](SIP-021-pos-login-operatori-apertura-esclusiva.md): SIP e dettagli della
+fase devono essere documentati e approvati prima di implementare. Il pairing
+SIN/codice della baseline seguente e un requisito legacy da sostituire, non il
+flusso di accesso v2 concordato.
+
 - Creare skeleton Yii2 dedicato POS.
 - Migrare model/controller/view mantenendo parity funzionale:
   - gestione importi e incasso

@@ -14,7 +14,7 @@ Questo README e indice operativo. Ogni scheda e nel file dedicato `TIP-XXX-*.md`
 | [TIP-001](TIP-001-inventario-perimetro-software.md) | Inventario software e perimetro tecnico Napay | Architettura | COMPLETED |
 | [TIP-002](TIP-002-piattaforma-docker-unificata.md) | Piattaforma Docker unificata | DevOps / Runtime | OPEN |
 | [TIP-003](TIP-003-napay-yii2-php83-hardening.md) | Napay Backoffice: hardening Yii2 su PHP 8.3 | Backoffice | IN_PROGRESS |
-| [TIP-004](TIP-004-pos-porting-yii1-yii2.md) | POS: porting da Yii1 a Yii2 | POS | OPEN |
+| [TIP-004](TIP-004-pos-porting-yii1-yii2.md) | POS: porting da Yii1 a Yii2 | POS | IN_PROGRESS |
 | [TIP-005](TIP-005-store-wallet-porting-yii1-yii2.md) | Store Wallet: porting da Yii1 a Yii2 | Wallet Merchant | OPEN |
 | [TIP-006](TIP-006-bolt-porting-yii1-yii2.md) | Bolt: porting da Yii1 a Yii2 | Wallet Cittadino Legacy | REJECTED |
 | [TIP-007](TIP-007-packages-ristrutturazione-libs.md) | Packages condivisi: da submodule legacy a dipendenze versionate | Shared Libraries | OPEN |
@@ -31,6 +31,7 @@ Questo README e indice operativo. Ogni scheda e nel file dedicato `TIP-XXX-*.md`
 | [SIP-018](SIP-018-napay-migrazione-tabler.md) | Napay: migrazione AdminLTE a Tabler, riferimento Aura | Backoffice / UI | IN_PROGRESS |
 | [TIP-019](TIP-019-napay-mysql-persistenza-migrazione.md) | Napay: MySQL dedicato, persistenza e ripristino dati v2 | Backoffice / Database | IN_PROGRESS |
 | [TIP-020](TIP-020-napay-ripristino-associazione-legacy.md) | Napay: ripristino gestione associazione e migrazione dati legacy | Backoffice / Associazione | IN_PROGRESS |
+| [SIP-021](SIP-021-pos-login-operatori-apertura-esclusiva.md) | POS: login operatori, negozi autorizzati e apertura esclusiva | POS / Napay / Integrazione | OPEN |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 
@@ -88,6 +89,21 @@ Ogni repository ha branch dedicato sviluppo v2:
 - Rollout: migrazione progressiva per repo, con gate di test e smoke end-to-end.
 
 ## Come gestire una TIP
+
+### SIP Prima Dell'Implementazione
+
+Regola confermata dall'utente il 2026-11-11: prima documentare il SIP, poi
+implementare. Per ogni nuovo intervento funzionale o architetturale:
+
+1. Creare o aggiornare il SIP con contesto, decisioni, criteri verificabili,
+   impatti, dipendenze, sicurezza e punti ancora da concordare.
+2. Ottenere approvazione del perimetro e delle scelte necessarie alla fase.
+   Una bozza API o un documento tecnico non equivale a SIP approvato.
+3. Implementare solo la fase documentata, con piccoli commit e test pertinenti.
+4. Riportare evidenze, limiti e stato reale; nuove decisioni tornano prima nel SIP.
+
+Per il POS il riferimento funzionale e SIP-021; TIP-004 resta il piano generale
+di porting. Lo stato OPEN non autorizza da solo l'implementazione.
 
 1. Assegna il prossimo ID progressivo.
 2. Crea `TIP-0XX-descrizione-breve.md` partendo da [`TEMPLATE.md`](TEMPLATE.md).
