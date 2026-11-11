@@ -135,3 +135,12 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   riesce il web non parte.
 - Commit napay `f9e21c72`. Test `tests/docker/bootstrap.sh`: 44 controlli verdi.
   Col codice precedente il test si ferma al primo upgrade.
+
+### Passo 2 - Accesso solo con email (COMPLETED, 2026-11-11)
+- Il login usa l'email per tutti gli utenti. La registrazione non chiede più lo
+  username, che coincide con l'email. Se un'email appartiene a più utenti,
+  l'accesso è rifiutato: non si sceglie mai un account a caso.
+- Niente indice univoco sull'email: un DB v2 con duplicati bloccherebbe
+  l'upgrade. L'import legacy garantisce email univoche.
+- Commit napay `a4f4ffe3`. Suite runtime verde (HTTP 134, reset 68,
+  registrazione/attivazione 92, con 5 nuovi controlli sul login).

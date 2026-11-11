@@ -103,6 +103,6 @@ for url in https://wallet.local/robots.txt https://napay.local/site/login; do
     || fail "$url non risponde (docker logs napay-gateway)."
 done
 
-printf '\nPronto:\n  Wallet:     https://wallet.local\n  Backoffice: https://napay.local (utente browser-admin, password in %s/browser-password)\n' "$NAPAY_STATE"
+printf '\nPronto:\n  Wallet:     https://wallet.local\n  Backoffice: https://napay.local (email browser-admin@example.invalid, password in %s/browser-password)\n' "$NAPAY_STATE"
 printf '  CA locale da importare una volta nel browser: %s\n' "$CA"
 printf 'Stop: bash %s/stop-localhost.sh\n' "$ROOT"
