@@ -113,9 +113,12 @@ commercianti/POS/transazioni (fase 6).
   **upgrade**: migration nuove applicate in automatico all'avvio, con
   controllo che i dati esistenti non cambino.
 
-## Domande aperte
+## Decisioni utente (2026-11-11, seguito)
 
-1. Utenti POS e Istituto: ruolo v2? Proposta: importati con il tipo legacy
-   conservato nel profilo. Istituto → User. POS → disattivato finché il
+7. **Istituti: non si migrano** (né utenti di tipo Istituto né `np_institutes`).
+   Era la funzione Covid-19 di Bolt (allarme dopo l'invio di token TTS); Bolt
+   è deprecato (TIP-006 REJECTED).
+8. **POS: si migrano**, disattivati e con il tipo legacy conservato, finché il
    modulo POS non è portato (TIP-004).
-2. Sola lettura dell'associazione in v2 durante l'import ripetuto: confermare.
+9. **Associazione in sola lettura in v2** finché l'import ripetuto è attivo
+   (`LEGACY_DB_DSN` impostata): confermato.

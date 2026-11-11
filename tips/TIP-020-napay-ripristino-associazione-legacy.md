@@ -126,3 +126,12 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   dump della produzione online.
 - Segreti in chiaro in `np_settings_webapp` (PayPal, BTCPay, SSH, chiave sealer
   POA, ...): non si migrano nel DB, vanno ruotati.
+
+### Passo 1 - Upgrade automatico del bootstrap (COMPLETED, 2026-11-11)
+- Prerequisito: il bootstrap v2 bloccava l'app a ogni nuova migration.
+- Ora, su un DB già ripristinato, le migration nuove vengono applicate all'avvio
+  (`migrating`). Non c'è mai un reimport. Uno schema modificato a mano è
+  rifiutato. Un upgrade fallito o interrotto viene ritentato e finché non
+  riesce il web non parte.
+- Commit napay `f9e21c72`. Test `tests/docker/bootstrap.sh`: 44 controlli verdi.
+  Col codice precedente il test si ferma al primo upgrade.
