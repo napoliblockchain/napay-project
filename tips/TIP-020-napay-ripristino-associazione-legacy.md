@@ -1,6 +1,6 @@
 # TIP-020 - Napay: ripristino gestione associazione e migrazione dati legacy
 
-- Stato: OPEN
+- Stato: IN_PROGRESS
 - Area: Backoffice / Associazione / Database
 - Repo: `napay`, `napay-project` (documentazione, avvio locale)
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -108,3 +108,19 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
 - Le chiavi di cifratura legacy non sono state recuperate (TIP-019): eventuali
   campi cifrati si migrano così come sono, senza decifrarli.
 - UI coerente con SIP-018 (Tabler).
+
+## Log esecuzione
+
+### Fase 1 - Copia legacy in sola lettura e inventario (COMPLETED, 2026-11-11)
+- Backup datadir del 2026-10-22 recuperato con MySQL 8.0.46 in un volume
+  temporaneo senza rete. Solo lo schema `napay` è importato come `napay_legacy`
+  nel MySQL del sandbox. Volume e container temporanei sono stati rimossi.
+- 52 tabelle e 13.839 righe: conteggi e `CHECKSUM TABLE EXTENDED` identici.
+  Schema in `READ ONLY`, nessun grant all'utente dell'app.
+- Inventario: [TIP-020/inventario-legacy.md](TIP-020/inventario-legacy.md).
+  Bozza mappa: [TIP-020/mapping.md](TIP-020/mapping.md).
+- **Il backup non è la produzione attuale**: pagamenti fino al 2022, mentre
+  l'app online ha quote 2023–2026. Per riconciliazione e cutover serve un
+  dump della produzione online.
+- Segreti in chiaro in `np_settings_webapp` (PayPal, BTCPay, SSH, chiave sealer
+  POA, ...): non si migrano nel DB, vanno ruotati.
