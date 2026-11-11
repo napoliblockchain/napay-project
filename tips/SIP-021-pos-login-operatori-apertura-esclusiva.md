@@ -378,6 +378,19 @@ separati e senza intervenire sui file condivisi dell'altro agente.
 Ricognizione del 2026-11-11, successiva al logout. Questa sezione e solo
 documentazione: non approva migration, endpoint, grant o import di dati.
 
+#### Decisioni confermate dall'utente (2026-11-11)
+
+- Ogni operatore POS appartiene a un solo merchant e puo essere assegnato
+  esplicitamente a piu negozi di quel merchant. Vietati grant verso negozi di
+  altri merchant, anche se l'operatore conosce gli ID. L'appartenenza al merchant
+  da sola non abilita automaticamente tutti i suoi negozi.
+- Prima dell'apertura esclusiva il catalogo mostra disponibilita **Non
+  verificata**, valore API `availability: "unknown"`. Non restituire `available`
+  o `in_use` senza un registro autorevole delle aperture; nessuna apertura
+  abilitata in questa fase. Gli stati futuri richiedono aggiornamento del contratto.
+- Queste conferme chiudono le due scelte funzionali, non approvano ancora
+  schema/migration, contratto GET completo o gestione backoffice.
+
 #### Evidenze repository e schema locale
 
 - Esistono `models/Stores.php` (`stores.merchant_id`, `description`),
@@ -395,8 +408,9 @@ documentazione: non approva migration, endpoint, grant o import di dati.
   POS Napay, non concede accesso e non deve diventare credenziale operatore.
 - Riutilizzare `PosApi::authenticateClient/findActiveSession/throttle` e il
   modulo `posapi`. Non duplicare autenticazione, impronta password o rate limit.
-- `availability=available|in_use` nell'OpenAPI e ancora bozza: senza registro
-  delle aperture non e possibile dichiarare correttamente la disponibilita.
+- La precedente bozza `availability=available|in_use` e superata, per il primo
+  catalogo, dalla scelta `unknown`: senza registro delle aperture non e
+  possibile dichiarare correttamente la disponibilita.
 
 #### Scomposizione proposta
 
@@ -421,6 +435,12 @@ opaco univoco, `store_id`, nome e abilitazione; grant con `user_id`, `store_id`,
 abilitazione e unicita della coppia. FK e tipi devono essere verificati sullo
 schema effettivo prima del codice; revoca grant effettiva dalla richiesta API
 successiva. Nessun SIN, indirizzo wallet o apertura nella tabella grant.
+La sola unicita `(user_id, store_id)` non garantisce il vincolo di un solo
+merchant per operatore: prima della migration definire appartenenza persistente
+univoca e coerenza dei grant con `stores.merchant_id`, anche in caso di cambio
+merchant del negozio o riassegnazione dell'operatore. Non ricavare l'appartenenza
+dal primo grant o dal ruolo; non modificarla implicitamente revocando l'ultimo
+grant. Disegno dei vincoli ancora da finalizzare, senza edit impliciti a Users.
 Nessun seed automatico di autorizzazioni nel DB operativo: fixture solo nel DB
 usa-e-getta. Tabelle nuove inizialmente vuote, senza assumere che ogni negozio
 debba avere un POS o che il proprietario merchant sia automaticamente operatore.
@@ -430,8 +450,9 @@ Non modificare vecchie migration e non importare il legacy in questa fase.
 
 - Chiave client e bearer come sessioni; risposta solo JSON, `no-store`, niente
   cookie/CORS; stessa rete e TLS. Il browser non riceve token o chiave servizio.
-- Riutilizzare la bozza `{items, next_cursor}` con item `{id, store_name, name}`;
-  risolvere esplicitamente il campo `availability` prima di aggiornare OpenAPI.
+- Riutilizzare la bozza `{items, next_cursor}` con item
+  `{id, store_name, name, availability}`; per questo micro-step `availability`
+  vale soltanto `unknown`, presentato come "Non verificata" nella vista POS.
 - `store_name` deriva da `stores.description`, non da ID o SIN. Nomi vuoti e
   limiti lunghezza vanno validati nei dati, output sempre codificato nel POS.
 - `limit`: proposta default 50, massimo 100; `cursor` opaco e validato, legato
@@ -474,6 +495,10 @@ eventuali worktree separati richiedono anche stack/DB di test isolati.
 - Migration su DB usa-e-getta, FK/unicita, dati esistenti preservati, replay
   bootstrap; nessuna scrittura sul DB della sandbox durante la progettazione.
 - Utente assegnato a due negozi, negozi altrui esclusi; nessun grant = vuoto.
+- Grant verso un altro merchant rifiutato; appartenenza univoca dell'operatore
+  verificata anche in riassegnazioni e cambio merchant del negozio. Nessun
+  accesso ampliato dopo revoca dell'ultimo grant. Disponibilita sempre `unknown`
+  finche mancano i lock, senza pulsanti di apertura attivi.
 - Ruolo base/merchant/admin senza grant non ottiene concessioni implicite.
 - Grant revocato, terminale disabilitato, sessione scaduta/revocata, password
   cambiata e chiave rimossa: effetto alla richiesta successiva.
@@ -483,8 +508,9 @@ eventuali worktree separati richiedono anche stack/DB di test isolati.
   token solo sul server; browser mobile/desktop e nessun incasso/apertura.
 - Regressioni login/logout e test di accesso cross-tenant sul DB reale di test.
 - Prima del codice approvare C1-C3, riservare rotta/runner/migration e chiudere:
-  politica grant tra merchant diversi, rappresentazione disponibilita prima
-  dei lock, modalita di gestione iniziale terminali/grant e dettagli GET.
+  schema/vincoli per appartenenza univoca al merchant, modalita di gestione
+  iniziale terminali/grant e dettagli GET. Scelte funzionali su merchant unico
+  e disponibilita non verificata confermate nella sezione sopra.
 
 ### Fasi e gate
 
