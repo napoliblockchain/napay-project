@@ -3,19 +3,21 @@ services:
   gateway:
     image: caddy:2.8.4-alpine
     container_name: napay-gateway
+    # in locale GATEWAY_BIND=127.0.0.1 e porte 80/443: https://wallet.local, https://napay.local
     ports:
-      - "${GATEWAY_HTTP_PORT}:80"
-      - "${GATEWAY_HTTPS_PORT}:443"
+      - "${GATEWAY_BIND:-0.0.0.0}:${GATEWAY_HTTP_PORT}:80"
+      - "${GATEWAY_BIND:-0.0.0.0}:${GATEWAY_HTTPS_PORT}:443"
     volumes:
       - ./docker/gateway/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./docker/gateway/conf.d:/etc/caddy/conf.d:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - napay-web
       - wallet-web
     networks:
       - napay_net
+      # rete interna verso il backoffice napay (sandbox napay/docker/local): solo gateway e web napay
+      - napay_local_browser
 
   mysql-main:
     image: mysql:8.0
@@ -102,6 +104,10 @@ networks:
   napay_net:
     name: napay_net
     driver: bridge
+  # creata da start-localhost.sh (docker network create --internal): condivisa con il compose napay
+  napay_local_browser:
+    name: napay_local_browser
+    external: true
 
 volumes:
   mysql_data:

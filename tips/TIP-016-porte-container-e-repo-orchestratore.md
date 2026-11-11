@@ -98,6 +98,11 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 - Avvio: `docker compose up -d` (non serve piu `-f docker-compose.base.yml`).
 - Verifica: `docker compose config` (tutti i profili) identico al precedente salvo il mount `conf.d`; `caddy adapt` JSON identico; `caddy validate` OK.
 - Healthcheck (2026-10-30): `mysql-main` (mysqladmin ping via TCP, pronto solo a fine inizializzazione), `redis-main` (redis-cli ping), `wallet-web` (Apache, file statico), `besu` (porta RPC). `depends_on` con `service_healthy`: wallet-web su mysql/redis, ws-notify su wallet-web/redis, adminer su mysql, chain-deploy su besu. Evita errori "Connection refused" alle migration al primo avvio.
+- Avvio locale unico (2026-11-11): `start-localhost.sh` / `stop-localhost.sh` nella root avviano/fermano tutto lo stack (MySQL/Redis, chain Besu + TTS, wallet-web, backoffice napay via `napay/docker/local.sh`, gateway).
+- Nomi senza porte in locale (2026-11-11): `.env` con `GATEWAY_BIND=127.0.0.1`, `GATEWAY_HTTP_PORT=80`, `GATEWAY_HTTPS_PORT=443` -> `https://wallet.local`, `https://napay.local`. `GATEWAY_BIND` assente = `0.0.0.0` (comportamento precedente).
+  - `napay.local` -> sandbox napay (`napay-local-web:80`) su rete interna `napay_local_browser` (creata da `start-localhost.sh`, `internal`): la condividono solo `napay-gateway` e il web napay, che resta senza Internet. Il gateway del sandbox (porte 18121/18444) e il suo Caddyfile sono rimossi.
+  - `localhost` e `napay.test` reindirizzano a `https://napay.local` (`WEBAPP_LINK` del sandbox). `gateway` non dipende piu da `napay-web` (non instradato).
+  - CA locale di `napay-gateway` esportata in `~/.local/share/napay/browser-local/caddy-root.crt`: da importare una volta nel browser.
 
 ## Verifica repository
 - `/var/www/blockchain-napoli/napay-project/docker-compose.yml`
