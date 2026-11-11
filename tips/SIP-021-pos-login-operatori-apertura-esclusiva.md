@@ -1,6 +1,6 @@
 # SIP-021 - POS: login operatori, negozi autorizzati e apertura esclusiva
 
-- Stato: OPEN (requisiti funzionali confermati; protocollo API da approvare).
+- Stato: OPEN (requisiti e flusso login confermati; dettagli API da approvare).
 - Area: POS / Autenticazione / Autorizzazioni / Integrazione Napay.
 - Repo: `pos`, `napay`; orchestratore per documentazione e integrazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
@@ -40,6 +40,23 @@ Decisioni funzionali confermate dall'utente il 2026-11-11:
    indirizzo wallet o merchant scelto liberamente dal client per ricevere fondi.
 8. Primo collaudo finanziario futuro soltanto TTS su chain locale, senza
    denaro reale. Wallet distinti per negozio richiedono un SIP futuro separato.
+
+### Flusso login approvato (2026-11-11)
+
+L'utente ha scelto **login nel POS, verifica API Napay**, non reindirizzamento
+al login del backoffice. Il browser invia email/password al proprio server POS
+con HTTPS e CSRF; il POS le inoltra a Napay tramite canale server-to-server
+verificato. Napay verifica credenziali e stato account con la logica centrale.
+
+La password non viene persistita o registrata. Il token restituito da Napay
+resta soltanto nella sessione server POS; il browser conserva un cookie POS
+HttpOnly/Secure, separato da quello Napay. Rigenerare la sessione al login.
+Niente copia utenti/hash, token in URL/localStorage o login via SIN.
+
+Questa scelta chiude il dubbio login POS contro redirect/SSO. Restano da
+concordare col backend: autenticazione del servizio, endpoint/JSON effettivi,
+durata e revoca del token, trust CA e routing interno. Il SIP non considera
+questi dettagli automaticamente approvati insieme alla scelta del flusso.
 
 ### Fasi e gate
 
@@ -90,8 +107,8 @@ definizione e approvazione dei dettagli tecnici ancora aperti.
 
 ## Note implementative
 
-- Autenticazione server-to-server con sessione opaca o login centralizzato:
-  scelta ancora aperta, non dedotta dalla presenza di una bozza OpenAPI.
+- Flusso server-to-server approvato; login centralizzato tramite redirect non
+  scelto. Formato del token e autenticazione del servizio ancora da concordare.
 - Da confermare: formato identificativi, TTL e revoche, chiusura normale/logout,
   ripresa dopo refresh, gestione crash e prove di concorrenza.
 - La proposta di rilascio normale da parte del titolare non equivale allo
