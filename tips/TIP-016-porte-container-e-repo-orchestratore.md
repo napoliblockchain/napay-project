@@ -103,6 +103,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
   - `napay.local` -> sandbox napay (`napay-local-web:80`) su rete interna `napay_local_browser` (creata da `start-localhost.sh`, `internal`): la condividono solo `napay-gateway` e il web napay, che resta senza Internet. Il gateway del sandbox (porte 18121/18444) e il suo Caddyfile sono rimossi.
   - `localhost` e `napay.test` reindirizzano a `https://napay.local` (`WEBAPP_LINK` del sandbox). `gateway` non dipende piu da `napay-web` (non instradato).
   - CA locale di `napay-gateway` esportata in `~/.local/share/napay/browser-local/caddy-root.crt`: da importare una volta nel browser.
+- Cartella privata della sandbox (2026-11-11): `NAPAY_LOCAL_STATE` nel `.env` dell'orchestratore, letta da `start-localhost.sh` e da `napay/docker/local.sh`. Contiene `local.env`, password, CA e chiave client POS. In locale vale `/var/www/documents/progetti/napoliblockchain/napay/ambiente-locale/` (0700, segreti ignorati da git); il dataset v2 sta in `/var/www/blockchain-napoli/napay-local-data/`. Se vuota si usa `~/.local/share/napay/browser-local`.
 
 ## Verifica repository
 - `/var/www/blockchain-napoli/napay-project/docker-compose.yml`

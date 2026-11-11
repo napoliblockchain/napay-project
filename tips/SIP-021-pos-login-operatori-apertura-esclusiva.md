@@ -242,8 +242,8 @@ X-POS-Operator-IP: <IP del browser dell'operatore>   (facoltativo, consigliato)
 - Variabili:
   - `NAPAY_API_BASE_URL=https://napay.local/api/pos/v1`
   - `NAPAY_POS_CLIENT_KEY`: in locale è il file privato
-    `~/.local/share/napay/pos-api/client-key` (0600), da montare come secret;
-  - `NAPAY_CA_FILE`: CA locale Caddy, `~/.local/share/napay/browser-local/caddy-root.crt`.
+    `/var/www/documents/progetti/napoliblockchain/napay/ambiente-locale/pos-client-key` (0600, ignorato da git), da montare come secret;
+  - `NAPAY_CA_FILE`: CA locale Caddy, `/var/www/documents/progetti/napoliblockchain/napay/ambiente-locale/caddy-root.crt`.
 - TLS sempre verificato (CA e hostname). Timeout 5 secondi, risposta massima
   16 KB, nessun redirect seguito.
 - Il token va solo nella sessione server POS: mai nel browser, nell'URL o nei log.
@@ -288,6 +288,14 @@ X-POS-Operator-IP: <IP del browser dell'operatore>   (facoltativo, consigliato)
   Nel registro c'è l'IP del container POS e nessun segreto.
 
 #### Allegati POS da allineare (repo `pos`, agente POS)
+
+Micro-step client autorizzato dal handoff: solo login tramite l'endpoint
+implementato, form con CSRF, TLS verificato, token in sessione server e scadenza
+assoluta. Nessun catalogo fittizio, apertura POS o incasso. Correggere prima
+la rete del POS come indicato sopra. Il logout, finche DELETE non e disponibile,
+puo soltanto distruggere la sessione locale e deve dichiarare che non revoca il
+token backend. La sessione locale non certifica grant o revoca remota continua.
+Questa suddivisione non approva i contratti delle altre API ancora in bozza.
 
 `pos/v2/docs/NAPAY-CONTRACT.md` e `pos-api.openapi.json` vanno aggiornati con
 questo contratto:

@@ -28,7 +28,10 @@ cd "$ROOT"
 compose() { docker compose --profile chain "$@"; }
 env_value() { sed -n "s/^$1=//p" .env | tail -n 1 | tr -d "\"'"; }
 # sandbox privata del backoffice (napay/docker/local.sh): config, password, CA locale esportata
-NAPAY_STATE="$HOME/.local/share/napay/browser-local"
+# cartella privata della sandbox (local.env, password, CA): NAPAY_LOCAL_STATE nel .env, fuori dai repository
+NAPAY_STATE="$(env_value NAPAY_LOCAL_STATE)"
+NAPAY_STATE="${NAPAY_STATE:-$HOME/.local/share/napay/browser-local}"
+export NAPAY_LOCAL_STATE="$NAPAY_STATE"
 LOCAL_NETWORK=napay_local_browser
 # rete interna del server POS: subnet fissa, l'API /api/pos/* è accettata dal gateway solo da qui (SIP-021)
 POS_NETWORK=pos_local_browser
