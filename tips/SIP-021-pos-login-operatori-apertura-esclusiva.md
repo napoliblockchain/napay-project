@@ -1,6 +1,6 @@
 # SIP-021 - POS: login operatori, negozi autorizzati e apertura esclusiva
 
-- Stato: OPEN (requisiti e flusso login confermati; dettagli API da approvare).
+- Stato: IN_PROGRESS (login operatore backend implementato il 2026-11-11; catalogo, aperture e logout da definire).
 - Area: POS / Autenticazione / Autorizzazioni / Integrazione Napay.
 - Repo: `pos`, `napay`; orchestratore per documentazione e integrazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
@@ -205,6 +205,98 @@ alla bozza OpenAPI sono marcate con **Δ**. Il codice parte solo dopo la conferm
 - Token salvato solo come digest; scadenza; revoca per disattivazione e cambio password.
 - Nessun `Set-Cookie`, nessun CORS, `no-store`.
 - Nessun segreto in risposte, registro e log su file.
+
+### Implementazione backend del login (2026-11-11) e handoff all'agente POS
+
+Implementato come approvato. Commit:
+- napay `be6b2bd5`: verifica bcrypt anche per email inesistente;
+- napay `b79ae7ab`: endpoint, sessioni e test;
+- orchestratore `d3656e6`: rete e gateway.
+
+#### Chiamata
+
+```http
+POST https://napay.local/api/pos/v1/sessions
+Content-Type: application/json
+X-POS-Client-Key: <chiave client, 43 caratteri base64url>
+X-POS-Operator-IP: <IP del browser dell'operatore>   (facoltativo, consigliato)
+
+{"email":"operatore@example.it","password":"..."}
+```
+
+- **201**: `{"access_token":"napos_…","token_type":"Bearer","expires_at":"YYYY-MM-DDTHH:MM:SSZ","operator":{"display_name":"…"}}`
+- **Errori**: `{"error":{"code":"…","message":"…"}}`.
+  - 401 `unauthenticated`: chiave del servizio.
+  - 401 `invalid_credentials`: credenziali o account.
+  - 400 `validation_failed`.
+  - 429 `rate_limited` con `Retry-After`.
+  - 503 `backend_unavailable`.
+  - 405 su metodi diversi da POST.
+- Le risposte non hanno mai `Set-Cookie` né header CORS, e portano sempre
+  `Cache-Control: no-store`.
+- Il corpo deve contenere esattamente `email` e `password`, entrambe stringhe;
+  massimo 4 KB.
+
+#### Lato server POS
+
+- Variabili:
+  - `NAPAY_API_BASE_URL=https://napay.local/api/pos/v1`
+  - `NAPAY_POS_CLIENT_KEY`: in locale è il file privato
+    `~/.local/share/napay/pos-api/client-key` (0600), da montare come secret;
+  - `NAPAY_CA_FILE`: CA locale Caddy, `~/.local/share/napay/browser-local/caddy-root.crt`.
+- TLS sempre verificato (CA e hostname). Timeout 5 secondi, risposta massima
+  16 KB, nessun redirect seguito.
+- Il token va solo nella sessione server POS: mai nel browser, nell'URL o nei log.
+- **Rete (bloccante, repo POS):** il container POS deve passare dalla rete
+  `napay_local_browser` alla rete `pos_local_browser` (esterna, creata da
+  `start-localhost.sh`, subnet 10.251.0.0/24). Lì il gateway ha l'alias
+  `napay.local`. Il gateway accetta `/api/pos/*` solo da quella subnet (404 altrove).
+  Finché il POS resta su `napay_local_browser` può raggiungere il web napay in
+  chiaro, scavalcando TLS e gateway: va corretto prima dell'integrazione.
+  Anche la rotta `pos.caddy` (`pos-v2-web`) deve funzionare sulla nuova rete.
+
+#### Lato Napay
+
+- `POS_API_CLIENT_KEYS_SHA256`: digest SHA-256 (hex) delle chiavi, separati da
+  virgola, massimo 4. Più digest = rotazione: si aggiunge il nuovo, si aggiorna
+  il POS, si toglie il vecchio, e le sessioni della chiave tolta decadono.
+  Vuota o malformata: API disattivata.
+- `POS_SESSION_TTL_SECONDS`: facoltativa, da 300 a 86400, default 43200 (12 ore).
+- `TRUSTED_PROXIES`: il gateway, per ricavare l'IP reale del chiamante.
+
+#### Durata e revoca
+
+- Scadenza assoluta di 12 ore, senza rinnovo.
+- La sessione non vale più se:
+  - è revocata (`PosApi::revoke`);
+  - l'utente è disattivato o bloccato;
+  - la password cambia;
+  - la chiave client viene rimossa;
+  - la usa un client diverso da quello che l'ha creata.
+- `DELETE /sessions` (logout) e la revoca dal backoffice sono il prossimo micro-step.
+- Il login non dà accesso a negozi o POS: le assegnazioni le verificano le API successive.
+
+#### Test eseguiti
+
+- `tests/application/pos-sessions.php`: 62 controlli su DB isolato, nella
+  suite runtime, con chiavi casuali per esecuzione.
+- Suite runtime completa verde: HTTP 134, reset 68, attivazione 92,
+  associazione 40, registro 20. Bootstrap 44, import 32.
+- Prova end-to-end dalla rete `pos_local_browser` con HTTPS verificato:
+  senza chiave o con chiave errata 401 `unauthenticated`, con la chiave valida
+  401 `invalid_credentials`, senza CA rifiuto TLS. Dall'host `/api/pos/*` dà 404.
+  Nel registro c'è l'IP del container POS e nessun segreto.
+
+#### Allegati POS da allineare (repo `pos`, agente POS)
+
+`pos/v2/docs/NAPAY-CONTRACT.md` e `pos-api.openapi.json` vanno aggiornati con
+questo contratto:
+- niente `operator.id`;
+- header `X-POS-Operator-IP`;
+- 405 sui metodi diversi da POST;
+- `X-POS-Client-Key` confermato.
+
+L'agente Napay non modifica il repo `pos`.
 
 ### Fasi e gate
 
