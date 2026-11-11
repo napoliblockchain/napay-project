@@ -183,3 +183,32 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   - rete dal container bootstrap al MySQL legacy del VPS;
   - utente MySQL legacy con solo SELECT;
   - percorso reale di `protected/verbali`.
+
+### Passo 4 - Backoffice associazione in sola consultazione (COMPLETED, 2026-11-11)
+- `AssociationController`, solo per gli amministratori (Segretario incluso).
+  Voci di menu: Soci, Quote associative, Verbali, Tabelle associazione.
+- Soci:
+  - stati come nel vecchio Napay: in regola, in scadenza (entro 45 giorni),
+    scaduto (da meno di un anno), decaduto (da più di un anno), mai pagato;
+    gli amministratori sono esenti;
+  - filtri per carica e ricerca;
+  - scheda socio con profilo e storico delle quote.
+- Quote associative:
+  - filtri per anno, metodo e stato, con totali esatti su tutte le pagine;
+  - export Excel, in cui il testo non diventa mai una formula;
+  - ricevuta stampabile ("progressivo/anno" e dati dell'associazione dalle
+    impostazioni `gdpr_*`); il PDF si ottiene con Stampa del browser.
+- Verbali con download del PDF salvato nel DB. Tabelle in sola lettura:
+  cariche, quote, metodi.
+- ID cifrati negli URL: un ID manomesso dà 404, mai 500 (`Crypt::decrypt`
+  restituisce false su input non valido, bug preesistente gestito nel
+  controller). Banner di sola lettura finché `LEGACY_DB_DSN` è impostata.
+- Import: nel legacy le città sono ID di `np_comuni_italiani`, tabella vuota
+  in v2. Ora si salvano come nome del comune ("Napoli (NA)"): 56 città su 56.
+- Test `tests/application/association.php` (36 controlli HTTP: accessi,
+  filtri, totali, escape, export, PDF, ID manomessi). Suite runtime e
+  bootstrap verdi.
+- Commit napay `8f1da057`.
+- Prossimo, passo 5: registrazione e modifica dei pagamenti (contanti,
+  bonifico) e gestione delle tabelle, attive solo dopo la disattivazione
+  dell'import; pagamento quota in app e da pagina pubblica (PayPal e BTCPay).
