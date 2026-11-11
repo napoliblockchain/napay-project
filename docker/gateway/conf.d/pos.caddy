@@ -1,0 +1,15 @@
+# POS Yii2 preview: separate app, no legacy document root or payment credentials.
+http://pos.localhost {
+    redir https://pos.localhost{uri} permanent
+}
+
+https://pos.localhost {
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        Cache-Control "no-store"
+    }
+    reverse_proxy pos-v2-web:80
+}
