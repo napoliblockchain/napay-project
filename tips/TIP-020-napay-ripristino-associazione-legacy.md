@@ -289,3 +289,26 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
 - Configurazione: `PAYPAL_WEBHOOK_ID`. Senza, il webhook è disattivato (503).
   In produzione l'URL deve essere pubblico e registrato nell'app PayPal.
 - Commit napay `cded958a`. Test `paypal-webhook.php`: 34 controlli.
+
+### Passo 5c - Quota in Bitcoin con BTCPay Greenfield (COMPLETED, 2026-11-12)
+- Server `https://btcpayserver.napoliblockchain.it` (mainnet), store
+  `2NcDqfRwWGozGqFo5U5cWmrANBBzdGnTEAdWcjTSbqPs`. Le API Greenfield sostituiscono
+  il vecchio abbinamento SIN e `protected/privatekeys/`.
+- Libreria ufficiale `btcpayserver-greenfield-php` già in napay (nessuna
+  dipendenza nuova), con timeout, solo HTTPS e niente redirect.
+- Fattura in EUR creata dal server; redirect solo al checkout del server configurato.
+- Webhook `POST /api/btcpay/v1/webhook`:
+  - firma HMAC `BTCPay-Sig` verificata;
+  - ogni consegna elaborata una sola volta, riconsegne comprese;
+  - stato riletto dalla fattura;
+  - `Settled` = pagata, `Expired`/`Invalid` = non valida.
+- Il pulsante "Aggiorna stato" (POST) permette di usarlo anche senza webhook raggiungibile.
+- Chiave API limitata allo store (crea e vedi fatture). Segreti solo nell'env.
+- Commit napay `7d82ba3d`. Test `pay-btc.php`: 31 controlli contro un BTCPay finto.
+- Guida chiavi e webhook (BTCPay e PayPal):
+  `documents/progetti/napoliblockchain/napay/guida-chiavi-pagamenti.md`.
+- Nota: napay salva nel DB la chiave admin BTCPay e il secret dei webhook dei
+  negozi commercianti (`settings.btcpayApiKey`, `webhookSecret`). Va spostata
+  nell'env, in un passo dedicato dell'area commercianti.
+- Prossimo: provare con il server reale (importo minimo) quando napay sarà
+  pubblico; ricevuta scaricabile dal socio, da decidere.
