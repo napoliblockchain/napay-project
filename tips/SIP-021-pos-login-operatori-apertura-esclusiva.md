@@ -58,6 +58,154 @@ concordare col backend: autenticazione del servizio, endpoint/JSON effettivi,
 durata e revoca del token, trust CA e routing interno. Il SIP non considera
 questi dettagli automaticamente approvati insieme alla scelta del flusso.
 
+### Contratto `POST /api/pos/v1/sessions` (backend, APPROVATO dall'utente il 2026-11-11)
+
+Scelte confermate dall'utente:
+- autenticazione del servizio con chiave, rete dedicata e TLS (mTLS rinviato);
+- sessione di 12 ore assolute;
+- risposta con il solo `display_name`;
+- rete separata per il POS.
+
+Proposta dell'agente Napay dopo l'ispezione del backend. Le differenze rispetto
+alla bozza OpenAPI sono marcate con **Δ**. Il codice parte solo dopo la conferma.
+
+#### Rilevazioni sul backend (commit napay `a27bfe5a`)
+
+- Login centrale: `LoginForm`/`Users::findByEmail` (email univoca, ambigua =
+  nessun utente) e `validateStatus` (`is_active = 1`). Va riusato.
+- Il login web non ha rate limit (lacuna preesistente, fuori da questo step).
+  Il pattern di throttling esistente è cache + mutex (`EmailRequestForm`).
+- Non esistono API POS. `users.accessToken` è in chiaro e non si usa per il POS.
+- L'esempio `ilnotturno/controllers/api/v1` non si usa come modello: confronto
+  del segreto non a tempo costante, 200 su accesso negato, CSRF disattivato in
+  un controller con sessione, nessun rate limit.
+- **Rete:** il container POS `pos-v2-local-web-1` è sulla rete
+  `napay_local_browser` e raggiunge `http://napay-local-web` in chiaro,
+  scavalcando gateway e TLS. Vedi la sezione "Rete e TLS".
+
+#### Implementazione proposta
+
+- Modulo `posapi` con `yii\rest\Controller`: risposta JSON, nessuna sessione e
+  nessun cookie (`user.enableSession = false`), quindi niente CSRF browser da
+  disattivare. Nessun header CORS. Regole URL esplicite e solo `POST`.
+- La verifica delle credenziali riusa `LoginForm` (formato email, ricerca
+  univoca, password, stato). Senza utente si esegue comunque una verifica bcrypt
+  fittizia, per non rivelare l'esistenza dell'email con i tempi di risposta
+  (correzione valida anche per il login web).
+
+#### Autenticazione del servizio POS (obbligatoria, prima delle credenziali)
+
+- Header `X-POS-Client-Key: <chiave>`: 32 byte casuali in base64url, generati
+  fuori dal repository.
+- Napay conserva solo i digest: `POS_API_CLIENT_KEYS_SHA256=<hex>[,<hex>]`.
+  Confronto con `hash_equals`. Due digest permettono la rotazione senza fermo.
+- Variabile vuota o assente: API disattivata (fail secure, `503 backend_unavailable`).
+- La sessione è legata al client che l'ha creata (prefisso del digest della
+  chiave). Rimuovere una chiave invalida anche le sue sessioni.
+- **Δ** In alternativa c'è mTLS: più forte, ma richiede CA client e gestione
+  dei certificati su Caddy. Proposta: chiave + rete dedicata + TLS verificato
+  ora, mTLS valutabile in seguito.
+
+#### Richiesta
+
+- `Content-Type: application/json` obbligatorio; corpo massimo 4 KB.
+- Un oggetto con esattamente due campi, `{"email": string ≤254, "password": string 1..1024}`.
+  Campi in più, tipi diversi (array, numeri, null) e JSON non valido danno 400.
+- **Δ** Header facoltativo `X-POS-Operator-IP`: IP dell'operatore al banco,
+  accettato solo da un client autenticato e validato come IP. Serve solo per
+  rate limit e audit.
+
+#### Risposta 201
+
+```json
+{"access_token":"napos_<43 caratteri base64url>","token_type":"Bearer",
+ "expires_at":"2026-11-11T23:00:00Z","operator":{"display_name":"Nome Cognome"}}
+```
+
+- **Δ** Niente `operator.id`. L'ID utente è interno, `users` non ha un UUID e il
+  POS non ne ha bisogno. Se servisse un riferimento stabile si aggiunge in un
+  passo successivo.
+- Header di risposta: `Cache-Control: no-store`, `Pragma: no-cache`,
+  `X-Content-Type-Options: nosniff`, nessun `Set-Cookie`.
+
+#### Token e sessione
+
+- Token opaco: `napos_` seguito da 32 byte casuali (`random_bytes`) in base64url.
+  Il prefisso serve a riconoscerlo con lo scanning dei segreti. Niente JWT.
+- Nel DB solo `SHA-256(token)` (univoco), nella nuova tabella
+  `pos_operator_sessions`:
+  - `user_id`, `client_key_prefix`, `credential_fingerprint` (digest dell'hash password);
+  - `created_at`, `expires_at`, `last_used_at`, `revoked_at`, `revoked_reason`, `created_ip`.
+- **Δ** Durata: scadenza assoluta di 12 ore (un turno), senza rinnovo
+  automatico. Configurabile con `POS_SESSION_TTL_SECONDS` (massimo 24 ore).
+- Revoca effettiva:
+  - logout (`DELETE /sessions`, passo successivo);
+  - scadenza;
+  - utente disattivato o bloccato;
+  - cambio o reset della password (cambia l'impronta);
+  - chiave client rimossa;
+  - revoca dal backoffice (passo successivo).
+- Il login non concede accesso a negozi o POS: le assegnazioni esplicite le
+  verificano le API successive.
+
+#### Errori (stesso schema `{"error":{"code","message"}}`, messaggi fissi, `no-store`)
+
+
+| Caso | HTTP | code |
+| --- | --- | --- |
+| Chiave servizio assente, errata o rimossa | 401 | `unauthenticated` |
+| JSON non valido, campi mancanti o in più, tipi errati, corpo > 4 KB, Content-Type errato | 400 | `validation_failed` |
+| Password errata, email inesistente, ambigua, account non attivo | 401 | `invalid_credentials` (identico in tutti i casi) |
+| Troppi tentativi | 429 | `rate_limited` + `Retry-After` |
+| API non configurata, DB non disponibile | 503 | `backend_unavailable` |
+| Metodo diverso da POST | 405 | (risposta del framework, senza dettagli) |
+
+#### Rate limit (cache + mutex, come `EmailRequestForm`)
+
+- Per chiave client: 60 tentativi al minuto.
+- Per IP operatore (`X-POS-Operator-IP`, oppure IP del chiamante): 10 al minuto.
+- Per account (digest dell'email): 5 fallimenti in 15 minuti; poi 429 per
+  quell'email fino alla fine della finestra. Un login riuscito azzera il contatore.
+- I limiti sono verificati prima della password. Nel log non finiscono email in
+  chiaro: si usano solo i digest come chiavi di cache.
+
+#### Audit (registro attività, nessun segreto)
+
+- Successo: evento attività con utente e prefisso del client.
+- Fallimento: evento di sicurezza con l'email quotata (`Log::quote`) e il motivo
+  interno generico. Mai password, token o chiave. URL senza query.
+
+#### Rete e TLS per il server POS
+
+- Il POS chiama `https://napay.local/api/pos/v1/sessions` **attraverso il
+  gateway**, verificando la CA locale di Caddy (`caddy-root.crt`) e l'hostname.
+  Niente `verify=false` e nessun redirect seguito.
+- **Correzione necessaria nel repo POS** (agente POS): togliere il container POS
+  da `napay_local_browser` e metterlo su una rete propria condivisa solo con il
+  gateway (`pos_local_browser`). Sulla rete del POS il gateway avrà l'alias
+  `napay.local`. Da parte Napay: gateway su entrambe le reti e rotta `/api/pos/*`.
+- Variabili del server POS:
+  - `NAPAY_API_BASE_URL=https://napay.local/api/pos/v1`
+  - `NAPAY_POS_CLIENT_KEY=<chiave>` (env privato)
+  - `NAPAY_CA_FILE=<caddy-root.crt>`
+  - timeout 5 secondi, risposta massima 16 KB.
+- Variabili Napay:
+  - `POS_API_CLIENT_KEYS_SHA256`
+  - `POS_SESSION_TTL_SECONDS` (facoltativa)
+  - `TRUSTED_PROXIES` (già presente)
+
+#### Test previsti (DB isolato della suite runtime)
+
+- Login valido.
+- Password errata, account inesistente, disattivato, ambiguo: tutti con lo
+  stesso 401 e lo stesso corpo.
+- Chiave assente, errata e rimossa; API non configurata.
+- JSON malformato, array, campi in più, dimensioni eccessive.
+- Rate limit per client, per IP e per account, con `Retry-After`.
+- Token salvato solo come digest; scadenza; revoca per disattivazione e cambio password.
+- Nessun `Set-Cookie`, nessun CORS, `no-store`.
+- Nessun segreto in risposte, registro e log su file.
+
 ### Fasi e gate
 
 | Fase | Risultato | Gate prima del codice |
