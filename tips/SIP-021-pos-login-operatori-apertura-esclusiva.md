@@ -415,8 +415,8 @@ documentazione: non approva migration, endpoint, grant o import di dati.
 #### Scomposizione proposta
 
 1. **C1 - Fondazioni dati.** Dopo approvazione, nuova migration additiva per
-   terminali Napay e grant espliciti operatore-negozio. Nomi proposti, non
-   definitivi: `pos_terminals`, `pos_store_operators`; AR dedicati, senza
+   terminali Napay, appartenenza operatore-merchant e grant operatore-negozio:
+   `pos_terminals`, `pos_operators`, `pos_store_operators`; AR dedicati, senza
    aggiungere relazioni ai modelli condivisi. Riutilizzare `users`, `stores`
    e `merchants`, mai ricreare anagrafiche o hash password.
 2. **C2 - API in sola lettura.** `GET /api/pos/v1/terminals`, autenticazione
@@ -430,21 +430,110 @@ documentazione: non approva migration, endpoint, grant o import di dati.
    assegnazioni con admin/merchant proprietario, autorizzazione record-level,
    POST/CSRF e audit. Non considerarlo implicitamente incluso nel GET.
 
-Per C1, proposta minima: terminale con ID interno, identificativo pubblico
-opaco univoco, `store_id`, nome e abilitazione; grant con `user_id`, `store_id`,
-abilitazione e unicita della coppia. FK e tipi devono essere verificati sullo
-schema effettivo prima del codice; revoca grant effettiva dalla richiesta API
-successiva. Nessun SIN, indirizzo wallet o apertura nella tabella grant.
-La sola unicita `(user_id, store_id)` non garantisce il vincolo di un solo
-merchant per operatore: prima della migration definire appartenenza persistente
-univoca e coerenza dei grant con `stores.merchant_id`, anche in caso di cambio
-merchant del negozio o riassegnazione dell'operatore. Non ricavare l'appartenenza
-dal primo grant o dal ruolo; non modificarla implicitamente revocando l'ultimo
-grant. Disegno dei vincoli ancora da finalizzare, senza edit impliciti a Users.
+Schema C1 finalizzato nella sezione seguente. Revoca grant effettiva dalla
+richiesta API successiva; nessun SIN, wallet o apertura nella tabella grant.
 Nessun seed automatico di autorizzazioni nel DB operativo: fixture solo nel DB
 usa-e-getta. Tabelle nuove inizialmente vuote, senza assumere che ogni negozio
 debba avere un POS o che il proprietario merchant sia automaticamente operatore.
 Non modificare vecchie migration e non importare il legacy in questa fase.
+
+#### C1 - Schema e vincoli finalizzati (2026-11-11)
+
+Perimetro: schema documentato su richiesta dell'utente, **nessuna migration
+ancora implementata o eseguita**. C2/GET, backoffice C4 e bootstrap sullo stack
+condiviso restano gate separati.
+
+Metadati verificati in sola lettura sulla sandbox MySQL 8.4.13: `users.id`,
+`merchants.id`, `merchants.user_id`, `stores.id` e `stores.merchant_id` sono
+`INT` signed e NOT NULL. Gli indici attuali su `stores` sono PK `(id)` e indice
+non univoco `(merchant_id)`; manca la chiave candidata `(id, merchant_id)`.
+Questa rilevazione non sostituisce il preflight sul DB destinatario della migration.
+
+**Convenzioni comuni.** Tre nuove tabelle InnoDB, utf8mb4 con collation
+`utf8mb4_0900_bin`, coerente con le sessioni POS. Tutti i campi sotto sono NOT
+NULL. ID referenziati `INT` signed, senza cambiare tipi nelle tabelle esistenti.
+Flag `is_enabled` TINYINT con CHECK `IN (0,1)`, default 0: inserire una riga non
+abilita nulla automaticamente. `created_at` e `updated_at`: BIGINT signed,
+Unix UTC in secondi, CHECK non negativi e `updated_at >= created_at`; valori
+impostati dal servizio, non dal browser. Tutte le FK nuove sono
+`ON DELETE RESTRICT ON UPDATE RESTRICT`: niente trasferimenti o cancellazioni
+a cascata del dominio POS. Indici di supporto FK espliciti e nominati.
+
+| Tabella | Colonne | Chiavi e indici |
+| --- | --- | --- |
+| `pos_operators` | `user_id INT`, `merchant_id INT`, `is_enabled TINYINT`, `created_at BIGINT`, `updated_at BIGINT` | PK `(user_id)`; UNIQUE `(user_id, merchant_id)` per FK composite; INDEX `(merchant_id)`; FK `user_id -> users.id`, `merchant_id -> merchants.id`. |
+| `pos_store_operators` | `user_id INT`, `merchant_id INT`, `store_id INT`, `is_enabled TINYINT`, `created_at BIGINT`, `updated_at BIGINT` | PK `(user_id, store_id)`; INDEX `(user_id, merchant_id)`; INDEX `(store_id, merchant_id)`; FK `(user_id, merchant_id) -> pos_operators(user_id, merchant_id)` e `(store_id, merchant_id) -> stores(id, merchant_id)`. |
+| `pos_terminals` | `id INT AUTO_INCREMENT`, `public_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin`, `merchant_id INT`, `store_id INT`, `name VARCHAR(256)`, `is_enabled TINYINT`, `created_at BIGINT`, `updated_at BIGINT` | PK `(id)`; UNIQUE `(public_id)`; INDEX `(store_id, merchant_id)`; INDEX `(store_id, is_enabled, id)`; FK `(store_id, merchant_id) -> stores(id, merchant_id)`. |
+
+Unica modifica strutturale a tabella esistente: aggiungere a `stores` UNIQUE
+`(id, merchant_id)`, nome riservato `uq-pos-stores-id-merchant`. `id` e gia PK:
+nessun nuovo vincolo funzionale sui dati esistenti; serve come chiave candidata
+esplicita delle FK composite. Non rimuovere gli indici esistenti. La migration
+deve verificare un eventuale indice equivalente prima di crearne un duplicato;
+collisione del nome con definizione diversa = errore controllato, non DROP.
+
+`merchant_id` in grant e terminali e ridondanza intenzionale, non un nuovo
+input di autorizzazione: deriva dall'appartenenza/negozio lato server. Le FK
+composite ne impongono la coerenza anche a scritture concorrenti o fuori dal
+form. Non basta confrontarlo nel controller.
+
+`public_id`: UUID v4 canonico minuscolo generato dal server con casualita
+crittografica; immutabile, non SIN e non credenziale. CHECK lunghezza 36 e
+validazione formato/versione nel modello. Non esporre `id`, `merchant_id` o
+`store_id` come prova di autorizzazione. `name`: CHECK
+`CHAR_LENGTH(TRIM(name)) > 0`, validazione Yii2 stringa/max 256 e normalizzazione
+degli spazi esterni nel servizio. Non imporre nuove unicita sui nomi: la chiave
+stabile e `public_id`; etichette non sono credenziali o identificatori univoci.
+
+**Invarianti e ciclo di vita.**
+
+1. PK `pos_operators.user_id`: un solo merchant per account operatore, anche
+   con zero grant o profilo disabilitato. Nessun merchant ricavato dal primo grant.
+2. FK composite: ogni grant riferisce sia l'operatore sia un negozio del suo
+   stesso merchant; ogni terminale appartiene coerentemente a un negozio.
+   Il vincolo resta valido anche per righe disabilitate.
+3. Lettura futura: sessione valida, account valido, profilo operatore abilitato,
+   grant abilitato e terminale abilitato, tutti sul medesimo merchant/negozio.
+   Nessun bypass admin/merchant; profilo o grant mancante produce catalogo vuoto,
+   non errore e non concessione implicita. Errori DB/schema restano 503.
+4. Revoca ordinaria = disabilitazione del profilo/grant/terminale, con audit;
+   niente cancellazione automatica. Revoca dell'ultimo grant non elimina
+   `pos_operators` e non libera implicitamente l'appartenenza al merchant.
+5. Le FK bloccano cambio merchant dell'operatore o del negozio finche esistono
+   riferimenti incompatibili, anche disabilitati. Nessun `ON UPDATE CASCADE`.
+   Questo puo bloccare anche DELETE/cascade di vecchi CRUD: effetto intenzionale
+   da segnalare al backoffice, non da aggirare disattivando i controlli FK.
+6. Riassegnazione tra merchant fuori da C1-C3: servira un comando amministrativo
+   esplicito e autorizzato, transazionale e con audit, che gestisca prima grant
+   incompatibili e revoca di tutte le sessioni POS dell'operatore, poi la nuova
+   appartenenza. Nessuna riattivazione delle vecchie autorizzazioni o sessioni.
+   Futuri lock/storico richiederanno ulteriori verifiche prima del trasferimento.
+7. Terminali non trasferibili automaticamente a un altro negozio/merchant.
+   Disabilitare non cambia identita. Trasferimento e trattamento dello storico
+   fuori perimetro; non riusare UUID dismessi per altri terminali.
+8. Nessuna colonna `availability`, lock, SIN o wallet in C1. Nel catalogo iniziale
+   `unknown` e valore di presentazione, non disponibilita persistita o acquisita.
+
+**Migration e test prima dell'applicazione.** Una sola nuova migration C1, con
+timestamp da riservare dopo quelle dell'altro agente; AR nuovi `PosOperators`,
+`PosStoreOperators`, `PosTerminals`. Nessun edit a Users/Stores/Merchants.
+Preflight: MySQL supportato, engine, tipi, indice candidato e assenza di tabelle
+omonime incompatibili; non correggere in silenzio schema o righe preesistenti.
+Ordine: indice `stores`, `pos_operators`, `pos_terminals`, `pos_store_operators`
+con relativi vincoli. Non fingere atomicita completa del DDL MySQL: i passi
+possono essere gia applicati dopo un errore. Riesecuzione solo dopo verifica
+delle definizioni presenti, senza DROP/TRUNCATE o seed automatici.
+Rollback distruttivo automatico disabilitato come per le sessioni POS: backup
+e procedura approvata prima di eliminare strutture contenenti dati.
+
+Test su DB usa-e-getta: inserimenti validi multi-negozio nello stesso merchant;
+duplicato operatore/UUID/grant rifiutato; FK inesistenti e grant cross-merchant
+rifiutati; flag e nomi vuoti non validi rifiutati; due assegnazioni concorrenti
+verso merchant diversi non producono doppia appartenenza; riassegnazioni e
+DELETE di parent con riferimenti bloccati; grant disabilitato non rimuove
+appartenenza; dati e schema non POS preservati; applicazione nuova, riesecuzione
+bootstrap e gestione DDL parziale senza perdita dati. Solo dopo test e accordo
+con l'altro agente potra essere migrata la sandbox condivisa.
 
 #### Contratto GET da finalizzare prima di C2
 
@@ -473,7 +562,7 @@ Non modificare vecchie migration e non importare il legacy in questa fase.
 | File/area | Ownership proposta | Coordinamento |
 | --- | --- | --- |
 | Nuova migration dedicata POS, nome/timestamp da riservare | Agente POS/API | Concordare ordine con nuove migration dell'altro agente; il bootstrap le applica automaticamente. |
-| Nuovi `models/PosTerminals.php`, `PosStoreOperators.php` | Agente POS/API | Nomi proposti, non file gia esistenti; nessun edit a Users/Stores/Merchants. |
+| Nuovi `models/PosOperators.php`, `PosTerminals.php`, `PosStoreOperators.php` | Agente POS/API | Schema C1 sopra; nessun edit a Users/Stores/Merchants. |
 | Nuovi `modules/posapi/controllers/TerminalsController.php`, `components/pos/TerminalCatalog.php` | Agente POS/API | Prima verificare che nessun altro agente li stia creando. |
 | Nuovo `tests/application/pos-terminals.php` e fixture dedicate | Agente POS/API | Non modificare fixture comuni mentre usate dall'altro agente. |
 | `config/web.php` per la rotta GET | Condiviso, altro agente attivo | Serve una regola esplicita; riservare una modifica minima o consegnare patch all'altro agente. Nessun aggiramento nel modulo. |
@@ -507,10 +596,9 @@ eventuali worktree separati richiedono anche stack/DB di test isolati.
 - API non espone SIN/credenziali/wallet; nomi malevoli codificati nella vista;
   token solo sul server; browser mobile/desktop e nessun incasso/apertura.
 - Regressioni login/logout e test di accesso cross-tenant sul DB reale di test.
-- Prima del codice approvare C1-C3, riservare rotta/runner/migration e chiudere:
-  schema/vincoli per appartenenza univoca al merchant, modalita di gestione
-  iniziale terminali/grant e dettagli GET. Scelte funzionali su merchant unico
-  e disponibilita non verificata confermate nella sezione sopra.
+- Prima del codice riservare migration e approvare implementazione C1 sullo
+  schema finalizzato sopra. C2-C3 richiedono ancora rotta/runner, gestione
+  iniziale terminali/grant e dettagli GET; non sono approvati implicitamente.
 
 ### Fasi e gate
 
