@@ -249,3 +249,27 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   "File troppo grande".
 - Prossimo: 5b, pagamento quota in app e da link esterno con PayPal (Orders v2).
   Poi 5c, BTCPay Greenfield.
+
+### Passo 5b - Pagamento quota online con PayPal (COMPLETED, 2026-11-12)
+- Pagina "Paga quota" per ogni socio, anche dal link esterno `/quota` (come il
+  vecchio `loginquota`). Dopo il login si torna alla pagina richiesta, solo come
+  percorso locale e mai verso un altro host.
+- Importo, quota e periodo decisi dal server: anno solare, rinnovo per l'anno
+  successivo, mai più di un anno di anticipo. L'importo viene dalle impostazioni
+  per persona fisica o giuridica. Il vecchio sistema prendeva l'importo dal form.
+- PayPal Checkout Orders v2:
+  - ordine CAPTURE creato dal server, redirect solo verso `paypal.com`;
+  - al ritorno, riepilogo e conferma con POST + CSRF, senza addebito in GET;
+  - capture verificata (stato, EUR, importo, riferimento) prima di segnare il
+    pagamento come pagato; numero di ricevuta assegnato una sola volta;
+  - idempotenza con `PayPal-Request-Id`.
+- Client minimo su Guzzle (scelta dell'utente dopo il confronto con
+  `paypal/paypal-server-sdk`): nessuna dipendenza nuova, host fissi, TLS
+  verificato, niente redirect, risposte limitate.
+- Configurazione: `PAYPAL_MODE=sandbox|live`, `PAYPAL_CLIENT_ID`,
+  `PAYPAL_CLIENT_SECRET` nell'env privato. Le vecchie credenziali erano in chiaro
+  nel DB legacy: vanno considerate esposte e create da capo.
+- Commit napay `9271869a`. Test `pay-fee.php`: 40 controlli contro un server
+  PayPal finto, attivo solo nella suite isolata.
+- Prossimo: 5c, pagamento in Bitcoin con BTCPay Greenfield. Da valutare anche
+  la ricevuta scaricabile dal socio.
