@@ -122,9 +122,11 @@ pronto resta `pending`, non fallisce.
     (A ripetibile, B nuova generazione nel limite, store/app solo adozione
     del marker).
 - **429 e `Retry-After`** (RV4):
-  - si accettano secondi interi (0..86400) o data HTTP (IMF-fixdate, RFC 9110);
-    valori non validi o assenti: backoff esponenziale da 30 s con jitter,
-    massimo 1 ora;
+  - si accettano secondi interi non negativi o data HTTP (IMF-fixdate,
+    RFC 9110); solo valori **non interpretabili** o assenti usano il backoff
+    esponenziale da 30 s con jitter, massimo 1 ora. Un valore valido ma
+    grande (es. secondi > 86400) **non** ricade nel backoff: vale la regola
+    delle 24 ore sotto;
   - prossimo tentativo = il più tardo fra scadenza del server e backoff: mai
     una chiamata prima della scadenza indicata dal server;
   - scadenza oltre 24 ore: stato `deferred` che richiede l'admin, nessuna
@@ -133,8 +135,13 @@ pronto resta `pending`, non fallisce.
     massimo tentativi per lavoro (es. 10), poi `failed` con codice.
 - **Il worker non si fida del payload** (RV3): prima di ogni concessione
   remota rilegge dal DB entità, tenant e stato (merchant attivo e qualificato
-  R1, negozio del merchant, terminale abilitato del negozio). Payload =
+  R1, negozio del merchant, terminale esistente del negozio). Payload =
   solo tipo e ID Napay.
+- **Configurazione distinta dall'operatività**: i terminali C4 nascono
+  disabilitati, quindi l'app POS si crea comunque alla creazione del
+  terminale (configurazione). Abilitazione, grant e apertura restano controlli
+  dell'operatività lato Napay (C1-C4), non condizioni del provisioning; un
+  terminale disabilitato non blocca per sempre il suo lavoro.
 - Eventi creati nella stessa transazione locale che attiva il merchant (R3b)
   o crea negozio/terminale: nessuna chiamata BTCPay nel salvataggio anagrafico.
 
