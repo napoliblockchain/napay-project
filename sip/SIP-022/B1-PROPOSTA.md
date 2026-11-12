@@ -7,7 +7,9 @@
   SIP-021 C1/C4 (negozi e terminali).
 - Stato: **proposta da rivedere. Nessun codice B1**, nessun segreto generato,
   nessuna chiamata a BTCPay produzione o al regtest condiviso.
-  Aggiornata dopo [review master](B1-REVIEW-MASTER.md) (RV1-RV5, sezione 11).
+  Aggiornata dopo [review master](B1-REVIEW-MASTER.md) (RV1-RV5, sezione 11) e
+  dopo la [decisione dell'utente sulla rotazione](B1-DECISIONE-ROTAZIONE.md)
+  (opzione B: password tecnica conservata cifrata, sezione 6).
 - Timestamp delle migration, file condivisi e servizio worker nello stack: master.
 
 ## 1. Perimetro
@@ -45,7 +47,7 @@ non si confondono mai.
 | Tabella | Contenuto | Vincoli |
 | --- | --- | --- |
 | `btcpay_merchant_accounts` | merchant, instance, `ref` casuale (16 byte hex), email tecnica `m-<ref>@btcpay-merchants.jamprojects.it`, id utente remoto, stato, generazione chiave, tentativi di creazione chiave, ultimo codice errore, versione. **Nessun segreto.** | UNIQUE (instance, merchant), UNIQUE ref, UNIQUE (instance, email), UNIQUE (instance, remote_user_id) |
-| `btcpay_merchant_credentials` | **una riga per segreto**: account (FK), tipo (`onboarding_password` o `api_key`), generazione, testo cifrato con tag, nonce del segreto, chiave dati cifrata, nonce della chiave dati, versione della KEK, impronta (solo per `api_key`, SHA-256) | PK (account, tipo); **leggibile e scrivibile solo dall'utente DB del worker** (sezione 5) |
+| `btcpay_merchant_credentials` | **una riga per segreto e generazione**: account (FK), tipo (`onboarding_password` o `api_key`), generazione, stato (`pending`, `verified`, `current`, `retiring`, `revoked`), busta B1a (testo cifrato con tag, nonce del segreto, chiave dati cifrata, nonce della chiave dati, versione della KEK), impronta (solo `api_key`, SHA-256) | PK (account, tipo, generazione); al massimo una riga `current` per (account, tipo); **leggibile e scrivibile solo dall'utente DB del worker** (sezione 5) |
 | `btcpay_store_links` | negozio, account merchant, `marker` casuale, id store remoto, stato, versione | UNIQUE (instance, store), UNIQUE marker, UNIQUE (instance, remote_store_id) |
 | `btcpay_pos_links` | terminale C1, store link, `marker`, id app remota, stato, versione | UNIQUE (instance, terminal), UNIQUE marker, UNIQUE (instance, remote_app_id) |
 | `btcpay_provisioning_jobs` | outbox: tipo, entità (solo ID Napay), generazione, stato, tentativi, prossimo tentativo, lease (owner, scadenza), **operazione remota in volo** (tipo, inizio, owner), versione, ultimo codice errore. Nessun segreto nel payload. | UNIQUE (tipo, entità, generazione) |
@@ -70,7 +72,7 @@ un esito certo, quella risorsa non riceve un altro POST.
 | A | genera `ref`, password casuale (32 byte), la cifra e la salva; stato `user_requested` | `POST /api/v1/users` (provisioner) | 201: salva id remoto, stato `user_created`. 422: vai a riconciliazione. 429: `retry_wait` con Retry-After. Timeout/5xx: riconciliazione. 401/403: `failed` (nessuna escalation). |
 | A-r | — | `GET /api/v1/users/{email}` | 404: nessun utente, si può ripetere A con **la stessa** password salvata. 200: l'utente esiste; si adotta **solo** se la password salvata funziona in Basic (passo B riuscito), il che prova che l'abbiamo creato noi; altrimenti `reconcile_required`. Mai reset o modifica di un utente esistente. |
 | B | incrementa e salva `generazione` e `tentativi chiave`; label `napay-<ref>-g<generazione>` | `POST /api/v1/api-keys` (Basic del merchant) | 200: cifra e salva la chiave e la sua impronta, stato `key_saved`. 401 (password non valida): `reconcile_required`. 429: `deferred` (sezione 4). Timeout: una nuova generazione è ammessa (una chiave in più non crea risorse né accessi a store altrui), **al massimo 3 generazioni**: poi `reconcile_required` (chiavi orfane possibili). |
-| C | — | `GET /api/v1/stores` con la nuova chiave | 200: cancella il segreto onboarding (password), stato `synced`. |
+| C | — | `GET /api/v1/stores` con la nuova chiave | 200: chiave `current`, stato `synced`. La password tecnica **resta** cifrata (opzione B) per la rotazione. |
 
 Il passo A si può ripetere senza duplicare: BTCPay rifiuta la stessa email
 (422, dimostrato in B0) e la riconciliazione A-r prova la proprietà con la
@@ -169,8 +171,12 @@ pronto resta `pending`, non fallisce.
 - Rotazione KEK: comando che decifra la DEK con la KEK vecchia e la ricifra con
   la nuova (nuovo nonce, nuova versione nei dati associati); i segreti non
   cambiano; righe non decifrabili = errore, mai sovrascritte.
-- Password di onboarding: esiste solo tra passo A e C, cifrata; cancellata
-  quando la chiave del merchant è salvata e verificata.
+- Password tecnica (tipo `onboarding_password`, ora identificatore stabile e
+  non più segreto temporaneo): conservata cifrata anche dopo l'onboarding,
+  per la rotazione gestita da Napay (decisione B). La password permanente
+  amplia l'impatto di una compromissione: per questo isolamento di worker e
+  utente DB, binding tenant/istanza nei dati associati e nessuna presenza in
+  UI, log, outbox o argomenti di processi sono obbligatori.
 - Nessun segreto in outbox, errori, audit, log o argomenti di processi.
 - **Utenti DB separati** (decisione dell'utente, 2026-11-12):
   - utente DB del **web** (RV3): **nessun privilegio** su
@@ -188,18 +194,49 @@ pronto resta `pending`, non fallisce.
   Così una falla nel web (SQL injection, lettura arbitraria) non arriva
   nemmeno ai valori cifrati, e il furto del DB senza KEK resta inutile.
 
-## 6. Revoca e rotazione della chiave merchant
+## 6. Revoca, rotazione e recupero (decisione B)
 
-- Revoca: `DELETE /api/v1/api-keys/current` con la chiave stessa; lavori
-  pendenti del merchant sospesi (`reconcile_required`), merchant Napay **non**
-  disattivato per questo.
-- **Rotazione: decisione aperta.** La chiave del merchant non può crearne
-  altre (403, B0) e la password viene cancellata dopo il passo C. Opzioni:
-  1. conservare la password cifrata (solo worker) per future rotazioni;
-  2. rotazione solo tramite procedura amministrativa manuale su BTCPay
-     (nuova password impostata dall'admin, poi passo B);
-  3. accettare chiavi senza rotazione periodica, solo revoca + nuovo utente.
-  Proposta: 2, coerente con la decisione P3 (password eliminata).
+### Revoca
+
+`DELETE /api/v1/api-keys/current` con la chiave stessa; lavori pendenti del
+merchant sospesi (`reconcile_required`); il merchant Napay **non** viene
+disattivato per questo.
+
+### Rotazione della chiave merchant (gestita da Napay)
+
+Avvio: azione dell'admin (un nuovo lavoro in outbox, sezione 5); nessuna
+periodicità automatica decisa (contratto del worker). Un lavoro di rotazione
+per account alla volta. Generazione corrente `n`, nuova `n+1`:
+
+| Passo | Prima | Chiamata | Esito |
+| --- | --- | --- | --- |
+| R1 | riga `n+1` non ancora creata; checkpoint `in_flight` con CAS; label `napay-<ref>-g<n+1>` | `POST /api/v1/api-keys` con la password tecnica (Basic) | 200: busta della nuova chiave salvata come `pending`. 401: password non valida, sospensione e recupero (sotto). Timeout: nuova generazione nel limite (es. 3 per rotazione), poi `reconcile_required`. |
+| R2 | — | `GET /api/v1/stores` con la chiave `n+1` | Deve restituire **esattamente** gli store mappati di quel merchant: `verified`. Diversamente: `reconcile_required`, la chiave `n` resta `current`. |
+| R3 | transazione: `n+1` diventa `current`, `n` diventa `retiring` (CAS su versione) | — | Da qui il worker usa solo `n+1`. |
+| R4 | — | `DELETE /api/v1/api-keys/current` con la chiave `n` | 200, oppure 401 se già revocata: `n` diventa `revoked` e la sua busta viene cancellata (resta solo una riga minima per audit). Timeout/5xx: ritenta più tardi, la busta di `n` resta finché la revoca non è confermata. |
+
+- La vecchia chiave non si revoca mai prima che la nuova sia verificata e
+  salvata: nessun momento senza una chiave funzionante.
+- Il riferimento a `n` resta in DB (`retiring`) finché la revoca non è
+  confermata: un crash fra R3 e R4 riprende da R4.
+- Crash fra R1 e il salvataggio: chiave orfana su BTCPay con label
+  riconoscibile, come nel passo B; limite di generazioni, nessun retry
+  illimitato.
+- Lease, CAS e `in_flight` come nella sezione 4.
+- La rotazione della chiave BTCPay è separata dalla rotazione della KEK
+  (sezione 5): sono comandi e calendari distinti.
+
+### Recupero amministrativo
+
+Password tecnica non più valida (401), account bloccato o stato non
+riconciliabile: lavori dell'account sospesi con errore controllato, merchant
+Napay non disattivato. Recupero esplicito e tracciato, solo per l'identità già
+mappata: l'admin imposta una nuova password a quell'utente su BTCPay e la
+consegna al worker con un **comando console sul server del worker**
+(lettura da stdin, mai argomento di processo né interfaccia web, che non ha
+accesso alle credenziali); il worker la cifra come nuova generazione della
+password tecnica e riprende dal passo B o R1. Nessuna adozione o reset
+automatico di utenti remoti non riconosciuti.
 
 ## 7. Trasporto
 
@@ -229,6 +266,10 @@ Test B1 previsti (regtest usa-e-getta + DB usa-e-getta, worker reale):
   rendono il segreto non decifrabile; DEK e nonce mai riusati;
 - utente con la stessa email creato fuori da Napay: mai adottato né resettato;
 - chiave revocata: lavori sospesi, merchant non disattivato;
+- rotazione: crash dopo R1, R2, R3 e durante R4; la vecchia chiave resta
+  utilizzabile finché la nuova non è verificata e non viene persa prima della
+  revoca confermata; nuova chiave che non vede esattamente gli store mappati
+  non diventa corrente; password non valida = sospensione e recupero;
 - nessun segreto in DB in chiaro, log, outbox, errori, processi;
 - trasporto via proxy/TLS sullo stack del master (punto 9);
 - utente DB del web: qualunque accesso a `btcpay_merchant_credentials`
@@ -258,7 +299,8 @@ revisione dei dati.
 
 
 - Master: review di questa proposta, schema e assegnazione file.
-- Utente/master: rotazione della chiave merchant (sezione 6, proposta opzione 2).
+- Decisa dall'utente: opzione B (sezione 6). Master: periodicità e
+  autorizzazioni per l'avvio della rotazione nel contratto del worker.
 
 ## 11. Correzioni dopo la review master
 
@@ -269,3 +311,4 @@ revisione dei dati.
 | RV3 privilegi e outbox | Web: solo `INSERT` in outbox e `SELECT` degli stati, zero privilegi sulle credenziali; worker rilegge entità e tenant dal DB (sezioni 4 e 5). |
 | RV4 Retry-After | Secondi o data HTTP, mai chiamate prima della scadenza, oltre 24 ore `deferred` con admin, nessun ciclo attivo (sezione 4). |
 | RV5 busta | Una busta per segreto: DEK, nonce e DEK cifrata propri, dati associati con account, tipo, generazione e versione KEK (sezioni 2 e 5). |
+| Decisione B (rotazione) | Password tecnica conservata cifrata; credenziali per generazione con stati; rotazione R1-R4 con vecchia chiave revocata solo dopo la nuova verificata e corrente; recupero amministrativo da console del worker (sezioni 2, 3.1, 5 e 6). |
