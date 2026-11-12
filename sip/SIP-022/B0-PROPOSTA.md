@@ -3,7 +3,9 @@
 - Autore: agente Napay. Data: 2026-11-12.
 - Riferimenti: [SIP-022](../SIP-022-provisioning-merchant-store-pos-btcpay.md),
   [SIP-023](../SIP-023-profili-soci-merchant-operatori.md), SIP-020 fase 5c.
-- Stato: proposta da approvare (master, poi decisioni dell'utente B0-1..B0-5).
+- Stato: proposta in review del master. Decisioni dell'utente del 2026-11-12:
+  B0-1 regtest locale, B0-2 una chiave provisioner (P1), B0-3 sottodominio di
+  `jamprojects.it`. B0-4 e B0-5 restano proposte.
   Nessun codice, nessuna chiamata di creazione verso BTCPay, nessuna migration.
 
 ## 1. Situazione rilevata (Napay v2, 2026-11-12)
@@ -67,10 +69,11 @@ Proposta A, nell'orchestratore (area stack del master: file da assegnare):
     (non ID numerico, nome, partita IVA o email).
   - È anche la **chiave di riconciliazione**: dopo un timeout si cerca
     l'utente per email invece di ricrearlo.
-- **Dominio tecnico: decisione dell'utente.** Deve essere un dominio gestito
-  (SIP-022 vieta indirizzi inventati). `napoliblockchain.it` dipende da terzi;
-  alternative: un sottodominio di un dominio dell'utente o dell'associazione.
-  Le caselle non servono se BTCPay non invia email (da verificare, sezione 3).
+- **Dominio tecnico (decisione dell'utente): sottodominio di `jamprojects.it`**,
+  dominio dell'utente con DNS gestibile. Nome proposto
+  `btcpay-merchants.jamprojects.it`, da confermare. Le caselle non servono se
+  BTCPay non invia email (da verificare, sezione 3); in quel caso basta che il
+  sottodominio resti riservato a questo uso.
 - Password: casuale, lunga, generata dal worker e **non salvata**; il merchant
   non entra mai in BTCPay. Recupero eventuale solo da admin BTCPay.
 - Nome store: descrizione del negozio + identificativo del mapping, così la
@@ -125,10 +128,8 @@ Esito da registrare in questo allegato, senza chiavi, password o dump.
 ## 5. Richieste
 
 All'utente:
-- B0-1: istanza di test regtest locale (opzione A)?
-- B0-2: modello P1 (una chiave provisioner)?
-- B0-3: quale dominio tecnico per le email dei merchant su BTCPay?
-- B0-4: store legacy solo con riconciliazione manuale?
+- Conferma del nome del sottodominio (`btcpay-merchants.jamprojects.it`).
+- B0-4: store legacy solo con riconciliazione manuale (proposta).
 
 Al master:
 - Assegnazione dei file dello stack di test BTCPay (compose, gateway
