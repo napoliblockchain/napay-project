@@ -5,13 +5,14 @@
   [R1 policy](../SIP-023/R1-POLICY-CONDIVISA.md),
   [handoff R1](../SIP-023/HANDOFF-AGENTE-NAPAY.md),
   [approvazione C4](C4-APPROVAZIONE.md), SIP-021 sezione C1.
-- Branch `feature/v2-napay-backoffice-c4`; base `a3fd15f3` + policy R1
-  (cherry-pick di `5c1fd920` e `00afe16a`).
+- Branch `feature/v2-napay-backoffice-c4`; base `a3fd15f3` + dipendenze
+  master importate (R1, catalogo C2, R2 email, login D3: vedi handoff).
 - Stato:
   - **parti A-C** (scope, terminali, profili esistenti, grant, revoca D3):
-    autorizzate, in implementazione;
-  - **parte D** (inviti): contratto proposto qui, **non approvato**; niente
-    migration né codice finché il master non lo rivede.
+    implementate, correzioni RV1/RV2 e gare C4+API reali; in attesa di review;
+  - **parte D** (inviti): disegno approvato; implementazione autorizzata dal
+    master solo nel worktree e su DB usa-e-getta, alle condizioni della
+    sezione 5 ([handoff R2-D3](../SIP-023/HANDOFF-R2-D3.md)).
 
 ## 1. Regole di riferimento (SIP-023, decisioni dell'utente)
 
@@ -84,14 +85,17 @@ Controller `PosManagementController` (`/pos-management/...`), servizio in
 
 - `VerbFilter` POST e CSRF su tutte; form con soli campi ammessi; nessun mass
   assignment sugli AR C1 (che già bloccano riassegnazioni).
-- In transazione, nell'ordine:
-  1. lock `FOR UPDATE` della riga `merchants` interessata;
-  2. ricalcolo dello scope dell'attore (`merchantForManager` per il gestore)
-     e, per le concessioni, dei gate della sezione 2;
-  3. lock `FOR UPDATE` del record (terminale, profilo, grant) e verifica che
-     appartenga a quel merchant;
-  4. scrittura, audit, commit.
-  Un modello letto prima del lock non viene riusato.
+- Transazione `READ COMMITTED` (solo quella transazione), nell'ordine dei
+  lock comune al login POS (`PosApi::createSession`):
+  1. `FOR UPDATE` della riga `merchants`, poi scope dell'attore ricalcolato
+     (`merchantForManager` per il gestore) su dati correnti;
+  2. `FOR UPDATE` del profilo operatore (azioni su operatori e grant);
+  3. `FOR UPDATE` dell'utente, solo per le concessioni, poi gate R1;
+  4. `FOR UPDATE` di negozio, grant o terminale, con verifica del merchant;
+  5. sessioni (`FOR UPDATE`) per la revoca D3;
+  6. scrittura, audit, commit.
+  Gli ID letti prima dei lock sono indizi; un modello letto prima non viene
+  riusato.
 - D3: `operator-disable` revoca nella stessa transazione tutte le sessioni POS
   attive dell'utente (`PosApi::revoke`, motivo `operator_disabled`). La
   riabilitazione non le riattiva: serve un nuovo login. Il login Napay
@@ -100,7 +104,28 @@ Controller `PosManagementController` (`/pos-management/...`), servizio in
   POST, sessione o credenziali. Audit `Log::TYPE_DATA` con attore, azione,
   `public_id`/ID, esito; nomi con `Log::quote`.
 
-## 5. Parte D: inviti operatore (PROPOSTA, da rivedere)
+## 5. Parte D: inviti operatore (disegno approvato, implementazione condizionata)
+
+### Condizioni del master (HANDOFF-R2-D3, vincolanti)
+
+- Email: `EmailIdentity::normalize` e `condition` (R2) e indice UNIQUE
+  `uq-users-email-normalized` come autorità. Violazione UNIQUE concorrente =
+  rollback completo, invito non consumato, nessun account duplicato, errore
+  generico. Mai query `WHERE email=...` con la collation della tabella.
+- Accettazione: token cercato solo come indizio; **lock del merchant prima del
+  lock dell'invito**; poi riletti sotto lock digest del token, merchant, stato
+  e scadenza. Emissione, reinvio e annullamento seguono lo stesso ordine
+  (merchant -> invito), mai l'inverso.
+- Account creato: base, attivo, `is_merchant = 0`, nessun profilo socio né
+  quote; profilo operatore esplicito **disabilitato**, nessun grant. Mai
+  `SignupForm::signup`, ruolo scelto dal POST, logica primo-admin, reset o
+  riuso di account esistenti.
+- Mail su file nei test; token solo come digest nel DB; nessun token o
+  password in log o risposte al merchant. Limiti di invio anche sugli avvisi
+  a indirizzi già registrati.
+- Solo worktree e DB usa-e-getta: nessun DDL sulla sandbox condivisa, nessun
+  operatore reale. Accesso al portale e registrazione PF/PG restano R3 del
+  master: la consegna inviti non chiude SIP-023.
 
 ### Flusso
 
@@ -118,10 +143,12 @@ Controller `PosManagementController` (`/pos-management/...`), servizio in
    nome, cognome, password, conferma. Non consuma il token. Con un utente già
    connesso a Napay: chiede di uscire prima, non collega l'account attuale.
 3. **Accettazione (POST con CSRF).** In una transazione:
-   1. lock `FOR UPDATE` dell'invito: attivo, non scaduto, non consumato;
-   2. lock della riga `merchants`: ancora `qualifiedMerchant`;
-   3. serializzazione per email (sezione "Concorrenza");
-   4. nessun account con quell'email normalizzata;
+   1. lock `FOR UPDATE` della riga `merchants` (da indizio del token):
+      ancora `qualifiedMerchant`;
+   2. lock `FOR UPDATE` dell'invito, riletto per digest e merchant: attivo,
+      non scaduto, non consumato;
+   3. nessun account con quell'email normalizzata (`EmailIdentity`);
+   4. l'indice UNIQUE resta l'autorità contro le gare;
    5. creazione account: livello base, attivo, `username` = `email`, password
       con `Yii::$app->security->generatePasswordHash`, `authKey`/`accessToken`
       casuali; nessun `is_merchant`, nessun socio, quote o ruoli associativi;
@@ -147,17 +174,10 @@ Controller `PosManagementController` (`/pos-management/...`), servizio in
 ### Concorrenza ed email
 
 - Inviti di merchant diversi alla stessa email: ammessi; la prima accettazione
-  crea l'account, le altre falliscono al punto 4.
-- `users.email` non ha un vincolo di unicità nel DB: un `findOne` non basta.
-  Proposta al master, in alternativa:
-  - **definitiva (consigliata):** colonna generata con l'email normalizzata e
-    indice UNIQUE su `users`, dopo la riconciliazione dei duplicati legacy;
-    l'inserimento concorrente fallisce in modo sicuro;
-  - **ponte:** lock applicativo per email (`GET_LOCK` sul digest dell'email
-    normalizzata) usato **sia** dall'accettazione **sia** dalla registrazione
-    pubblica. Senza il secondo uso non protegge.
-  Entrambe toccano file/schema condivisi: le decide e integra il master.
-  Il codice inviti resta fermo finché una delle due non è disponibile.
+  crea l'account, le altre falliscono (account già presente o violazione
+  UNIQUE) senza consumare l'invito.
+- Accettazione contro registrazione pubblica: decide l'indice UNIQUE R2;
+  chi perde ottiene un errore generico, nessuna scrittura parziale.
 
 ### Schema `pos_operator_invitations` (timestamp riservato `m261112_140000`)
 
@@ -214,8 +234,7 @@ coerenti e incoerenti (socio + operatore).
 
 ## 7. Richieste al master
 
-- Unicità/serializzazione email (sezione 5): blocca il codice inviti.
-- Review della parte D e via libera alla migration `m261112_140000`.
+- Review delle parti A-C corrette (RV1/RV2, gare C4+API).
 - Sidebar: voce "Terminali POS" (patch alla consegna).
 - Da R0/SIP-023, fuori C4: operatori che entrano nel backoffice Napay non
   devono vedere funzioni da socio; registrazione pubblica con `is_merchant`.

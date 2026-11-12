@@ -14,7 +14,19 @@
     esistenti, grant, revoca D3);
   - `0463cbc6` test(pos): suite C4 e runner dedicato;
   - `842ea694` fix(pos): C4-RV1/RV2, letture correnti e revoca sotto lock;
-  - `704a9323` test(pos): gare a due connessioni per RV1 e RV2.
+  - `704a9323` test(pos): gare a due connessioni per RV1 e RV2;
+  - dipendenze master (HANDOFF-R2-D3), cherry-pick senza modifiche:
+    `fef473f9` (= `7ee57669`), `1a2f5d8a` (= `0275704f`), `7b160750`
+    (= `121fe3a2`), `e54291b0` (= `6487abbd`);
+  - `bae55cdb` fix(pos): ordine lock C4 allineato al login POS;
+  - `b6b1653d` test(pos): gara D3 disable C4 contro login API reale.
+- **Scostamento dall'handoff R2-D3 (da confermare):** il cherry-pick di
+  `6487abbd` andava in conflitto su `tests/application/pos-terminals.php` e
+  `POS-TERMINALS.md`, introdotti dal catalogo C2 assente nel mio branch; anche
+  `pos-session-eligibility.php` chiama `/terminals`. Ho annullato e importato
+  i commit master nell'ordine del branch di integrazione, includendo i due C2
+  (`7ee57669`, `0275704f`). Nessun conflitto né modifica: i 27 file importati
+  coincidono con `6487abbd`. Nessun merge sul branch di integrazione.
 - Ambiente di test isolato nel worktree: vendor installato da `composer.lock`
   del worktree (composer 2.10.3, `--no-dev`, pacchetti e versioni identici al
   checkout principale, nessun symlink); cartelle ignorate `runtime/` e
@@ -64,9 +76,19 @@
   - riabilitazione -> nessuna sessione torna attiva.
   Prova sul codice precedente (`0463cbc6`): falliscono tutti e tre i casi
   RV1/RV2. Con la correzione: **53 PASS**, bootstrap no-op.
-- Non coperto qui (master): login API contro disable concorrente, profilo già
-  disabilitato al login. D3 non dichiarato chiuso finché il lato API non è
-  integrato e testato.
+- **Allineamento al login D3 del master** (`bae55cdb`): le concessioni sugli
+  operatori bloccano anche l'utente dopo il profilo. Ordine finale:
+  merchant -> profilo -> utente (concessioni) -> negozio -> grant/terminale ->
+  sessioni, come `PosApi::createSession`.
+- **Gara C4 + API reale** (`b6b1653d`): la connessione di test tiene il lock
+  del merchant; il disable C4 (processo) e `POST /api/pos/v1/sessions`
+  (HTTP reale, processo) si mettono in coda in ordini opposti; poi il lock
+  viene rilasciato:
+  - disable prima: login 401, nessuna sessione inserita;
+  - login prima: sessione 201 committata e revocata dal disable
+    (`operator_disabled`); bearer rifiutato da `/terminals` (401), anche dopo
+    la riabilitazione.
+  Suite C4 eseguita due volte consecutive: 58/58 entrambe, ordini rispettati.
 
 ## File riservati
 
@@ -99,8 +121,12 @@
 
 - `tests/docker/account-eligibility.sh` nel worktree: 24 PASS, bootstrap
   `already-complete`.
-- `tests/docker/pos-management.sh`: **53 PASS** (49 + 4 gare RV1/RV2) +
-  bootstrap `already-complete`.
+- `tests/docker/pos-management.sh`: **58 PASS** (49 + 4 RV1/RV2 + 5 gara
+  C4+API), log Apache senza bearer né chiave client, bootstrap no-op.
+- Regressioni nel worktree dopo i cherry-pick (tutte verdi):
+  `pos-session-eligibility.sh` 119; `pos-terminals.sh` 177; `pos-catalog.sh`
+  51/62/32; `email-schema.sh` 106; `email-identity.sh` 14 + 68 reset + 92
+  attivazione + 24 policy; `account-eligibility.sh` 24.
   Ruoli (admin, gestore, gestore altrui, merchant non qualificato, base,
   operatore, anonimo), scope di elenchi e selettori, UUID/ID altrui o
   malformati, POST con campi extra, CSRF assente 400, GET su scritture 405,
@@ -120,5 +146,7 @@
 
 ## Blocchi
 
-- Inviti: codice e DDL bloccati fino all'indice UNIQUE sull'email normalizzata
-  (master). Timestamp `m261112_140000` resta riservato.
+- Parte D: dipendenza email risolta (R2). Condizioni del master riportate in
+  C4-BACKOFFICE sezione 5; implementazione non ancora iniziata, solo nel
+  worktree e su DB usa-e-getta quando autorizzata a procedere.
+- A-C: in attesa della review master delle correzioni.
