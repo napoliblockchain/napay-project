@@ -30,8 +30,9 @@ stati remoti, riconciliazione e notifiche di pagamento non sono import anagrafic
   BTCPay, senza sincronizzazione anagrafica inversa.
 - Il merchant usa soltanto Napay: BTCPay trasparente, niente inviti o credenziali
   BTCPay consegnati al merchant e nessun login BTCPay richiesto dal flusso.
-- Un utente BTCPay distinto per ogni merchant, anche quando lo stesso account
-  Napay possiede piu merchant. Non raggruppare per proprietario o email di login.
+- Un utente BTCPay distinto per ogni merchant. Precisazione SIP-023: ogni
+  merchant ha il proprio unico account gestore, non condiviso con altri merchant.
+  Non raggruppare identita remote per persona fisica, proprietario o email.
 - Restano da definire identita tecnica/email per merchant e credenziali server;
   le scelte funzionali non approvano automaticamente policy, schema o API key.
 
@@ -55,9 +56,10 @@ POS e non modifica le migration C1 gia condivise.
 - Il nuovo pagamento quota associativa usa `components/payments/BTCPay.php`
   e uno store configurato per l'associazione. Quel destinatario non deve
   diventare lo store condiviso di tutti i merchant.
-- Un utente Napay puo avere piu record merchant (`Users::getMerchants()`). Va
-  mantenuta questa possibilita: ogni merchant ha comunque il proprio utente
-  BTCPay, secondo la decisione sopra. Identita tecnica ancora da definire.
+- Lo schema attuale permette piu record merchant per utente (`Users::getMerchants()`).
+  La nuova decisione SIP-023 richiede invece un account gestore dedicato per
+  merchant. Censire incompatibilita legacy prima dei vincoli, senza riattivare
+  gestione multi-merchant per account. Identita BTCPay ancora da definire.
 
 ## API esterne verificate e limite della verifica
 
@@ -92,8 +94,8 @@ eseguita durante questa analisi.
 3. Persistenza dei mapping per istanza BTCPay: merchant/user ID, negozio/store ID,
    terminale/app ID. Non usare SIN, email o nome come credenziale/ID stabile locale.
    La corrispondenza merchant/utente remoto e uno-a-uno per istanza: impedire
-   che due merchant condividano lo stesso utente BTCPay, anche se hanno lo stesso
-   proprietario Napay. Non imporre un nuovo limite ai merchant del proprietario.
+   che due merchant condividano lo stesso utente BTCPay. Unicita dell'account
+   gestore locale secondo SIP-023; la piattaforma mantiene molti merchant separati.
 4. Proposta: store creato nel contesto dell'utente merchant con credenziale
    server-to-server adatta, oppure creato dal provisioner e associato esplicitamente
    al merchant secondo ruoli approvati. Scegliere un solo percorso prima del codice
@@ -178,7 +180,7 @@ trasporto sicuro o SDK gia esistenti. Nessuna implementazione implicita da quest
 - Nuove risorse locali generano automaticamente le tre risorse remote corrette.
 - Secondo negozio/POS non ricrea l'utente merchant; merchant diversi non
   condividono risorse per errore. Mapping ripetuto non crea duplicati locali.
-- Due merchant dello stesso proprietario Napay hanno due utenti BTCPay distinti.
+- Due merchant distinti hanno account gestore locali e utenti BTCPay distinti.
   Nessun invito/login remoto richiesto al merchant; nessuna password Napay
   trasmessa. Risorse create direttamente su BTCPay non popolano anagrafiche Napay.
 - Account/store preesistenti e timeout ambigui non producono agganci cross-tenant
@@ -193,7 +195,7 @@ trasporto sicuro o SDK gia esistenti. Nessuna implementazione implicita da quest
 
 - Identita tecnica/email distinta e stabile per ogni merchant, dominio/recapiti
   gestiti e politica di recupero; non derivarla automaticamente dall'email del
-  proprietario condivisa da piu merchant. Nessun indirizzo fittizio inventato
+  titolare come scorciatoia per accorpare merchant diversi. Nessun indirizzo fittizio inventato
   nel codice prima di questa decisione.
 - Modalita di creazione degli account senza inviti, policy di conferma/approvazione
   e credenziali backend compatibili con l'istanza target, senza accesso UI richiesto

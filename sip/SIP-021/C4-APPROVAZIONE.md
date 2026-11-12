@@ -68,6 +68,14 @@ prima contratto/schema corretto e review master. Runner dedicato
 `tests/docker/pos-management.sh` confermato; sidebar integrata dal master solo
 dopo consegna codice/test e patch richiesta. Nessun edit a tabelle C1.
 
+Precisazione utente sulla cardinalita, ora confermata in SIP-023: unico account
+gestore dedicato a un solo merchant; tanti merchant indipendenti, ciascuno con
+i propri operatori. Il gestore puo creare soltanto account POS tramite invito,
+non soci, altri gestori o nuovi merchant. Aggiornare C4: la ricerca di tutti i
+merchant con user_id uguale non autorizza a mantenerli come scope gestionale.
+Caso legacy con piu righe: errore/riconciliazione sicura, mai merchants[0] o
+estensione implicita dello scope. Il master definisce gli adeguamenti condivisi.
+
 Aggiornare C4-BACKOFFICE.md con la scelta D1 e proporre schema/contratto inviti:
 token casuale, solo digest nel DB, scadenza, monouso/consumo atomico, revoca e
 rate limit; GET visualizza il form senza consumare, POST con CSRF completa.

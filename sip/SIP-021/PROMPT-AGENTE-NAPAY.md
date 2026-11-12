@@ -16,6 +16,12 @@ stack, installazione globale o migrazione della sandbox. Nessun push automatico.
 
 ## Primo deliverable, da fare subito
 
+Aggiornamento vincolante: leggere SIP-023 e C4-APPROVAZIONE.md. Ogni merchant
+ha un solo account gestore dedicato a quel merchant; crea solo account POS.
+Nessun gestore multi-merchant, nessun socio tramite invito, nessun riuso
+dell'account/email socio per diventare operatore. Le ipotesi precedenti di
+scope multi-merchant per gestore sono superate; niente merchants[0].
+
 Preparare `sip/SIP-021/C4-BACKOFFICE.md` nell'orchestratore, senza modificare
 SIP-021 principale, e `C4-HANDOFF.md` con branch/base commit e file riservati.
 Disegnare backoffice dedicato per terminali, profili operatore e grant:

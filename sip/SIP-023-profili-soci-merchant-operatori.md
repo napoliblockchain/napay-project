@@ -22,6 +22,12 @@ Decisioni confermate dall'utente il 2026-11-12:
 - Il gestore merchant amministra ma non opera sul POS con quell'account.
 - Una persona puo essere socio e operatore, ma deve utilizzare due account
   con due email differenti.
+- Un merchant ha un unico account gestore, dedicato a quel merchant. I merchant
+  possono essere molti nella piattaforma, ciascuno con i propri operatori POS;
+  non e richiesto un account gestore comune a piu merchant/PG. Il gestore puo
+  generare solo account operatore POS, non nuovi soci, altri gestori o merchant.
+  Questa precisazione sostituisce l'ipotesi multi-merchant per account gestore
+  riportata in precedenza negli allegati di lavoro e in SIP-022.
 
 ## Profili e capacita
 
@@ -73,6 +79,11 @@ la distinzione non elimina i flussi quota Bitcoin/PayPal/contanti di SIP-020.
    non il socio PF o l'operatore. Nessun invito/login BTCPay per il merchant;
    Napay resta master. Le email tecniche di provisioning sono questione separata
    dalle due email personali richieste per socio/operatore.
+10. **Cardinalita gestore.** Un solo account gestore per merchant e un solo
+    merchant per quell'account; una PG socia puo scegliere il profilo merchant
+    senza creare una gestione trasversale di altre PG. Ciascun merchant invita
+    e gestisce soltanto i propri operatori; nessuna delega gestionale ad altri
+    account introdotta qui. Piattaforma multi-merchant, non account multi-merchant.
 
 ## Stato attuale e adeguamenti necessari
 
@@ -107,6 +118,10 @@ registrazione o API condivise. Il master riserva eventuali nuovi cambi comuni.
   di invito con altra email; niente email fittizie o alias inventati dal sistema.
 - Dati legacy discordanti richiedono piano esplicito di riconciliazione,
   preservando storico, quote e audit; non cancellare o riscrivere anagrafiche.
+- Piu merchant collegati allo stesso account nel vecchio schema sono una
+  incompatibilita da censire, non una capacita da mantenere automaticamente.
+  Vietato scegliere il primo merchant (`merchants[0]`), unire aziende, duplicare
+  credenziali o trasferire record per rendere artificialmente univoca la relazione.
 - L'effetto di cessazione/sospensione associativa sull'attivita merchant resta
   da definire: nessuna disabilitazione commerciale automatica introdotta qui.
 
@@ -115,6 +130,8 @@ registrazione o API condivise. Il master riserva eventuali nuovi cambi comuni.
 - Registrazione PF: solo socio; nessun merchant/operatore implicito.
 - Registrazione PG: socio, con scelta merchant facoltativa e riferita alla PG.
 - Merchant/gestore non opera POS, anche conoscendone ID o avendo sessione valida.
+- Merchant A e B hanno gestori e operatori separati; nessun account gestore
+  amministra entrambi e nessun invito crea un socio o un altro gestore.
 - Invito operatore non crea socio; dopo consenso crea solo account e appartenenza
   previsti, con abilitazioni/grant espliciti e limiti C1.
 - Email socio o gestore non riutilizzabile per creare/collegare operatore;

@@ -40,7 +40,9 @@ Agente aggiorna C4-BACKOFFICE/C4-HANDOFF; master definisce qualificazione PG e
 scopo account condivisi. Le concessioni non possono usare il solo livello 0/30.
 Ricognizione del master pronta: [R0 identita](SIP-023/R0-MODELLO-ATTUALE.md).
 Include le query soci/quote e l'assenza del legame diretto merchant-PG;
-prima dello schema va confermata la cardinalita account gestore / PG rappresentate.
+cardinalita confermata: un gestore dedicato per merchant, nessun account gestore
+multi-PG/merchant. Ogni merchant crea solo i propri operatori POS. Vecchi casi
+multi-merchant per account richiedono riconciliazione, non uso di merchants[0].
 
 C1 chiuso: Napay `c357ec41`, `a3fd15f3`; [handoff](SIP-021/C1-HANDOFF.md).
 Agente Napay assegnato a `feature/v2-napay-backoffice-c4`, worktree
