@@ -21,6 +21,10 @@ services:
       # rete interna del server POS (SIP-021): il POS raggiunge napay solo dal gateway, in HTTPS verificato
       pos_local_browser:
         aliases: [napay.local]
+      # B0 backend and egress never share a network.
+      btcpay_regtest_edge: {}
+      btcpay_regtest_client:
+        aliases: [btcpay.local]
 
   mysql-main:
     image: mysql:8.0
@@ -114,6 +118,12 @@ networks:
   # creata da start-localhost.sh (--internal, subnet fissa 10.251.0.0/24 usata dal gateway per /api/pos/*)
   pos_local_browser:
     name: pos_local_browser
+    external: true
+  btcpay_regtest_edge:
+    name: btcpay_regtest_edge
+    external: true
+  btcpay_regtest_client:
+    name: btcpay_regtest_client
     external: true
 
 volumes:

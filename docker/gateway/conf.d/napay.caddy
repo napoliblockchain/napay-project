@@ -1,9 +1,13 @@
 # Backoffice napay: sandbox locale napay/docker/local (web senza porte, rete interna napay_local_browser).
 http://napay.local, http://napay.test, http://localhost, https://napay.test, https://localhost {
-    redir https://napay.local{uri} permanent
+    import no_btcpay_backend
+    handle {
+        redir https://napay.local{uri} permanent
+    }
 }
 
 https://napay.local {
+    import no_btcpay_backend
     header X-Content-Type-Options nosniff
     header Referrer-Policy no-referrer
     # API server-to-server dei POS (SIP-021): solo dalla rete interna pos_local_browser

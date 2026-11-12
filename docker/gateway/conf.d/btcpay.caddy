@@ -1,0 +1,7 @@
+# B0 regtest only: verified HTTPS via egress/client, backend only on edge.
+https://btcpay.local {
+    import no_btcpay_backend
+    header X-Content-Type-Options nosniff
+    header Referrer-Policy no-referrer
+    reverse_proxy btcpay-regtest:49392
+}

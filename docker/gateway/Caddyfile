@@ -4,8 +4,18 @@
     admin off
 }
 
+(no_btcpay_backend) {
+    @btcpay_backend remote_ip 10.252.0.0/24
+    handle @btcpay_backend {
+        abort
+    }
+}
+
 :80 {
-    redir https://napay.local{uri} permanent
+    import no_btcpay_backend
+    handle {
+        redir https://napay.local{uri} permanent
+    }
 }
 
 import conf.d/*.caddy

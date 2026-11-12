@@ -94,3 +94,42 @@ Nessun file dei checkout, segreto persistente o servizio condiviso toccato;
 albero temporaneo e segreti generati dalla sonda eliminati. Verifiche di rete
 RV2/RV3/RV4 rimangono analisi del codice/configurazione, non traffico eseguito.
 La prova non sostituisce i nuovi test di regressione richiesti all'agente.
+
+## Seconda consegna - autorizzazione integrazione fase 1
+
+Commit agente `caa4769`, `45038bd`, `83536ed`, `bf70527`, `f6be0a8`,
+`bc4d756`, `eb69199` revisionati il 2026-11-12: guardie filesystem/no-clobber,
+reti validate, due reti backend/client e blocco laterale gateway risolvono
+RV1-RV4 nel disegno. Master riesegue filesystem27 e topology11: positivi.
+
+Il runner isolated corretto si e fermato su confronto di nomi reti ordinati:
+`sort` e atteso non usano stesso ordine fra trattino/underscore. Non e prova
+di difetto d'isolamento, ne un PASS dello stack. Prima di approvare fase 1 il
+master normalizza ordinamento atteso/effettivo con LC_ALL=C e riesegue tutti
+14 controlli. Fix nel checkout principale, nessun edit al worktree agente.
+
+Autorizzata integrazione selettiva di stack/test/doc consegnati e successiva
+patch master gateway/infra/egress a due reti, con validazione configurazioni e
+test isolati prima di riavvii locali. Nessuna produzione/reset persistente.
+Fase 2 TLS/permessi resta da dimostrare; B1 non autorizzato da questa review.
+
+Verifica master dopo correzione ordinamento: **14 controlli stack reale
+usa-e-getta passati**, insieme a filesystem27 e topology11. Approvata fase 1.
+Integrazione gateway/proxy: due reti controllate, backend negato su tutti i
+vhost, nessun nuovo accesso diretto Napay -> BTCPay. Si validano configurazioni
+reali prima di eventuale restart locale gateway/egress; non usare avvio globale
+che applica automaticamente migration Napay. B0 fase2 e B1 ancora non conclusi.
+
+## Configurazioni effettive condivise
+
+Integrato fix agente `2e6d368` come `e6acc82`, senza duplicare la correzione.
+Master verifica compose orchestratore e 24 controlli compose sandbox; Squid
+accetta la allowlist effettiva. Napay proxy/rete: commit `9334c2c3`.
+
+Caddy adapt sulla configurazione reale ha mostrato redirect ordinati prima
+al blocco backend. Redirect ora in handle catch-all, dopo handle del rifiuto;
+nessuna modifica alle destinazioni. `tests/gateway-btcpay.cjs`, alimentato
+con JSON di caddy adapt, verifica 22 casi inclusi controlli negativi con
+redirect anticipato. Tutti i siti HTTP/HTTPS devono rifiutare la subnet
+backend prima di risposte/proxy/redirect. Sintassi launcher e diff verificati.
+Questi controlli non sostituiscono fase 2 TLS/permessi su servizi avviati.

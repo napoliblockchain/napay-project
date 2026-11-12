@@ -36,6 +36,9 @@ LOCAL_NETWORK=napay_local_browser
 # rete interna del server POS: subnet fissa, l'API /api/pos/* è accettata dal gateway solo da qui (SIP-021)
 POS_NETWORK=pos_local_browser
 POS_SUBNET=10.251.0.0/24
+BTCPAY_EDGE_NETWORK=btcpay_regtest_edge
+BTCPAY_EDGE_SUBNET=10.252.0.0/24
+BTCPAY_CLIENT_NETWORK=btcpay_regtest_client
 
 step 'Prerequisiti'
 docker info >/dev/null 2>&1 || fail 'Docker non attivo o non accessibile al tuo utente.'
@@ -69,6 +72,21 @@ docker network inspect "$POS_NETWORK" >/dev/null 2>&1 \
   || docker network create --internal --subnet "$POS_SUBNET" --label napay.service=pos-local "$POS_NETWORK" >/dev/null
 [[ "$(docker network inspect "$POS_NETWORK" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')" == "$POS_SUBNET" ]] \
   || fail "la rete $POS_NETWORK esiste con una subnet diversa da $POS_SUBNET."
+# Match B0 launcher identity and the subnet rejected by the Caddy backend guard.
+btcpay_network() {
+  local name=$1 label=$2 subnet=${3:-} props
+  if docker network inspect "$name" >/dev/null 2>&1; then
+    props=$(docker network inspect -f '{{.Internal}} {{.Driver}} {{index .Labels "napay.btcpay-regtest"}} {{range .IPAM.Config}}{{.Subnet}}{{end}}' "$name")
+    [[ $props == "true bridge $label "* && ( -z $subnet || $props == "true bridge $label $subnet" ) ]] \
+      || fail "rete $name incompatibile: non modificata (richiesta bridge interna napay.btcpay-regtest=$label $subnet)."
+  else
+    local -a args=(network create --internal --driver bridge --label "napay.btcpay-regtest=$label")
+    [[ -z $subnet ]] || args+=(--subnet "$subnet")
+    docker "${args[@]}" "$name" >/dev/null
+  fi
+}
+btcpay_network "$BTCPAY_EDGE_NETWORK" edge "$BTCPAY_EDGE_SUBNET"
+btcpay_network "$BTCPAY_CLIENT_NETWORK" client
 compose config --quiet || fail 'configurazione docker compose non valida.'
 
 if $BUILD; then
