@@ -25,7 +25,7 @@ esac
 exit 0
 STUB
 chmod 700 "$T/bin/docker"
-export PATH="$T/bin:$PATH" STUB_LOG=$T/docker.log STUB_NET='true bridge edge'
+export PATH="$T/bin:$PATH" STUB_LOG=$T/docker.log STUB_NET='true bridge edge 10.252.0.0/24'
 sentinel=$T/outside/sentinel
 printf 'SENTINEL\n' > "$sentinel"; chmod 640 "$sentinel"
 fingerprint() { sha256sum -- "$sentinel" | cut -c1-64; stat -c '%a %s' -- "$sentinel"; }
@@ -64,8 +64,8 @@ STUB_NET=absent run "$good" up
 [[ $(stat -c '%a' "$good") == 700 && $(stat -c '%a' "$good/regtest.env") == 600 && $(stat -c '%a' "$good/.gitignore") == 600 ]]
 grep -qx '\*' "$good/.gitignore" && [[ -z $(find "$good" -name '.new.*') && ! -e $good/control.lock ]]
 pass 'Fresh up: 0700 dir, 0600 secrets and .gitignore, no temp or lock files'
-grep -q -- '--internal --driver bridge --label napay.btcpay-regtest=edge' "$STUB_LOG" || exit 1
-pass 'Missing edge network created as internal bridge with identity label'
+grep -q -- '--internal --driver bridge --subnet 10.252.0.0/24 --label napay.btcpay-regtest=edge' "$STUB_LOG" || exit 1
+pass 'Missing edge network created as internal bridge, fixed subnet, identity label'
 env_sum=$(sha256sum "$good/regtest.env")
 run "$good" up
 [[ $(sha256sum "$good/regtest.env") == "$env_sum" ]] && pass 'Second up keeps existing secrets'
@@ -98,7 +98,7 @@ refused "$T/outside/s2" '.gitignore not ignoring everything refused' up
 [[ ! -e $T/outside/s2/regtest.env ]] && pass 'No secrets written next to a refused .gitignore'
 
 # B0-RV2: rete omonima incompatibile mai riusata ne modificata
-for props in 'false bridge edge' 'true overlay edge' 'true bridge <no value>'; do
+for props in 'false bridge edge 10.252.0.0/24' 'true overlay edge 10.252.0.0/24' 'true bridge <no value> 10.252.0.0/24' 'true bridge edge 172.30.0.0/16'; do
     STUB_NET=$props refused "$good" "Existing edge network '$props' refused" up
     ! grep -qE 'network (create|rm|connect|disconnect)|compose .* up' "$STUB_LOG" || exit 1
 done

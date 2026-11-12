@@ -23,6 +23,9 @@ case "$action" in
 esac || fail 'Usage: bash docker/btcpay-regtest/local.sh {up|status|stop|reset --yes}'
 edge=${BTCPAY_EDGE_NETWORK:-btcpay_regtest_edge}
 [[ $edge =~ ^[a-z0-9][a-z0-9_.-]{0,62}$ ]] || fail 'Invalid BTCPAY_EDGE_NETWORK.'
+# subnet fissa: il gateway rifiuta le richieste che arrivano dal backend BTCPay verso gli altri siti
+subnet=${BTCPAY_EDGE_SUBNET:-10.252.0.0/24}
+[[ $subnet =~ ^10\.[0-9]{1,3}\.[0-9]{1,3}\.0/24$ ]] || fail 'Invalid BTCPAY_EDGE_SUBNET (10.x.y.0/24).'
 project=${BTCPAY_PROJECT:-btcpay-regtest}
 [[ $project =~ ^[a-z0-9][a-z0-9_-]{0,62}$ ]] || fail 'Invalid BTCPAY_PROJECT.'
 
@@ -96,11 +99,11 @@ case "$action" in
     up)
         # rete verso il gateway: deve essere la bridge interna attesa; una rete omonima diversa non viene toccata
         if docker network inspect "$edge" >/dev/null 2>&1; then
-            props=$(docker network inspect -f '{{.Internal}} {{.Driver}} {{index .Labels "napay.btcpay-regtest"}}' "$edge")
-            [[ $props == 'true bridge edge' ]] \
-                || fail "Network $edge exists but is not the internal bridge labelled napay.btcpay-regtest=edge: left unchanged."
+            props=$(docker network inspect -f '{{.Internal}} {{.Driver}} {{index .Labels "napay.btcpay-regtest"}} {{range .IPAM.Config}}{{.Subnet}}{{end}}' "$edge")
+            [[ $props == "true bridge edge $subnet" ]] \
+                || fail "Network $edge exists but is not the internal bridge $subnet labelled napay.btcpay-regtest=edge: left unchanged."
         else
-            docker network create --internal --driver bridge --label napay.btcpay-regtest=edge "$edge" >/dev/null
+            docker network create --internal --driver bridge --subnet "$subnet" --label napay.btcpay-regtest=edge "$edge" >/dev/null
         fi
         "${compose[@]}" config --quiet
         "${compose[@]}" up -d --wait --wait-timeout 240 postgres bitcoind nbxplorer
