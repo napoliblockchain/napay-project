@@ -39,6 +39,7 @@ Riferimenti storici TIP nei vecchi commit restano parte della cronologia Git.
 | [SIP-019](SIP-019-napay-mysql-persistenza-migrazione.md) | Napay: MySQL dedicato, persistenza e ripristino dati v2 | Backoffice / Database | IN_PROGRESS |
 | [SIP-020](SIP-020-napay-ripristino-associazione-legacy.md) | Napay: ripristino gestione associazione e migrazione dati legacy | Backoffice / Associazione | IN_PROGRESS |
 | [SIP-021](SIP-021-pos-login-operatori-apertura-esclusiva.md) | POS: login operatori, negozi autorizzati e apertura esclusiva | POS / Napay / Integrazione | OPEN |
+| [SIP-022](SIP-022-provisioning-merchant-store-pos-btcpay.md) | Provisioning automatico merchant, negozi e POS su BTCPay | Napay / BTCPay / Integrazione | OPEN |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 
