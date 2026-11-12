@@ -21,6 +21,13 @@ Napay resta il backend autorevole, sviluppato in parallelo da un altro agente.
 
 ## Proposta
 
+Profili confermati il 2026-11-12: [SIP-023](SIP-023-profili-soci-merchant-operatori.md).
+Operatore e account operativo non socio; gestore merchant non opera POS.
+Un socio puo essere anche operatore solo con altro account e altra email.
+"Base" e un livello tecnico, non sinonimo di socio o prova di scopo operatore.
+La separazione completa richiede adeguamenti successivi, non gia coperti dal
+solo filtro ruolo/grant C2. Solo PG socia puo qualificarsi merchant.
+
 Decisioni funzionali confermate dall'utente il 2026-11-11:
 
 1. Un merchant puo avere piu negozi; ciascun negozio puo avere piu POS.

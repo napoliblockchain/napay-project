@@ -8,6 +8,13 @@
 
 ## Contesto
 
+Precisazione funzionale confermata il 2026-11-12:
+[SIP-023](SIP-023-profili-soci-merchant-operatori.md) distingue socio PF, socio PG,
+gestore merchant e operatore non socio. Solo PG socia puo diventare merchant;
+iscrizione e pagamento quote non conferiscono operativita commerciale. Stessa
+persona socio/operatore: account ed email distinti. Adeguamenti da progettare,
+nessuna conversione automatica dei dati legacy autorizzata da questa nota.
+
 La vecchia app Napay (Yii 1.1, branch `master`, release b2c2152 del 28/03/2023,
 ancora online su `napay.napoliblockchain.it`) gestiva l'associazione:
 soci, quote associative, pagamento quote in Bitcoin, PayPal o contanti,

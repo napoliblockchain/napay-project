@@ -6,6 +6,14 @@ form/service/controller/view, C1 invariato, nessun delete/trasferimento/lock.
 
 ## Via libera immediato
 
+**Precisazione successiva, prevalente: review dei documenti 11877b1 e 18246fe.**
+Il disegno generale e riusabile, ma il contratto inviti **non e approvato**
+finche non recepisce SIP-023. Il precedente via libera su profili/grant non
+autorizza a concedere operativita ad account soci di livello 0 o a merchant
+privi di qualificazione PG. Possono proseguire parti indipendenti, strutture UI,
+scope e controlli di sola riduzione dei privilegi; le concessioni e il flusso
+inviti richiedono prima il contratto aggiornato e le dipendenze condivise definite.
+
 Agente Napay puo implementare servizi comuni di scope, elenco/creazione/modifica
 nome/abilitazione terminali e relativi test nel worktree assegnato. Non occorre
 attendere D1-D3 per questa parte. Nessuna riga profilo/grant creata implicitamente.
@@ -27,6 +35,38 @@ secondo queste decisioni e sul write set C4 gia riservato. Non usare un link
 di invito per sovrascrivere password o rivendicare un account gia registrato.
 
 ## Inviti: prossimo allegato tecnico prima del codice
+
+Vincolo trasversale confermato successivamente:
+[SIP-023](../SIP-023-profili-soci-merchant-operatori.md). Solo PG socia diventa
+merchant; gestore non usa POS. Un operatore non diventa socio per invito.
+Socio che vuole operare: altro account e altra email; vietato riusare email o
+account associativo anche se ha livello tecnico base. Aggiornare C4-BACKOFFICE
+e C4-HANDOFF prima del codice dipendente da questa separazione. Non dichiarare
+gia implementata la distinzione sulla sola base di C1/C2; niente edit autonomi
+a Users/SignupForm, AR C1 o API condivise.
+
+Correzioni richieste alla versione C4 esaminata:
+
+1. Non chiedere una registrazione pubblica generica prima di accettare l'invito.
+   Il nuovo operatore completa direttamente il percorso invito con password,
+   conferma, nome e cognome. Nessuna iscrizione associativa automatica.
+2. Livello 0 e account attivo non bastano: verificare scopo account operatore
+   e assenza di riuso dell'account socio/gestore. Email gia socio = altra email,
+   non collegamento dopo login. Stessa persona puo avere entrambi solo separati.
+3. Merchant eleggibile solo se PG socia con relazione verificata server-side;
+   non bastano livello 30 e riga merchants. Il master definisce l'adeguamento
+   condiviso; niente riconoscimenti automatici basati su nomi/partita IVA.
+4. FOR UPDATE sul singolo invito non risolve collisioni email tra inviti diversi
+   e registrazione pubblica. Contratto deve esplicitare serializzazione/unicita,
+   normalizzazione e fallimento sicuro senza duplicare utenti o cambiare password
+   esistenti. Allineare anche i limiti email ai validator/schema effettivi.
+
+Timestamp **riservato all'agente Napay**:
+`m261112_140000_create_pos_operator_invitations.php` (tabella additiva inviti).
+La riserva evita collisioni, **non autorizza ancora codice migration o DDL**:
+prima contratto/schema corretto e review master. Runner dedicato
+`tests/docker/pos-management.sh` confermato; sidebar integrata dal master solo
+dopo consegna codice/test e patch richiesta. Nessun edit a tabelle C1.
 
 Aggiornare C4-BACKOFFICE.md con la scelta D1 e proporre schema/contratto inviti:
 token casuale, solo digest nel DB, scadenza, monouso/consumo atomico, revoca e

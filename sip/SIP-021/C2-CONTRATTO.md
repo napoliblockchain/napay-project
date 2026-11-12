@@ -6,6 +6,11 @@
 
 ## API C2
 
+Precisazione successiva [SIP-023](../SIP-023-profili-soci-merchant-operatori.md):
+livello base e profilo/grant sono i filtri attuali, non la completa prova di
+separazione socio/operatore. Questa ulteriore esclusione e da progettare e
+implementare; il presente contratto non la dichiara gia disponibile.
+
 `GET /api/pos/v1/terminals`, solo server-to-server, corpo vuoto.
 Header: `X-POS-Client-Key` e `Authorization: Bearer napos_<43 base64url>`.
 Riusa PosApi::authenticateClient/findActiveSession/throttle, senza modificarli.

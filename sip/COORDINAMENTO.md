@@ -29,6 +29,16 @@ La creazione di un worktree non autorizza nuovi stack o l'uso del DB condiviso.
 
 ## Ripartizione iniziale
 
+Regole trasversali aggiornate: [SIP-023](SIP-023-profili-soci-merchant-operatori.md).
+Solo PG socia diventa merchant; gestore non opera POS; operatore non socio.
+Stessa persona socio/operatore: due account e due email. Il livello "base" da
+solo non distingue questi scopi. Agente C4 recepisce nelle proprie specifiche;
+master riserva disegno/integrazione di eventuali adeguamenti condivisi.
+Review C4 (documenti 11877b1/18246fe): inviti non ancora approvati per differenze
+con SIP-023. Timestamp 140000 riservato all'agente Napay, non autorizzato DDL.
+Agente aggiorna C4-BACKOFFICE/C4-HANDOFF; master definisce qualificazione PG e
+scopo account condivisi. Le concessioni non possono usare il solo livello 0/30.
+
 C1 chiuso: Napay `c357ec41`, `a3fd15f3`; [handoff](SIP-021/C1-HANDOFF.md).
 Agente Napay assegnato a `feature/v2-napay-backoffice-c4`, worktree
 `/var/www/blockchain-napoli/napay-worktrees/napay-backoffice-c4`, base `a3fd15f3`.
