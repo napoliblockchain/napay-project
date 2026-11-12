@@ -1,185 +1,228 @@
-# C4 - Backoffice terminali, operatori e grant (BOZZA, da approvare)
+# C4 - Backoffice terminali, operatori e grant
 
-- Autore: agente Napay. Data: 2026-11-12.
-- Riferimenti: SIP-021 (sezioni C1 e scomposizione), [handoff C1](C1-HANDOFF.md),
-  [prompt](PROMPT-AGENTE-NAPAY.md), `napay/tests/application/POS-CATALOG.md`.
-- Base: Napay `a3fd15f3`, branch `feature/v2-napay-backoffice-c4`.
-- Stato: solo documento. Decisioni D1-D3 confermate dall'utente il 2026-11-12
-  (sezione 4). Nessun codice finché il master non approva questo allegato e
-  non riserva il timestamp della migration inviti.
+- Autore: agente Napay. Aggiornato: 2026-11-12, regole definitive SIP-023.
+- Riferimenti: [SIP-023](../SIP-023-profili-soci-merchant-operatori.md),
+  [R1 policy](../SIP-023/R1-POLICY-CONDIVISA.md),
+  [handoff R1](../SIP-023/HANDOFF-AGENTE-NAPAY.md),
+  [approvazione C4](C4-APPROVAZIONE.md), SIP-021 sezione C1.
+- Branch `feature/v2-napay-backoffice-c4`; base `a3fd15f3` + policy R1
+  (cherry-pick di `5c1fd920` e `00afe16a`).
+- Stato:
+  - **parti A-C** (scope, terminali, profili esistenti, grant, revoca D3):
+    autorizzate, in implementazione;
+  - **parte D** (inviti): contratto proposto qui, **non approvato**; niente
+    migration né codice finché il master non lo rivede.
 
-## 1. Rilevazioni sul backoffice (base `a3fd15f3`)
+## 1. Regole di riferimento (SIP-023, decisioni dell'utente)
 
-- Ruoli da `privileges.level` (`components/User.php`): admin 50
-  (`isAdministrator`), merchant 30 (`isMerchant`), base 0. Nessun RBAC Yii.
-- Proprietà del merchant: `merchants.user_id`. `User::getMerchantId()` prende
-  `merchants[0]`: con più merchant per utente la scelta è arbitraria. C4 non lo
-  usa: lo scope del merchant è l'insieme dei `merchants.id` con
-  `user_id` = utente corrente (vuoto = nessuna risorsa).
-- Gli account nascono solo da registrazione pubblica (`SiteController::signup`,
-  attivazione via email). L'admin crea il merchant scegliendo un utente base e
-  lo promuove a merchant (`MerchantsController::create`).
-  Nessun merchant può oggi creare o invitare account.
-- Nella registrazione l'utente sceglie da sé `is_merchant` e ottiene il livello
-  30 (senza riga `merchants`). Per C4 il livello merchant da solo non dà scope:
-  serve la proprietà in `merchants`. Segnalato al master (punto 7).
-- Rotte: `enablePrettyUrl` senza strict parsing, quindi `pos-management/<action>`
-  funziona senza modificare `config/web.php`.
-- Accessi negati già registrati dal filtro globale `AuditedAccessControl`; scritture
-  con `Log::save(..., Log::TYPE_DATA)`; pager unico `components/web/LinkPager`.
-- ID nelle URL: pattern `Crypt::encrypt` + decodifica tollerante
-  (`decodeId` in `AssociationController`); la cifratura non è autorizzazione.
-- Revoca sessioni POS: `PosApi::revoke(PosOperatorSessions, reason)`, per
-  singola sessione; riusabile senza modificare `PosApi.php`.
+- Socio PF: solo associazione. Socio PG: può autoattivare il proprio merchant;
+  lo stesso account ne diventa l'unico gestore e resta socio PG.
+- Gestore: amministra un solo merchant; non usa il POS; crea solo operatori.
+- Operatore: account dedicato, non socio, nato dall'invito; un solo merchant;
+  negozi solo tramite grant espliciti. Socio che vuole lavorare in cassa: altro
+  account, altra email.
+- Admin: funzioni esplicitamente autorizzate; mai operatore per ruolo.
+- Merchant diversi non condividono gestori né operatori. Mai `merchants[0]`.
 
-## 2. Attori e scope
+## 2. Gate di identità: solo `AccountEligibility`
 
-| Attore | Condizione | Scope |
+C4 non copia query di classificazione: chiama la policy condivisa.
+
+| Uso in C4 | Metodo |
+| --- | --- |
+| Scope del gestore | `merchantForManager((int) Yii::$app->user->id)`; `null` = nessuno scope, 403 |
+| Merchant su cui si può **concedere** (abilitare terminale, profilo, grant; creare grant o terminale) | `qualifiedMerchant($merchantId)` |
+| Account a cui si può concedere (abilitare profilo, creare/abilitare grant) | `isOperatorAccount($userId)` |
+
+- Admin: `User::isAdministrator()` resta il controllo di ruolo; la policy non
+  conferisce ruoli. L'admin seleziona un merchant con ID cifrato, solo come
+  selettore: il servizio risolve il record e ne ricava `merchant_id`.
+- Riduzioni di privilegio (disabilitare terminale, profilo, grant) restano
+  possibili anche su dati incoerenti: sono il percorso esplicito di riduzione
+  richiesto da R1. Le concessioni invece richiedono identità coerente.
+- Flag e grant C1 restano controlli separati: `isOperatorAccount` non li verifica.
+
+## 3. Attori e scope
+
+| Attore | Condizione | Lettura | Scrittura |
+| --- | --- | --- | --- |
+| Admin | `isAdministrator()` | tutti i merchant | concessioni solo su merchant qualificati; riduzioni ovunque |
+| Gestore | `isMerchant()` e `merchantForManager` non nullo | solo il proprio merchant | come admin, solo sul proprio merchant |
+| Tutti gli altri | - | 403 | 403 |
+
+- Scope applicato nella query prima di conteggi, ordinamento e paginazione.
+- Record fuori scope o inesistente: 404, senza distinguere i due casi.
+- Il gestore non riceve mai grant né profilo operatore per ruolo.
+
+## 4. Parti A-C: funzioni (autorizzate)
+
+Controller `PosManagementController` (`/pos-management/...`), servizio in
+`components/pos/management/`, form in `models/forms/pos/`.
+
+| Action | Metodo | Effetto | Gate di concessione |
+| --- | --- | --- | --- |
+| `index` | GET | terminali e operatori in scope, filtro negozio, pager unico | - |
+| `terminal-create` | GET/POST | nome + negozio in scope; nasce disabilitato | `qualifiedMerchant` |
+| `terminal-update` | GET/POST | solo nome | - |
+| `terminal-enable` | POST | abilita | `qualifiedMerchant` |
+| `terminal-disable` | POST | disabilita | - |
+| `operator-view` | GET | profilo e grant per negozio | - |
+| `operator-enable` | POST | abilita profilo esistente | `qualifiedMerchant` + `isOperatorAccount` |
+| `operator-disable` | POST | disabilita e revoca subito le sessioni POS (D3) | - |
+| `grant-create` | POST | grant verso un negozio del merchant dell'operatore; nasce disabilitato | `qualifiedMerchant` + `isOperatorAccount` |
+| `grant-enable` | POST | abilita | `qualifiedMerchant` + `isOperatorAccount` |
+| `grant-disable` | POST | disabilita | - |
+
+- Disponibilità terminali sempre "Non verificata"; nessun comando di apertura,
+  chiusura o sblocco. Niente delete, trasferimenti o riassegnazioni.
+- Identificativi: terminale = `public_id`; operatore e negozio = ID cifrati
+  con `Crypt`, decodifica tollerante; malformati, array o lunghi: 404.
+- Profili operatore oggi esistono solo da fixture o futuri inviti: C4-A..C non
+  crea profili.
+
+### Scritture
+
+- `VerbFilter` POST e CSRF su tutte; form con soli campi ammessi; nessun mass
+  assignment sugli AR C1 (che già bloccano riassegnazioni).
+- In transazione, nell'ordine:
+  1. lock `FOR UPDATE` della riga `merchants` interessata;
+  2. ricalcolo dello scope dell'attore (`merchantForManager` per il gestore)
+     e, per le concessioni, dei gate della sezione 2;
+  3. lock `FOR UPDATE` del record (terminale, profilo, grant) e verifica che
+     appartenga a quel merchant;
+  4. scrittura, audit, commit.
+  Un modello letto prima del lock non viene riusato.
+- D3: `operator-disable` revoca nella stessa transazione tutte le sessioni POS
+  attive dell'utente (`PosApi::revoke`, motivo `operator_disabled`). La
+  riabilitazione non le riattiva: serve un nuovo login. Il login Napay
+  dell'account non viene toccato.
+- Errori: messaggio generico; nel log solo classe dell'eccezione, mai query,
+  POST, sessione o credenziali. Audit `Log::TYPE_DATA` con attore, azione,
+  `public_id`/ID, esito; nomi con `Log::quote`.
+
+## 5. Parte D: inviti operatore (PROPOSTA, da rivedere)
+
+### Flusso
+
+1. **Invito.** Gestore (o admin su un merchant qualificato) inserisce un'email.
+   - Normalizzazione come la policy: `LOWER(TRIM(email))`; validazione email,
+     massimo 60 caratteri (limite di `Users.email`).
+   - Al merchant sempre la stessa risposta ("invito registrato"), qualunque sia
+     lo stato dell'indirizzo: nessuna enumerazione.
+   - Se l'email appartiene già a un account (socio, gestore, operatore, altro):
+     all'indirizzo arriva un avviso "questo indirizzo ha già un account Napay:
+     per lavorare in cassa serve un'altra email", senza link di accettazione.
+     Nessun collegamento, nessun cambio password.
+   - Altrimenti email con link `/pos-invitation/accept?token=...`.
+2. **Apertura del link (GET).** Mostra merchant, email (sola lettura) e form:
+   nome, cognome, password, conferma. Non consuma il token. Con un utente già
+   connesso a Napay: chiede di uscire prima, non collega l'account attuale.
+3. **Accettazione (POST con CSRF).** In una transazione:
+   1. lock `FOR UPDATE` dell'invito: attivo, non scaduto, non consumato;
+   2. lock della riga `merchants`: ancora `qualifiedMerchant`;
+   3. serializzazione per email (sezione "Concorrenza");
+   4. nessun account con quell'email normalizzata;
+   5. creazione account: livello base, attivo, `username` = `email`, password
+      con `Yii::$app->security->generatePasswordHash`, `authKey`/`accessToken`
+      casuali; nessun `is_merchant`, nessun socio, quote o ruoli associativi;
+   6. riga `pos_operators` **disabilitata** per quel merchant;
+   7. invito consumato (data e account creato), audit, commit.
+   Qualunque condizione fallita: messaggio generico, nessuna scrittura, invito
+   non consumato. Il gestore poi abilita il profilo e concede i negozi (parte C).
+
+### Token, scadenza, reinvio
+
+- Token: 32 byte casuali in base64url; nel DB solo SHA-256; mai mostrato al
+  merchant, mai nei log (gli URL sono registrati senza query).
+- Scadenza 72 ore. Monouso: consumo atomico al punto 3.
+- Un nuovo invito per la stessa coppia merchant/email annulla quello attivo.
+- Email non inviata: invito resta attivo con stato "invio non riuscito".
+  **Reinvia** genera un nuovo token (il vecchio smette di valere) e una nuova
+  scadenza. **Annulla** revoca l'invito attivo.
+- Limiti (componente `Throttle`, riuso): 20 inviti/ora per merchant,
+  3/giorno per email normalizzata, 10 accettazioni/minuto per IP.
+- Elenco inviti del merchant: email digitata, stato (in attesa, invio non
+  riuscito, accettato, scaduto, annullato), scadenza.
+
+### Concorrenza ed email
+
+- Inviti di merchant diversi alla stessa email: ammessi; la prima accettazione
+  crea l'account, le altre falliscono al punto 4.
+- `users.email` non ha un vincolo di unicità nel DB: un `findOne` non basta.
+  Proposta al master, in alternativa:
+  - **definitiva (consigliata):** colonna generata con l'email normalizzata e
+    indice UNIQUE su `users`, dopo la riconciliazione dei duplicati legacy;
+    l'inserimento concorrente fallisce in modo sicuro;
+  - **ponte:** lock applicativo per email (`GET_LOCK` sul digest dell'email
+    normalizzata) usato **sia** dall'accettazione **sia** dalla registrazione
+    pubblica. Senza il secondo uso non protegge.
+  Entrambe toccano file/schema condivisi: le decide e integra il master.
+  Il codice inviti resta fermo finché una delle due non è disponibile.
+
+### Schema `pos_operator_invitations` (timestamp riservato `m261112_140000`)
+
+Additiva, nessuna modifica alle tabelle C1; convenzioni C1 (InnoDB, utf8mb4,
+`utf8mb4_0900_bin`, BIGINT Unix, FK RESTRICT).
+
+| Colonna | Tipo | Note |
 | --- | --- | --- |
-| Admin | `User::isAdministrator()` | tutti i merchant, negozi, operatori, terminali |
-| Merchant | `User::isMerchant()` **e** almeno un `merchants.user_id` = sé | solo i propri merchant e i loro negozi |
-| Altri (base, merchant senza `merchants`) | - | 403 su tutto il controller |
+| `id` | INT AUTO_INCREMENT | PK |
+| `merchant_id` | INT | FK `merchants.id` |
+| `email` | VARCHAR(60) | normalizzata, CHECK non vuota |
+| `token_sha256` | CHAR(64) ascii | UNIQUE |
+| `created_by` | INT | FK `users.id` (gestore o admin) |
+| `created_at`, `updated_at`, `expires_at` | BIGINT | |
+| `sent_at` | BIGINT NULL | ultimo invio riuscito |
+| `send_failures` | SMALLINT | contatore |
+| `consumed_at` | BIGINT NULL | |
+| `consumed_user_id` | INT NULL | FK `users.id` |
+| `revoked_at` | BIGINT NULL | annullato o sostituito |
+| `active_key` | generata: `merchant_id:email` se non consumato né revocato, altrimenti NULL | UNIQUE: un solo invito attivo per coppia |
 
-Lo scope si applica nella query prima di conteggi, ordinamento e paginazione,
-e di nuovo su ogni action che riceve un identificativo. Un record fuori scope
-risponde 404 come un record inesistente (nessun oracolo sull'esistenza).
-Nessun grant implicito: né admin né merchant diventano operatori o ricevono
-accesso a negozi per ruolo.
+Indici: `(merchant_id, created_at)` per l'elenco. Rollback distruttivo
+disabilitato come nelle migration C1.
 
-## 3. Funzioni
+### Test previsti (parte D)
 
-Controller `PosManagementController` (`/pos-management/...`) per admin e
-merchant; controller `PosInvitationController` (`/pos-invitation/accept`) per
-l'utente invitato.
+Risposta identica con email libera, socio, gestore o operatore; nessun
+collegamento o cambio password di account esistenti; token solo come digest;
+link scaduto, annullato, sostituito o già usato rifiutato senza scritture;
+due accettazioni concorrenti e accettazione contro registrazione pubblica: un
+solo account; varianti maiuscole/spazi trattate come la stessa email; utente
+connesso non collegato; nessun socio/quote creati; profilo creato disabilitato
+e senza grant; invio fallito e reinvio; limiti; nessun token nei log o nelle
+risposte al merchant (mail su file).
 
-| Action | Metodo | Admin | Merchant | Effetto |
-| --- | --- | --- | --- | --- |
-| `index` | GET | sì | sì | due schede: terminali e operatori, filtro per negozio |
-| `terminal-create` | GET/POST | sì | sì | nome + negozio (solo negozi in scope); `merchant_id` dal negozio; nasce disabilitato |
-| `terminal-update` | GET/POST | sì | sì | solo nome |
-| `terminal-enable` / `terminal-disable` | POST | sì | sì | flag `is_enabled` |
-| `invitation-create` | GET/POST | sì | sì | invito via email a diventare operatore di un merchant in scope (D1) |
-| `invitation-revoke` | POST | sì | sì | annulla un invito in attesa |
-| `operator-view` | GET | sì | sì | profilo + grant per negozio |
-| `operator-enable` / `operator-disable` | POST | sì | sì | flag profilo; disable revoca subito le sessioni POS (D3) |
-| `grant-create` | POST | sì | sì | grant verso un negozio dello stesso merchant dell'operatore; nasce disabilitato |
-| `grant-enable` / `grant-disable` | POST | sì | sì | flag grant |
+## 6. Test parti A-C (`tests/application/pos-management.php`)
 
-Elenco terminali: `negozio - nome POS`, stato, disponibilità sempre
-**"Non verificata"**. Nessun pulsante di apertura, chiusura o sblocco.
-Niente delete, trasferimento di terminali o riassegnazione di operatori a un
-altro merchant (fuori perimetro come da C1).
+Runner dedicato `tests/docker/pos-management.sh` (confermato), su DB
+usa-e-getta, fixture proprie: PG socia con ragione sociale e gestore di livello
+merchant, secondo merchant qualificato, merchant non qualificato, operatori
+coerenti e incoerenti (socio + operatore).
 
-Identificativi:
-- terminale: `public_id` (UUID) nella URL, mai `id`/`store_id`/`merchant_id`;
-- operatore: `user_id` cifrato con `Crypt`;
-- grant: operatore cifrato + `store_id` cifrato.
-Decodifica fallita, tipo non scalare o lunghezza eccessiva: 404.
+- Ruoli: admin, gestore, gestore di altro merchant, merchant non qualificato,
+  socio, operatore, anonimo.
+- Scope su elenchi, conteggi e pagine; ID e UUID altrui o malformati: 404.
+- POST manipolati (campi extra ignorati, negozio altrui rifiutato); CSRF
+  assente: 400; GET su scritture: 405.
+- Concessioni rifiutate su merchant non qualificato e operatore incoerente;
+  riduzioni sempre possibili.
+- D3: sessioni dell'operatore revocate, quelle di altri intatte; riabilitazione
+  senza riattivazione.
+- Nomi malevoli codificati; nessun dato sensibile nel registro.
+- Regressioni: policy R1, C1, login/logout API.
 
-## 4. Collegamento degli account operatore (decisioni dell'utente, 2026-11-12)
+## 7. Richieste al master
 
-**D1 - Invito del merchant, accettato dall'intestatario dell'account.**
-Il merchant non vede un elenco utenti e non può collegare un account con un ID
-o un'email: l'appartenenza nasce solo dal consenso dell'utente invitato.
-
-Invito (`invitation-create`, admin o merchant proprietario):
-- campi: email e merchant (solo tra quelli in scope; preselezionato se uno solo);
-- risposta sempre uguale, che l'account esista o no: nessun oracolo sugli utenti;
-- token: 32 byte casuali in base64url, nel DB solo SHA-256; scadenza 72 ore;
-- un nuovo invito per la stessa coppia merchant/email annulla quello in attesa;
-- email (`Yii::$app->mailer`, template nuovi in `mail/`): link
-  `/pos-invitation/accept?token=...`; se l'account non esiste, invita a
-  registrarsi prima con quell'indirizzo. Il token non va nei log (gli URL sono
-  già registrati senza query);
-- limite: 20 inviti l'ora per merchant e 3 al giorno per email, con il
-  componente esistente `Throttle` (riuso, nessuna modifica);
-- elenco inviti del merchant: email, scadenza, stato (in attesa, accettato,
-  scaduto, annullato).
-
-Accettazione (`PosInvitationController`, utente autenticato):
-- GET mostra merchant e richiesta di conferma; POST con CSRF accetta;
-- condizioni, tutte verificate in transazione con il record invito `FOR UPDATE`:
-  token valido, non scaduto, non annullato, non già usato; email dell'utente
-  connesso uguale a quella invitata (confronto normalizzato); account attivo di
-  livello base (D2); utente non già operatore di un merchant (PK `user_id`);
-- esito: riga `pos_operators` **disabilitata** (default C1) e invito segnato
-  come accettato. Il merchant poi abilita il profilo e concede i negozi;
-- qualunque condizione fallita: stesso messaggio generico, invito non consumato.
-
-Nuova tabella `pos_operator_invitations` (migration additiva, timestamp da
-riservare al master): `id`, `merchant_id` (FK RESTRICT), `email`
-VARCHAR(254), `token_hash` CHAR(64) UNIQUE, `created_by` (FK users),
-`created_at`, `expires_at`, `accepted_at`, `accepted_user_id`, `revoked_at`
-(BIGINT Unix come C1). Nessuna modifica alle tabelle C1.
-
-**D2 - Solo utenti base.** Operatori solo account attivi di livello 0. Admin e
-merchant esclusi; il titolare che usa la cassa usa un secondo account base.
-
-**D3 - Disconnessione immediata.** Disabilitando il profilo, nella stessa
-transazione si revocano tutte le sessioni POS attive dell'utente
-(`PosApi::revoke`, motivo `operator_disabled`). Grant e terminali disabilitati
-hanno effetto dalla richiesta API successiva (C2), senza revocare la sessione.
-
-## 5. Regole di sicurezza delle scritture
-
-- Accesso: `AccessControl` con `roles => ['@']` + `matchCallback` sul ruolo;
-  poi controllo record-level su ogni identificativo.
-- Metodi: `VerbFilter` con POST su tutte le scritture; CSRF attivo
-  (`ActiveForm` / `Html::beginForm`), nessuna eccezione.
-- Form dedicati in `models/forms/pos/*` con soli campi ammessi (nome, negozio
-  cifrato, email e merchant cifrato per l'invito). `merchant_id`, `public_id`, `is_enabled`,
-  timestamp e identità non arrivano mai dal client; i valori derivano dai record
-  in scope. I tre AR C1 restano invariati e già bloccano le riassegnazioni.
-- Servizio `components/pos/management/*`: ogni scrittura in transazione, con
-  rilettura del record in scope `FOR UPDATE` prima di modificarlo; violazioni
-  di unicità/FK (anche concorrenti) diventano un errore generico, mai il
-  messaggio del DB.
-- Audit (`Log::TYPE_DATA`): attore, azione, `public_id` del terminale o ID
-  operatore/negozio, esito. Nomi con `Log::quote`. Mai email in chiaro,
-  sessioni o token.
-- Output: `Html::encode` su nomi di terminali, negozi, merchant e operatori.
-- Errori: flash generici; dettagli solo nel log applicativo.
-
-## 6. Test previsti (`tests/application/pos-management.php`, DB usa-e-getta)
-
-Runner dedicato `tests/docker/pos-management.sh` sul modello di
-`pos-catalog.sh`, stesso DB `napay_test_runtime` con conferma
-`isolated-fixture`, fixture proprie senza modificare quelle comuni.
-
-- Ruoli: admin, merchant proprietario, merchant altrui, merchant senza riga
-  `merchants`, utente base, anonimo.
-- Scope: elenchi e conteggi senza dati di altri merchant; filtri e pagine
-  manipolati.
-- ID alterati: UUID altrui, ID cifrati altrui o malformati, array: 404.
-- POST manipolati: `merchant_id`/`public_id`/`is_enabled` aggiunti ignorati;
-  negozio di altro merchant rifiutato; grant cross-merchant rifiutato.
-- CSRF assente o errato: 400; GET sulle scritture: 405.
-- Creazioni disabilitate per default; enable/disable con audit.
-- Inviti: risposta identica con e senza account; token solo come digest;
-  scaduto, annullato, riusato, di un altro utente o con email diversa:
-  rifiutati senza consumarlo; due accettazioni concorrenti, una sola riesce;
-  limiti di invio; nessun token nei log.
-- D2: account non attivo, admin, merchant, già operatore: rifiutati.
-- D3: disabilitazione profilo revoca le sessioni attive dell'utente e non
-  quelle di altri.
-- Nomi malevoli (`<script>`, `=formula`) codificati in tutte le viste.
-- Concorrenza: due grant uguali in parallelo, uno solo riesce.
-- Regressioni: suite C1, login/logout API.
-
-## 7. Richieste e segnalazioni al master
-
-- Voce di menu nella sidebar (admin e merchant): file condiviso, patch
-  nell'handoff alla consegna.
-- Eventuale riga nel runner comune: alternativa al runner dedicato.
-- Sicurezza (fuori C4, file condivisi): la registrazione pubblica permette di
-  scegliersi il ruolo merchant; `User::getMerchantId()` prende il primo merchant
-  in modo arbitrario.
-- Timestamp della migration `pos_operator_invitations` da riservare
-  nell'ordine delle migration.
+- Unicità/serializzazione email (sezione 5): blocca il codice inviti.
+- Review della parte D e via libera alla migration `m261112_140000`.
+- Sidebar: voce "Terminali POS" (patch alla consegna).
+- Da R0/SIP-023, fuori C4: operatori che entrano nel backoffice Napay non
+  devono vedere funzioni da socio; registrazione pubblica con `is_merchant`.
 
 ## 8. Fuori perimetro
 
-Creazione di account da parte del merchant, delete, trasferimenti e
-riassegnazioni, apertura/sblocco/disponibilità reale, API POS, modifiche ai
-modelli C1, a `Users`/`Stores`/`Merchants`, routing, layout, runner comune,
-BTCPay e import legacy.
+Registrazione PF/PG e autoattivazione merchant (master), delete,
+trasferimenti, riassegnazioni, apertura/sblocco/disponibilità reale, API POS,
+modifiche a modelli C1, `Users`, `SignupForm`, `AccountEligibility`, routing,
+layout, runner comuni, BTCPay, import legacy.
