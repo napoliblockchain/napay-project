@@ -22,6 +22,12 @@ piu il provisioning P1 con permessi sulle impostazioni server.
 
 ## Crash e riconciliazione da coprire nel contratto B1
 
+Aggiornamento vincolante: l'utente ha scelto conservazione cifrata della
+password tecnica anche dopo onboarding, per rotazione gestita da Napay,
+con recupero amministrativo eccezionale. Vedi
+[decisione opzione B](B1-DECISIONE-ROTAZIONE.md). Le indicazioni storiche di
+eliminazione qui sotto sono superate, non autorizzano piu la cancellazione.
+
 La vecchia ipotesi "password mai persistita" non copre il crash dopo creazione
 utente e prima di salvataggio chiave. B1 deve definire stato onboarding:
 password casuale cifrata con la stessa separazione dei segreti, salvata prima

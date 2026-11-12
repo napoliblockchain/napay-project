@@ -1,5 +1,11 @@
 # SIP-022 B1 - Review master
 
+Aggiornamento decisionale: rotazione non piu aperta sul destino della password.
+Utente conferma opzione B, conservazione cifrata e recupero amministrativo
+eccezionale: [contratto vincolante](B1-DECISIONE-ROTAZIONE.md). Supera le
+indicazioni precedenti di eliminazione; policy e recovery del worker ancora
+da definire e verificare prima dell'implementazione.
+
 Data: 2026-11-12. Esaminati594485f e cbdd37f, importati come9fe7de5 e2274edd.
 P3 e separazione utenti DB confermati dall'utente; codice B1 non approvato.
 

@@ -23,6 +23,10 @@ stati remoti, riconciliazione e notifiche di pagamento non sono import anagrafic
 
 ## Decisioni confermate dall'utente (2026-11-12)
 
+- Password tecnica BTCPay conservata cifrata anche dopo onboarding, solo al
+  worker: rotazione gestita da Napay, recupero amministrativo per eccezioni.
+  Merchant mai obbligato ad accedere a BTCPay. Dettagli e gate:
+  [decisione opzione B](SIP-022/B1-DECISIONE-ROTAZIONE.md).
 - Modello credenziali definitivo **P3**, dopo test B0: provisioner limitato
   e chiave cifrata/revocabile per merchant. Sostituisce P1 delle prime
   proposte. Contratto e gate: [decisione P3](SIP-022/B0-DECISIONE-P3.md).
