@@ -23,6 +23,9 @@ stati remoti, riconciliazione e notifiche di pagamento non sono import anagrafic
 
 ## Decisioni confermate dall'utente (2026-11-12)
 
+- Modello credenziali definitivo **P3**, dopo test B0: provisioner limitato
+  e chiave cifrata/revocabile per merchant. Sostituisce P1 delle prime
+  proposte. Contratto e gate: [decisione P3](SIP-022/B0-DECISIONE-P3.md).
 - [SIP-023](SIP-023-profili-soci-merchant-operatori.md): merchant solo PG socia;
   gestore e operatore distinti, invito operatore non iscrive all'associazione.
   Identita BTCPay per merchant non coincide con account socio o operatore.
