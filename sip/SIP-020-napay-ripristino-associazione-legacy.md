@@ -14,6 +14,9 @@ gestore merchant e operatore non socio. Solo PG socia puo diventare merchant;
 iscrizione e pagamento quote non conferiscono operativita commerciale. Stessa
 persona socio/operatore: account ed email distinti. Adeguamenti da progettare,
 nessuna conversione automatica dei dati legacy autorizzata da questa nota.
+La PG si iscrive prima come socio PG; puo poi autoattivare il proprio profilo
+merchant senza approvazione admin, conservando la posizione associativa.
+La scelta merchant non appartiene al flusso PF o all'invito operatore.
 
 La vecchia app Napay (Yii 1.1, branch `master`, release b2c2152 del 28/03/2023,
 ancora online su `napay.napoliblockchain.it`) gestiva l'associazione:

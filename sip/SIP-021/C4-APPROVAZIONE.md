@@ -76,6 +76,15 @@ merchant con user_id uguale non autorizza a mantenerli come scope gestionale.
 Caso legacy con piu righe: errore/riconciliazione sicura, mai merchants[0] o
 estensione implicita dello scope. Il master definisce gli adeguamenti condivisi.
 
+Ultima decisione: la PG si iscrive prima come socio PG e autoattiva poi il
+proprio merchant senza approvazione admin. Il gestore e quello stesso account;
+non e un secondo account creato dall'admin. L'operatore POS resta distinto e
+nasce dal percorso invito. Autoattivazione e adeguamenti registrazione/scopo
+account restano al master, non autorizzano edit C4 ai file condivisi.
+Policy read-only condivisa ora disponibile: AccountEligibility, Napay `5c1fd920`
+e test `00afe16a`. C4 deve riusarla senza duplicare i gate; contratto e incarico
+aggiornati nell'[handoff R1](../SIP-023/HANDOFF-AGENTE-NAPAY.md).
+
 Aggiornare C4-BACKOFFICE.md con la scelta D1 e proporre schema/contratto inviti:
 token casuale, solo digest nel DB, scadenza, monouso/consumo atomico, revoca e
 rate limit; GET visualizza il form senza consumare, POST con CSRF completa.

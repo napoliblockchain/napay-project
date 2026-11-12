@@ -19,13 +19,16 @@ socio, una persona giuridica, un merchant o un operatore POS.
 
 Decisioni confermate dall'utente il 2026-11-12:
 - Solo una PG socia puo scegliere di diventare anche merchant; non una PF.
+- La PG si registra prima come socio PG e puo poi attivare autonomamente il
+  proprio profilo merchant, senza approvazione admin. Lo stesso account diventa
+  il suo unico gestore, conservando la posizione associativa.
 - Il gestore merchant amministra ma non opera sul POS con quell'account.
 - Una persona puo essere socio e operatore, ma deve utilizzare due account
   con due email differenti.
 - Un merchant ha un unico account gestore, dedicato a quel merchant. I merchant
   possono essere molti nella piattaforma, ciascuno con i propri operatori POS;
   non e richiesto un account gestore comune a piu merchant/PG. Il gestore puo
-  generare solo account operatore POS, non nuovi soci, altri gestori o merchant.
+  generare solo account operatore POS, non nuovi soci, altri gestori o altri merchant.
   Questa precisazione sostituisce l'ipotesi multi-merchant per account gestore
   riportata in precedenza negli allegati di lavoro e in SIP-022.
 
@@ -34,8 +37,8 @@ Decisioni confermate dall'utente il 2026-11-12:
 | Profilo | Ambito | Capacita | Esclusioni |
 | --- | --- | --- | --- |
 | Socio PF | Associazione | Iscrizione, anagrafica, quote e funzioni associative autorizzate. | Nessun merchant e nessuna operativita POS derivano dall'iscrizione. |
-| Socio PG | Associazione | Iscrizione/anagrafica/quote della persona giuridica tramite account autorizzato; scelta facoltativa di diventare merchant. | PG non implica merchant attivo; iscrizione da sola non abilita incassi. |
-| Gestore merchant | Azienda/merchant | Gestione dei propri merchant, negozi, terminali e operatori secondo scope e permessi. | Non usa POS con quell'account; non acquisisce grant operatore per ruolo. |
+| Socio PG | Associazione | Iscrizione/anagrafica/quote della PG; autoattivazione facoltativa del proprio merchant senza approvazione admin. | PG non implica merchant attivo; iscrizione da sola non abilita incassi. |
+| Gestore merchant | Azienda/merchant | Stesso account PG dopo attivazione merchant; gestione del proprio merchant, negozi, terminali e operatori. | Non usa POS con quell'account; non acquisisce grant operatore per ruolo. |
 | Operatore POS | Cassa | Account dedicato, attivo, invitato dal merchant; POS dei soli negozi esplicitamente assegnati. | Non e socio per effetto dell'invito; nessuna amministrazione merchant o dei suoi operatori. |
 | Admin piattaforma | Amministrazione | Funzioni amministrative esplicitamente autorizzate. | Non diventa operatore per ruolo; non aggira grant o lock POS. |
 
@@ -48,11 +51,16 @@ la distinzione non elimina i flussi quota Bitcoin/PayPal/contanti di SIP-020.
    autorizzato che la gestisce non va confuso con l'anagrafica della societa.
    La PG puo essere contemporaneamente socia e merchant, senza perdere il
    proprio stato associativo.
-2. **Merchant solo PG.** Scelta disponibile nel flusso della PG socia;
-   qualificazione associativa e legame alla PG verificati server-side. Nessun
+2. **Merchant solo PG, autoattivazione.** Iscrizione prima come socio PG;
+   successivamente lo stesso account attiva il proprio merchant senza
+   approvazione admin. Qualificazione associativa e titolarita PG verificate
+   server-side; operazione autenticata e POST con CSRF, mai cambio ruolo via GET.
+   Doppio invio o retry non crea un secondo merchant/gestore. Nessun
    ruolo merchant autoassegnato da un flag del form PF o dall'invito operatore.
-   Non e qui introdotta una nuova approvazione manuale obbligatoria: il processo
-   tecnico di attivazione deve rispettare la scelta e i controlli definiti.
+   L'autoattivazione autorizzata della PG non equivale alla libera scelta di un
+   livello privilegio dal browser. Nessun requisito automatico di quota pagata
+   o altra approvazione introdotto qui; incassi reali richiedono comunque la
+   propria configurazione tecnica e i gate dei SIP pertinenti.
 3. **Gestore non cassiere.** L'account che amministra il merchant non puo
    acquisire o utilizzare un POS. Per lavorare alla cassa serve un distinto
    account operatore, non un ulteriore permesso sullo stesso account gestore.
@@ -129,6 +137,9 @@ registrazione o API condivise. Il master riserva eventuali nuovi cambi comuni.
 
 - Registrazione PF: solo socio; nessun merchant/operatore implicito.
 - Registrazione PG: socio, con scelta merchant facoltativa e riferita alla PG.
+- Autoattivazione PG senza intervento admin, idempotente e protetta da CSRF;
+  PF, operatore e richiesta su altra PG rifiutati. Nessun secondo gestore o
+  secondo merchant creato per la stessa PG/account.
 - Merchant/gestore non opera POS, anche conoscendone ID o avendo sessione valida.
 - Merchant A e B hanno gestori e operatori separati; nessun account gestore
   amministra entrambi e nessun invito crea un socio o un altro gestore.

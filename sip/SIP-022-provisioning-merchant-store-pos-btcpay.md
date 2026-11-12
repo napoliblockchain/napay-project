@@ -26,6 +26,10 @@ stati remoti, riconciliazione e notifiche di pagamento non sono import anagrafic
 - [SIP-023](SIP-023-profili-soci-merchant-operatori.md): merchant solo PG socia;
   gestore e operatore distinti, invito operatore non iscrive all'associazione.
   Identita BTCPay per merchant non coincide con account socio o operatore.
+- La PG si iscrive come socio e autoattiva poi il proprio merchant senza
+  approvazione admin. Provisioning dalla creazione/attivazione del merchant,
+  non dalla sola iscrizione PG; BTCPay offline non annulla l'iscrizione
+  associativa e non autorizza a dichiarare pronti gli incassi.
 - Napay unico punto di gestione per merchant, negozi e POS; provisioning verso
   BTCPay, senza sincronizzazione anagrafica inversa.
 - Il merchant usa soltanto Napay: BTCPay trasparente, niente inviti o credenziali

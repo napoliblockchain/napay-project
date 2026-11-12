@@ -43,6 +43,14 @@ Include le query soci/quote e l'assenza del legame diretto merchant-PG;
 cardinalita confermata: un gestore dedicato per merchant, nessun account gestore
 multi-PG/merchant. Ogni merchant crea solo i propri operatori POS. Vecchi casi
 multi-merchant per account richiedono riconciliazione, non uso di merchants[0].
+PG: prima iscrizione come socio PG, poi autoattivazione merchant senza admin;
+stesso account come unico gestore. Il master mantiene registrazione, policy
+identita e autoattivazione; l'agente Napay mantiene backoffice C4 e inviti.
+Primo contratto tecnico master: [R1 policy condivisa](SIP-023/R1-POLICY-CONDIVISA.md),
+helper read-only da riusare in C4. Non autorizza ancora inviti/DDL o nuove iscrizioni.
+R1 implementato e testato: Napay `5c1fd920`, `00afe16a`, 24 controlli isolati.
+[Incarico aggiornato agente Napay](SIP-023/HANDOFF-AGENTE-NAPAY.md): puo ricevere
+i due commit sul proprio branch C4 e avanzare sulle parti gia autorizzate.
 
 C1 chiuso: Napay `c357ec41`, `a3fd15f3`; [handoff](SIP-021/C1-HANDOFF.md).
 Agente Napay assegnato a `feature/v2-napay-backoffice-c4`, worktree
