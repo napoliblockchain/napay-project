@@ -36,7 +36,9 @@ probe() {
     set -e
 }
 ip_on() { docker inspect -f "{{(index .NetworkSettings.Networks \"$2\").IPAddress}}" "$1"; }
-networks_of() { docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$1" | tr ' ' '\n' | sed '/^$/d' | sort | tr '\n' ' '; }
+# insieme di reti in ordine byte (LC_ALL=C), indipendente dalla lingua di sistema
+networks_of() { docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$1" | tr ' ' '\n' | sed '/^$/d' | LC_ALL=C sort | tr '\n' ' '; }
+expect_networks() { printf '%s\n' "$@" | LC_ALL=C sort | tr '\n' ' '; }
 
 # prerequisiti: client con curl, ricetta proxy
 docker run --rm --network none --entrypoint curl "$client_image" --version >/dev/null
@@ -58,8 +60,8 @@ docker cp "$p-gateway:/data/caddy/pki/authorities/local/root.crt" "$work/ca.crt"
 chmod 644 "$work/ca.crt"
 sleep 2
 
-[[ $(networks_of "$p-backend") == "$p-edge " && $(networks_of "$p-gateway") == "$p-client $p-edge " ]]
-[[ $(networks_of "$p-egress") == "$p-client $p-napay $p-sim " ]]
+[[ $(networks_of "$p-backend") == "$(expect_networks "$p-edge")" && $(networks_of "$p-gateway") == "$(expect_networks "$p-client" "$p-edge")" ]]
+[[ $(networks_of "$p-egress") == "$(expect_networks "$p-client" "$p-napay" "$p-sim")" ]]
 pass 'Backend only on edge; gateway on edge+client; egress on client, never on edge'
 
 # percorso previsto: web -> proxy -> btcpay.local (TLS verificato) -> backend

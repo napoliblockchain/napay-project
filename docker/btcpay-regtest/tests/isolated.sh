@@ -38,7 +38,9 @@ probe() {
     set -e
 }
 ip_on() { docker inspect -f "{{(index .NetworkSettings.Networks \"$2\").IPAddress}}" "$1"; }
-networks_of() { docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$1" | tr ' ' '\n' | sed '/^$/d' | sort | tr '\n' ' '; }
+# insieme di reti in ordine byte (LC_ALL=C), indipendente dalla lingua di sistema
+networks_of() { docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$1" | tr ' ' '\n' | sed '/^$/d' | LC_ALL=C sort | tr '\n' ' '; }
+expect_networks() { printf '%s\n' "$@" | LC_ALL=C sort | tr '\n' ' '; }
 docker run --rm --network none --entrypoint curl "$client" --version >/dev/null
 
 "${local_sh[@]}" up >/dev/null
@@ -60,9 +62,9 @@ pass 'OpenAPI not public (401 without credentials)'
 
 regtest="${BTCPAY_PROJECT}_regtest"
 for service in postgres bitcoind nbxplorer; do
-    [[ $(networks_of "$("${compose[@]}" ps -q "$service")") == "$regtest " ]]
+    [[ $(networks_of "$("${compose[@]}" ps -q "$service")") == "$(expect_networks "$regtest")" ]]
 done
-[[ $(networks_of "$("${compose[@]}" ps -q btcpayserver)") == "$BTCPAY_EDGE_NETWORK $regtest " ]]
+[[ $(networks_of "$("${compose[@]}" ps -q btcpayserver)") == "$(expect_networks "$BTCPAY_EDGE_NETWORK" "$regtest")" ]]
 [[ $(docker network inspect -f '{{.Internal}}' "$regtest") == true && $(docker network inspect -f '{{.Internal}}' "$BTCPAY_EDGE_NETWORK") == true ]]
 pass 'Services only on internal networks (btcpayserver also on edge)'
 
