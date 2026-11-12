@@ -98,3 +98,53 @@ completa, incluso riavvio con dati preservati/bootstrap no-op, tutti verdi.
 Sintassi PHP8.3.36 e diff controllati. Nessuna prova grafica browser o nuova
 migration. La mancata qualificazione di dati legacy ora nega la selezione
 implicita del merchant: richiede riconciliazione, non scelta arbitraria.
+
+## Contratto R3b prima del codice
+
+- GET merchants/activate mostra form solo alla PG base attiva coerente;
+  POST con CSRF attiva il merchant del solo account corrente, senza approval.
+  PF, operatore, identita incompleta/conflittuale o inattiva negati server-side.
+  Gestore gia qualificato torna alla propria azienda: ripetizione non crea2.
+- Riuso form/model Merchants e campi obbligatori esistenti; nuova scenario
+  activation normalizza input testuali malformati e valida email. P.IVA si
+  inserisce alla creazione e rimane immutabile nei successivi editor esistenti.
+  Nessuna sincronizzazione implicita con dati fiscali MemberProfiles.
+- Unico servizio locale per autoattivazione e create admin preesistente.
+  Il vecchio create non resta disponibile ai merchant per creare altre aziende;
+  admin puo selezionare solo PG eleggibili, mai PF o operatori. Owner del self
+  flow deciso dal server; campi extra ID/ruolo/attivazione ignorati.
+- Transazione READ COMMITTED propria: lock account destinatario, rilettura
+  attore attivo/ruolo e policy R1, lock profilo PG, validazione e creazione
+  merchant + promozione ruolo30 risolto dal catalogo (esattamente uno).
+  Guardie ripetute dopo attesa; errore = rollback di entrambe le scritture.
+  Tutti i writer applicativi merchants rilevati passano dal servizio.
+- Due attivazioni dello stesso account serializzate sul lock users: un solo
+  merchant, stesso ID restituito dopo verifica qualificazione. Nessun vincolo
+  UNIQUE nuovo su dati legacy senza censimento; incoerenze esistenti negate.
+- Nessuna chiamata BTCPay, token, grant, negozio, quota o operatore generato.
+  UI chiarisce attivazione solo locale, incassi non ancora pronti. Hook/outbox
+  saranno B1 su contratto separato; il successo locale non certifica pagamenti.
+- Link Attiva merchant solo menu account in alto a destra; profilo non duplicato.
+  Test: accessi, CSRF/metodi, extra fields, validazione/array, idempotenza,
+  concorrenza a due processi, rollback e catalogo ruoli ambiguo/mancante.
+
+## R3b verificata
+
+Implementazione Napay: MerchantActivation condiviso tra self e create admin;
+form di attivazione dal menu account, owner server-side, lock account/profilo,
+transazione locale, catalogo ruolo univoco e nessuna chiamata BTCPay.
+Nuovo scenario sul modello Merchants; editor successivi mantengono P.IVA
+immutabile. Create legacy non piu disponibile al merchant e non promuove PF.
+
+Master ha eseguito39 controlli HTTP/DB/service: guest/PF/operatore/inattivo e
+account senza profilo negati; CSRF400/metodo405; array senza500; owner/ruolo/ID
+extra ignorati; idempotenza; creazione admin solo PG; validazione email;
+catalogo ruoli ambiguo/assente; CHECK temporaneo per fallimento promozione
+con rollback merchant+ruolo; due processi concorrenti restituiscono stesso ID.
+Bootstrap no-op dopo test dedicati. Runtime completa verde, incluso riavvio
+con dati preservati e bootstrap no-op; sintassi6 file PHP/shell e diff puliti.
+Nessuna suite PHPStan/Psalm configurata nel composer.json; nessuna prova
+grafica browser di questo form. Nessun dato o schema sandbox modificato.
+
+Resta R3c (portale soci/operatori/menu), oltre a B1 e prontezza incassi di
+SIP-022. Il commit R3b non dichiara conclusi inviti D, provisioning o POS.
