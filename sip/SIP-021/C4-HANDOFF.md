@@ -19,7 +19,11 @@
     `fef473f9` (= `7ee57669`), `1a2f5d8a` (= `0275704f`), `7b160750`
     (= `121fe3a2`), `e54291b0` (= `6487abbd`);
   - `bae55cdb` fix(pos): ordine lock C4 allineato al login POS;
-  - `b6b1653d` test(pos): gara D3 disable C4 contro login API reale.
+  - `b6b1653d` test(pos): gara D3 disable C4 contro login API reale;
+  - `450d395d` cherry-pick di `e0132f64` (Scope con account attivo, test
+    sessioni integrati, sidebar), nessun conflitto;
+  - parte D: `63911cae` schema, `f25acc04` servizio, `5a6ef31b` interfaccia,
+    `19b06f0b` test.
 - **Scostamento dall'handoff R2-D3 (da confermare):** il cherry-pick di
   `6487abbd` andava in conflitto su `tests/application/pos-terminals.php` e
   `POS-TERMINALS.md`, introdotti dal catalogo C2 assente nel mio branch; anche
@@ -90,6 +94,31 @@
     la riabilitazione.
   Suite C4 eseguita due volte consecutive: 58/58 entrambe, ordini rispettati.
 
+## Parte D - inviti operatore (2026-11-12)
+
+- **Schema** `m261112_140000` (additiva): tabella `pos_operator_invitations`,
+  digest del token univoco, FK RESTRICT verso merchants/users, CHECK
+  verificati sulla resa di MySQL 8.4; ripresa solo su definizione identica.
+- **Servizio** `components/pos/management/PosInvitations.php`, riusa
+  `PosManagement::write/lockMerchant/requireQualified` (resi pubblici come
+  interni) ed `EmailIdentity`:
+  - invito: email validata anche nel servizio; risposta identica per ogni
+    indirizzo; indirizzo già registrato = solo avviso senza link; il nuovo
+    invito annulla quello attivo per la stessa email nello stesso merchant;
+  - reinvio con nuovo token e scadenza; annullamento;
+  - accettazione: lock merchant -> invito, token riletto sotto lock, account
+    base attivo, `is_merchant = 0`, `oauth_provider = POS_INVITE`, nessun
+    profilo socio; profilo operatore disabilitato, nessun grant; qualunque
+    errore (anche violazione UNIQUE R2) = rollback e messaggio generico;
+  - limiti (`Throttle`): 20/ora per merchant, 3/giorno per indirizzo (anche
+    gli avvisi), 10/minuto per IP sulle accettazioni;
+  - mail dopo il commit; esito registrato in `sent_at`/`send_failures`.
+- **Interfaccia**: sezione inviti in `pos-management/index` (invito, stato,
+  reinvio, annullamento; admin sceglie il merchant con ID cifrato);
+  `PosInvitationController::actionAccept` pubblica, GET non consuma,
+  `no-store`/`no-referrer`, utente connesso mai collegato.
+- **Mail**: `mail/posOperatorInvitation*.php` (invito e avviso).
+
 ## File riservati
 
 - `controllers/PosManagementController.php`, `views/pos-management/*`
@@ -121,8 +150,15 @@
 
 - `tests/docker/account-eligibility.sh` nel worktree: 24 PASS, bootstrap
   `already-complete`.
-- `tests/docker/pos-management.sh`: **58 PASS** (49 + 4 RV1/RV2 + 5 gara
-  C4+API), log Apache senza bearer né chiave client, bootstrap no-op.
+- `tests/docker/pos-management.sh`: **C4 61 PASS** (58 + 3 del master da
+  `e0132f64`) e **inviti 41 PASS**; log Apache senza bearer, chiave client o
+  `token=`; bootstrap no-op.
+- Regressioni dopo la parte D, tutte verdi: `pos-management-sessions.sh` 59
+  (master); `pos-session-eligibility.sh` 119; `pos-terminals.sh` 177;
+  `pos-catalog.sh` 51/62/32; `email-identity.sh` 14 + 68 + 92 + 24;
+  `email-schema.sh` 106; `runtime.sh` completa con riavvio e bootstrap no-op.
+- Non verificati: invio mail reale via SMTP e percorso "invio non riuscito"
+  (solo trasporto su file); resa grafica nel browser.
 - Regressioni nel worktree dopo i cherry-pick (tutte verdi):
   `pos-session-eligibility.sh` 119; `pos-terminals.sh` 177; `pos-catalog.sh`
   51/62/32; `email-schema.sh` 106; `email-identity.sh` 14 + 68 reset + 92
@@ -146,7 +182,5 @@
 
 ## Blocchi
 
-- Parte D: dipendenza email risolta (R2). Condizioni del master riportate in
-  C4-BACKOFFICE sezione 5; implementazione non ancora iniziata, solo nel
-  worktree e su DB usa-e-getta quando autorizzata a procedere.
+- Parte D: implementata (vedi "Parte D" sopra), in attesa di review.
 - A-C: in attesa della review master delle correzioni.

@@ -10,9 +10,10 @@
 - Stato:
   - **parti A-C** (scope, terminali, profili esistenti, grant, revoca D3):
     implementate, correzioni RV1/RV2 e gare C4+API reali; in attesa di review;
-  - **parte D** (inviti): disegno approvato; implementazione autorizzata dal
-    master solo nel worktree e su DB usa-e-getta, alle condizioni della
-    sezione 5 ([handoff R2-D3](../SIP-023/HANDOFF-R2-D3.md)).
+  - **parte D** (inviti): implementata nel worktree e testata su DB usa-e-getta
+    alle condizioni della sezione 5 ([handoff R2-D3](../SIP-023/HANDOFF-R2-D3.md));
+    in attesa di review. Scostamento dallo schema proposto: niente colonna
+    generata `active_key` (vedi tabella schema).
 
 ## 1. Regole di riferimento (SIP-023, decisioni dell'utente)
 
@@ -197,7 +198,14 @@ Additiva, nessuna modifica alle tabelle C1; convenzioni C1 (InnoDB, utf8mb4,
 | `consumed_at` | BIGINT NULL | |
 | `consumed_user_id` | INT NULL | FK `users.id` |
 | `revoked_at` | BIGINT NULL | annullato o sostituito |
-| `active_key` | generata: `merchant_id:email` se non consumato né revocato, altrimenti NULL | UNIQUE: un solo invito attivo per coppia |
+
+Implementato senza la colonna generata `active_key` proposta: un solo invito
+attivo per merchant/email è garantito dal lock della riga `merchants`, preso
+per primo da emissione, reinvio, annullamento e accettazione (stesso ordine
+merchant -> invito). `email` è VARCHAR(255) come `users.email` (limite
+applicativo 60). CHECK: email 3-255 caratteri, token 64, tempi coerenti,
+`send_failures >= 0`, consumo e utente consumatore entrambi nulli o valorizzati,
+mai consumato e annullato insieme.
 
 Indici: `(merchant_id, created_at)` per l'elenco. Rollback distruttivo
 disabilitato come nelle migration C1.
