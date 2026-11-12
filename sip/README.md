@@ -44,6 +44,7 @@ Piano condiviso Napay/POS, ownership file e obiettivo 23/11/2026:
 | [SIP-021](SIP-021-pos-login-operatori-apertura-esclusiva.md) | POS: login operatori, negozi autorizzati e apertura esclusiva | POS / Napay / Integrazione | OPEN |
 | [SIP-022](SIP-022-provisioning-merchant-store-pos-btcpay.md) | Provisioning automatico merchant, negozi e POS su BTCPay | Napay / BTCPay / Integrazione | OPEN |
 | [SIP-023](SIP-023-profili-soci-merchant-operatori.md) | Separazione soci PF/PG, gestori merchant e operatori POS | Identita / Associazione / Autorizzazioni | OPEN |
+| [SIP-024](SIP-024-websocket-nodejs-notifiche.md) | WebSocket Node.js al posto del motore socket PHP | Realtime / Docker / Sicurezza | OPEN |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 

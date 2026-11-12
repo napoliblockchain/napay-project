@@ -31,6 +31,11 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 - Gestione container futuri `napay`, `poawallet`, `pos`, `store-wallet`, `tokenpay` (staging source)
 
 ## Note implementative
+
+Precisazione realtime (2026-11-12): [SIP-024](SIP-024-websocket-nodejs-notifiche.md).
+Relay Node interno 14800 dietro Caddy/WSS; nessuna pubblicazione host predefinita.
+18110 resta solo eventuale diagnostica loopback opzionale, senza aggirare TLS.
+Questa e la destinazione proposta, non una modifica gia applicata al compose.
 - Porte host proposte (non standard):
   - `18080` gateway HTTP
   - `18443` gateway HTTPS

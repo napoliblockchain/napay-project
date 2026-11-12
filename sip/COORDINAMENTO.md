@@ -29,6 +29,11 @@ La creazione di un worktree non autorizza nuovi stack o l'uso del DB condiviso.
 
 ## Ripartizione iniziale
 
+Realtime richiesto: [SIP-024](SIP-024-websocket-nodejs-notifiche.md), motore
+Node.js anziche PHP, riferimenti Aigo/IlNotturno e ws-notify wallet gia presente.
+Solo documentazione; nessuna sostituzione/avvio servizio o modifica a file wallet.
+Prima del codice W0 deve riservare ownership e contratto, senza interferire C4.
+
 Regole trasversali aggiornate: [SIP-023](SIP-023-profili-soci-merchant-operatori.md).
 Solo PG socia diventa merchant; gestore non opera POS; operatore non socio.
 Stessa persona socio/operatore: due account e due email. Il livello "base" da
