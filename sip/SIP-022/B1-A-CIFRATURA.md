@@ -8,7 +8,7 @@ dalla decisione sulla rotazione della chiave BTCPay e dal futuro schema DB.
 Nuovo branch/worktree Napay da base master corrente, non il checkout principale.
 Write set esclusivo: components/btcpay/provisioning/CredentialEnvelope.php,
 tests/application/btcpay-credential-envelope.php e runner dedicato sotto
- tests/docker/btcpay-credential-envelope.sh. Documentazione di consegna in
+tests/docker/btcpay-credential-envelope.sh. Documentazione di consegna in
 sip/SIP-022/B1-A-HANDOFF.md nel worktree orchestratore. Non toccare altre classi,
 config, composer, bootstrap, migration, controller o sorgenti master R3.
 
@@ -25,17 +25,19 @@ per non inserirli nei trace. Errori sanitizzati senza valori, SQL o eccezione
 originale contenente input. Non promettere cancellazione completa della memoria
 PHP; DEK temporanee ripulite con sodium_memzero ove possibile.
 
-Context richiede esattamente: account_id e merchant_id int positivi <=INT_MAX,
+Context richiede esattamente: account_id e merchant_id int positivi <=2147483647,
 instance stringa digest hex64 minuscola, kind onboarding_password oppure api_key,
 generation int positivo. Nessun campo derivato da email, nomi o payload liberi.
 Canonicalizzare ordine e tipi prima di costruire AD. Il formato1 e la tabella
 btcpay_merchant_credentials fanno parte dei dati associati.
 
-Busta versione1: kek_version (ID ASCII1..64, allowlist lettere/cifre/_/-),
+Busta: version (intero esattamente1), kek_version (ID con regex
+`^[A-Za-z0-9_-]{1,64}$`),
 secret_nonce, ciphertext, dek_nonce, wrapped_dek. Campi binari in base64
 standard canonica, decodifica stretta; reject campi ignoti/mancanti, tipi,
 lunghezze e formati sconosciuti. Plaintext non vuoto, massimo16384 byte;
-KEK e DEK esattamente32 byte, nonce24 byte, tag16 incluso nel ciphertext.
+KEK e DEK esattamente32 byte, nonce24 byte, tag16 incluso nel ciphertext;
+wrapped_dek decodificato esattamente48 byte, ciphertext17..16400 byte.
 DEK e due nonce casuali nuovi a ogni encrypt, XChaCha20-Poly1305 IETF per
 entrambi i livelli. Nessun riuso volontario di nonce/DEK tra buste.
 
