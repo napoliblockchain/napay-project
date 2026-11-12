@@ -121,3 +121,10 @@ Test mail su file; mai token/password nei log o in risposte al merchant.
 
 Aggiornare solo C4-HANDOFF.md/C4-BACKOFFICE.md e i file di codice riservati.
 Il master continua C2/C3 e integra menu/rotte solo dopo review dei commit C4.
+
+## Review codice A-C, successiva e prevalente
+
+Vedere [C4-REVIEW-MASTER.md](C4-REVIEW-MASTER.md): 49 controlli rieseguiti
+positivi, ma integrazione sospesa su snapshot/ownership e coordinamento D3-login.
+Dipendenza email: scelto vincolo UNIQUE normalizzato, niente ponte GET_LOCK;
+audit e migration utenti assegnati al master. Inviti ancora senza via libera DDL.

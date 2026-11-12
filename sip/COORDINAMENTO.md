@@ -127,3 +127,19 @@ Ogni handoff contiene commit, file, test eseguiti/non eseguiti e rischi. L'agent
 secondario non fa merge/cherry-pick sul branch di integrazione. Il master
 riesamina i commit, integra e riesegue le regressioni pertinenti. Nessuna
 migrazione/riaccensione della sandbox condivisa senza suo via libera.
+
+## Review C4 e assegnazione B0 - 2026-11-12
+
+- C4 A-C: 49 PASS rieseguiti dal master; integrazione sospesa per ownership
+  su snapshot obsoleto e D3/login concorrente. Correzioni classi C4 all'agente,
+  API/login/PosApi al master; dettagli in
+  [C4-REVIEW-MASTER](SIP-021/C4-REVIEW-MASTER.md).
+- Email: UNIQUE normalizzato definitivo, audit e schema utenti al master;
+  nessun GET_LOCK provvisorio. D inviti non parte prima della dipendenza.
+- B0: approvata preparazione stack regtest, non B1. Utente conferma
+  `btcpay-merchants.jamprojects.it` e riconciliazione legacy esplicita.
+  [B0-REVIEW-MASTER](SIP-022/B0-REVIEW-MASTER.md) assegna all'agente solo nuovi
+  file `docker/btcpay-regtest/*` in branch orchestratore dedicato; patch gateway,
+  rete, egress e launcher condivisi integrate esclusivamente dal master.
+- Ordine agente: fix C4 e test concorrenti, poi stack B0 indipendente.
+  Nessun riavvio gateway o provisioning senza integrazione/autorizzazione master.
