@@ -5,9 +5,12 @@
     admin off
 }
 
+# handle (non abort semplice): viene valutato prima dei blocchi handle dei siti, che altrimenti lo scavalcano
 (no_btcpay_backend) {
     @btcpay_backend remote_ip {$EDGE_SUBNET}
-    abort @btcpay_backend
+    handle @btcpay_backend {
+        abort
+    }
 }
 
 https://btcpay.local {
@@ -19,4 +22,15 @@ https://btcpay.local {
 https://napay.local {
     import no_btcpay_backend
     respond "napay-site"
+}
+
+# controfigura con la struttura di wallet.caddy (blocchi handle)
+https://wallet.local {
+    import no_btcpay_backend
+    handle /ws-notify {
+        respond "wallet-ws"
+    }
+    handle {
+        respond "wallet-site"
+    }
 }

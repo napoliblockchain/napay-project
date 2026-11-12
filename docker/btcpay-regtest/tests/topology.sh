@@ -106,10 +106,12 @@ gateway_edge=$(ip_on "$p-gateway" "$p-edge")
 gateway_client=$(ip_on "$p-gateway" "$p-client")
 probe "$p-client" --cacert /ca.crt --resolve "napay.local:443:$gateway_client" https://napay.local/
 [[ $code == 0 && $out == napay-site ]]
+probe "$p-client" --cacert /ca.crt --resolve "wallet.local:443:$gateway_client" https://wallet.local/ws-notify
+[[ $code == 0 && $out == wallet-ws ]]
 pass 'Positive control: other gateway sites answer on the client network'
-for host in napay.local btcpay.local; do
-    probe "$p-edge" --cacert /ca.crt --resolve "$host:443:$gateway_edge" "https://$host/"
-    [[ $code != 0 && $out != *napay-site* && $out != *btcpay-backend* ]]
+for target in napay.local/ btcpay.local/ wallet.local/ wallet.local/ws-notify; do
+    probe "$p-edge" --cacert /ca.crt --resolve "${target%%/*}:443:$gateway_edge" "https://$target"
+    [[ $code != 0 && $out != *-site* && $out != *btcpay-backend* && $out != *wallet-ws* ]]
 done
 pass 'Requests from the backend subnet aborted by the gateway on every site'
 printf 'PASS %d B0 topology checks (local sentinels only)\n' "$checks"
