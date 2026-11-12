@@ -116,6 +116,14 @@ pass 'Same email again refused (422): no duplicate identity'
 api GET "/api/v1/users/m-a@$domain" "" prov.hdr
 [[ $code == 200 ]] || fail "lookup by email ($code)"
 pass 'Reconciliation lookup by technical email (200)'
+# gate B1: il provisioner non deve poter creare amministratori del server
+body admin-try.json "{'email': 'b0-escalation@$domain', 'password': '$(openssl rand -hex 24)', 'isAdministrator': True}"
+api_retry POST /api/v1/users admin-try.json prov.hdr
+escalation=$code
+api_retry GET "/api/v1/users/b0-escalation@$domain" "" prov.hdr
+printf 'INFO: provisioner isAdministrator=true -> %s; lookup %s\n' "$escalation" "$code"
+[[ $escalation == 403 && $code == 404 ]] || fail 'provisioner could create a server admin'
+pass 'Provisioner (cancreateuser) cannot create a server administrator'
 body store-x.json "{'name': 'Negozio provisioner'}"
 api POST /api/v1/stores store-x.json prov.hdr
 [[ $code == 403 ]] || fail "provisioner store creation without store permission ($code)"
