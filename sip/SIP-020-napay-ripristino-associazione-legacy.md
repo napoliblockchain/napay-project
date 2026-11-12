@@ -312,3 +312,30 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (SIP-019, backup del 202
   nell'env, in un passo dedicato dell'area commercianti.
 - Prossimo: provare con il server reale (importo minimo) quando napay sarà
   pubblico; ricevuta scaricabile dal socio, da decidere.
+
+### Proxy di uscita della sandbox (COMPLETED, 2026-11-12)
+- La sandbox napay non ha internet (reti interne): PayPal e BTCPay erano
+  irraggiungibili. Scelta dell'utente: proxy con allowlist.
+- Servizio `egress`:
+  - Squid 6.12 su Alpine 3.22.8, non root, read-only, senza capability;
+  - unico container con internet: solo CONNECT 443 verso `api-m.paypal.com`,
+    `api-m.sandbox.paypal.com` e `btcpayserver.napoliblockchain.it`.
+- Il web usa il proxy solo per i gateway (`PAYMENT_PROXY`); un valore non
+  valido blocca ogni connessione.
+- Commit napay `c79c4f5c`.
+- Verificato sulla sandbox con le credenziali dell'utente (mai stampate):
+  - PayPal risulta in modalità `live` (credenziali vecchie, esposte: da
+    sostituire con un'app sandbox);
+  - la chiave BTCPay risponde 403 (permessi dello store da correggere).
+
+### Service worker con Workbox 7 (COMPLETED, 2026-11-12)
+- `sw.js` mancava da sempre nella v2 (404 su ogni pagina). Il vecchio
+  `sw-base.js` (Workbox v2.1.3) metteva in cache anche le pagine con dati personali.
+- Scelta dell'utente: generare `sw.js` con Workbox.
+  - Sorgente `web/sw-src.js`, build `docker/sw/build.sh` (Node 22 LTS, lockfile,
+    `tmp` forzato a 0.2.7).
+  - Precache minimo (offline, manifest, icone: 116 kB); pagine sempre dal
+    server, offline.html senza rete.
+  - Push e aggiornamento invariati; clic sulla notifica solo verso napay.
+- Commit napay `b7cd58df`. Test `service-worker.php`: 37 controlli, tra cui la
+  revisione MD5 del precache aggiornata.
