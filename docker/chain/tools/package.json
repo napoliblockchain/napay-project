@@ -8,5 +8,8 @@
     "@openzeppelin/contracts": "2.4.0",
     "ethers": "6.17.0",
     "solc": "0.5.17"
+  },
+  "overrides": {
+    "tmp": "^0.2.7"
   }
 }
