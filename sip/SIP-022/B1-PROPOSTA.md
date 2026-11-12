@@ -149,9 +149,11 @@ pronto resta `pending`, non fallisce.
     cifrato;
   - DEK cifrata con la KEK con lo stesso algoritmo e un **proprio** nonce
     casuale di 24 byte;
-  - dati associati identici per segreto e DEK, che legano il valore al suo
-    posto: `napay-btcpay|v1|<instance>|<account id>|<tipo>|<generazione>|kek<versione>`.
-    Una riga copiata su un altro account, tipo o generazione non si decifra.
+  - dati associati che legano il valore al suo posto:
+    segreto `napay-btcpay|v1|<instance>|<account id>|<tipo>|<generazione>`;
+    DEK la stessa stringa più `|kek<versione>`. Una riga copiata su un altro
+    account, tipo o generazione non si decifra; la rotazione della KEK cambia
+    solo i dati associati della DEK, non quelli del segreto.
   - versione della KEK salvata nella riga; con nonce casuali di 24 byte la
     probabilità di collisione è trascurabile anche con molte cifrature.
 - KEK fuori da DB e git, in un file secret del solo worker, con identificativo
