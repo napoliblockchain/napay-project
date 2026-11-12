@@ -32,9 +32,10 @@ stati remoti, riconciliazione e notifiche di pagamento non sono import anagrafic
 - Restano da definire identita tecnica/email per merchant e credenziali server;
   le scelte funzionali non approvano automaticamente policy, schema o API key.
 
-SIP-021 C1 e sospeso per coordinamento, non viene ripreso da questo documento.
+SIP-021 C1 e stato ripreso e chiuso dal master il 2026-11-12 su autorizzazione
+dell'utente; questo documento non autorizza altre migration o bootstrap.
 Questo SIP aggiunge un flusso remoto, non sostituisce appartenenze, grant o lock
-POS e non modifica le migration C1 durante la sospensione.
+POS e non modifica le migration C1 gia condivise.
 
 ## Verifica repository
 
@@ -157,7 +158,7 @@ qui approvati nuovi URL pubblici, payload CRUD o permessi per operatori base.
    identita tecnica per merchant e verificare versione/API/permessi/policy
    in ambiente BTCPay di test senza denaro reale.
 2. B1: mapping/outbox/worker e test, nuovi file dedicati e migration riservata
-   dopo coordinamento C1. Nessuna modifica al codice C1 sospeso.
+   dopo coordinamento del master. Nessuna modifica autonoma al codice C1.
 3. B2: creazione/associazione utente merchant, collisioni e riconciliazione.
 4. B3: creazione store e verifica ownership con almeno due merchant di test.
 5. B4: creazione app POS sullo store mappato e checkpoint idempotenti locali.

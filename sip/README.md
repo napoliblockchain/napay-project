@@ -16,6 +16,9 @@ Riferimenti storici TIP nei vecchi commit restano parte della cronologia Git.
 
 ## Indice (ordinato per dipendenze)
 
+Piano condiviso Napay/POS, ownership file e obiettivo 23/11/2026:
+[COORDINAMENTO.md](COORDINAMENTO.md).
+
 | ID | Titolo | Area | Stato |
 | -- | ------ | ---- | ----- |
 | [SIP-001](SIP-001-inventario-perimetro-software.md) | Inventario software e perimetro tecnico Napay | Architettura | COMPLETED |

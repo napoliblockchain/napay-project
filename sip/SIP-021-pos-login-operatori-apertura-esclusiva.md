@@ -439,9 +439,10 @@ Non modificare vecchie migration e non importare il legacy in questa fase.
 
 #### C1 - Schema e vincoli finalizzati (2026-11-11)
 
-Perimetro: schema documentato su richiesta dell'utente, **nessuna migration
-ancora implementata o eseguita**. C2/GET, backoffice C4 e bootstrap sullo stack
-condiviso restano gate separati.
+Perimetro: C1 implementato e verificato il 2026-11-12 dopo autorizzazione
+dell'utente a riprendere. La sandbox condivisa risultava gia migrata da un
+bootstrap concorrente: verificati schema e storico in sola lettura, senza
+nuovo DDL. C2/GET, backoffice C4 e aggiornamento di altri ambienti restano gate separati.
 
 Metadati verificati in sola lettura sulla sandbox MySQL 8.4.13: `users.id`,
 `merchants.id`, `merchants.user_id`, `stores.id` e `stores.merchant_id` sono
@@ -599,6 +600,22 @@ eventuali worktree separati richiedono anche stack/DB di test isolati.
 - Prima del codice riservare migration e approvare implementazione C1 sullo
   schema finalizzato sopra. C2-C3 richiedono ancora rotta/runner, gestione
   iniziale terminali/grant e dettagli GET; non sono approvati implicitamente.
+
+#### Chiusura C1 e coordinamento (2026-11-12)
+
+- Migration `m261112_130000_create_pos_catalog.php`, tre AR e runner dedicato
+  implementati. Nessuna modifica a PosApi/Throttle, routing, anagrafiche o runner
+  condivisi. Default disabilitati, nessun seed/import operativo.
+- Eseguiti 51 controlli C1 su MySQL isolato, 62 login e 32 logout API;
+  bootstrap ripetuto `already-complete`. PHP/shell e diff controllati.
+- Revisione indipendente: verificato anche database referenziato dalle FK e
+  reso non ambiguo il test di riassegnazione grant. Nessun bypass di FK/CHECK.
+- C1 chiuso come fondazione dati, non catalogo, backoffice, apertura o pagamento.
+- Commit Napay: `c357ec41` (schema/modelli), `a3fd15f3` (test e documentazione).
+  Worktree secondo agente e base riservati nell'[handoff C1](SIP-021/C1-HANDOFF.md).
+- Dettagli riproducibili: [test C1](../napay/tests/application/POS-CATALOG.md).
+  Piano e ownership al 23/11: [coordinamento](COORDINAMENTO.md).
+  Prompt secondo agente: [C4 Napay](SIP-021/PROMPT-AGENTE-NAPAY.md).
 
 ### Fasi e gate
 
