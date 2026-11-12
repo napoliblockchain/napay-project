@@ -136,6 +136,50 @@ Per testare il wallet senza VPS: profilo compose `chain` in `docker/compose/wall
 - `besu`: `hyperledger/besu:26.9.0`, utente uid 1000, RPC solo su rete interna (`http://besu:8545`), niente discovery, `--sync-min-peers=0`.
 - `chain-deploy`: compila TTSToken (sorgente `napoliblockchain/ttstoken`, solc 0.5.17 + OpenZeppelin 2.4.0 come in produzione) e lo pubblica; indirizzo in `/data/tts.json`. Rieseguibile.
 - Avvio: `docker compose --profile chain up -d chain-init besu chain-deploy`.
-- `npm audit` degli strumenti: advisory su OpenZeppelin 2.4.0 (ERC165Checker/Initializable, non usati da TTSToken) e `tmp` (CLI di solc, non usata): accettate, solo uso locale.
+- `npm audit` degli strumenti: advisory su OpenZeppelin 2.4.0 (GHSA-88g8 Initializable, GHSA-7grf ERC165Checker): non si applicano, TTSToken non usa quei moduli. `tmp` forzato a `^0.2.7` (override), resta pulito.
 - Test di integrazione poawallet: `tests/chain/erc20-integration.php` (13 controlli su `Erc20`: blocchi, nonce, saldi, stima gas, invio token firmato, faucet gas), riferimento per la sostituzione di `sc0vu/web3.php`.
 - Le chiavi private Besu nei documenti di `napay-docs` sono state rimosse (commit `77e51a1`): restano nella storia pubblica, considerarle compromesse.
+
+## Chain di produzione (2026-11-12)
+
+Decisioni dell'utente:
+
+- Chain nuova da zero: nuovo genesis, nuovo contratto TTS, nessun saldo migrato.
+- chainId **2118** condiviso con il progetto Fidelity: una sola POA servira entrambi.
+  Ogni progetto ha il proprio account faucet e i propri contratti.
+- VPS dedicata alla chain, separata dalle app; collegamento tramite firewall e
+  TLS, niente VPN.
+- Consenso QBFT (sostituisce IBFT 2.0 della vecchia istanza), un validatore;
+  altri validatori solo se servira tolleranza ai guasti.
+
+Implementazione: `docker/chain/prod/compose.yml` (orchestratore).
+
+- `besu` (26.9.0) su rete Docker interna, senza porte pubblicate e senza uscita
+  internet; RPC solo `ETH,NET,WEB3`; `--host-allowlist` limitato al dominio
+  pubblico; limite memoria e heap JVM configurabili; `cap_drop: ALL`.
+- `caddy` (2.8.4) unico ingresso: 80/443 aperte per Let's Encrypt, JSON-RPC
+  accettato solo in POST e solo dagli IP in `RPC_ALLOWED_IPS` (app napay e
+  Fidelity); per tutti gli altri la connessione viene chiusa.
+- `tools`, solo a riga di comando:
+  - `init.mjs` con `CHAIN_FAUCET=1`: chiave del validatore, account faucet
+    separato (gas dei wallet), genesis con `CHAIN_BLOCK_PERIOD`;
+  - `deploy.mjs` con `TTS_RECIPIENT`: emissione iniziale (`TTS_MINT`) sul wallet
+    indicato, il validatore resta minter;
+  - `mint.mjs` con `TTS_RECIPIENT` e `TTS_AMOUNT`: nuove emissioni verso un wallet.
+- Chiavi (validatore e faucet) generate sulla VPS nel volume `chain_data`: mai
+  nei repository; backup cifrato fuori macchina.
+- Configurazione non segreta in `.env` accanto al compose (`.env.example`).
+- Procedura operativa con indirizzi e IP: documentazione privata.
+
+Verifica (stack completo in locale, porte non pubblicate): genesis con faucet,
+deploy con destinatario, mint 10,25 TTS, `eth_chainId` 200 dall'IP ammesso,
+connessione chiusa da IP non ammesso e per richieste GET, besu senza uscita
+internet, limite memoria applicato.
+
+Prossimi passi produzione:
+
+- [ ] Pulizia della VPS chain e firewall host (22, 80, 443)
+- [ ] Record DNS del dominio RPC, `.env`, avvio, deploy TTS con destinatario
+- [ ] Faucet napay nel `.env` del wallet; nodo RPC nel pannello Blockchains/Nodes
+- [ ] Backup cifrato di `chain_data` fuori macchina, verifica del ripristino
+- [ ] Fidelity: proprio faucet e contratti sulla stessa chain (attivita separata)
