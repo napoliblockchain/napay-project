@@ -40,7 +40,56 @@ non è stata interrogata (review, punto 1).
   (reti edge e client separate, proxy solo sulla client, blocco del backend
   nel gateway), solo controfigure locali.
 
-## Fase 2 - Verifiche via TLS (dopo integrazione del master)
+## Fase 2 - Verifiche sul comportamento reale (2026-11-12)
+
+Autorizzazione master: istanza regtest **usa-e-getta**, HTTP diretto sulla
+rete interna del test. Il trasporto applicativo (proxy + TLS, punto 9) resta
+quello verificato dal master sullo stack persistente. Script
+`docker/btcpay-regtest/tests/phase2.sh`: **22 PASS**, nessun segreto nel log,
+nessuna risorsa residua.
+
+### Matrice
+
+| # | Verifica | Esito |
+| --- | --- | --- |
+| 1 | Versione e OpenAPI | 2.4.7 (immagine fissata); OpenAPI v1 scaricata con l'admin di test: 138 percorsi, sha256 `9a7cc600a68aa88e...`. Senza credenziali 401. |
+| 2 | Policy server | Il primo admin si crea senza autenticazione solo su istanza vuota (201). Poi la creazione anonima è rifiutata (401). Nessun server email: nessun invio possibile. |
+| 3 | Utente con password casuale | 201, `requiresEmailConfirmation: false`, `requiresApproval: false`, `approved: false`, nessun ruolo. Stessa email di nuovo: 422 (nessun duplicato). |
+| 4 | Permessi minimi | vedi "Permessi" sotto. |
+| 5 | Proprietà e isolamento | P3: ogni merchant è unico Owner del proprio store; la sua chiave vede solo il proprio store, l'altro dà 403. |
+| 6 | App POS | Creazione con la chiave del merchant (200, `PointOfSale`); elenco app dello store per riconciliazione (200). |
+| 7 | Riconciliazione | Utente per email tecnica: 200. Store: nomi uguali accettati due volte, quindi il nome non è una chiave univoca: ricerca per nome = ambigua, serve mapping locale. |
+| 8 | Errori | Chiave sconosciuta 401; chiave revocata dal titolare 401; permesso mancante 403 con `missing-permission`; store inesistente 403 (come uno altrui); servizio spento = nessuna risposta HTTP; **creazione utenti limitata: 429 con `Retry-After: 10`** (6 risposte 429 in una esecuzione, superate rispettando l'attesa). |
+| 9 | Trasporto | fuori da questo script: verificato dal master sullo stack persistente (proxy, TLS, CA). |
+
+### Permessi
+
+| Operazione | Dichiarato nell'OpenAPI | Comportamento reale |
+| --- | --- | --- |
+| Creare utente | `btcpay.server.cancreateuser` | come dichiarato |
+| Leggere utente per email | `btcpay.server.canviewusers` | come dichiarato |
+| Creare store | `btcpay.store.canmodifystoresettings` | come dichiarato; lo store appartiene all'utente della chiave |
+| Aggiungere utente a uno store | `btcpay.store.canmodifystoresettings` | **crea un invito** (il merchant non diventa membro); l'aggiunta diretta (`requireInvitation: false`) richiede **`btcpay.server.canmodifyserversettings`** |
+| Creare app POS | `btcpay.store.canmodifystoresettings` | come dichiarato |
+| Chiave per un altro utente | `btcpay.server.canmanageusers` | **richiede `btcpay.server.canmodifyserversettings`** (non documentato); `canmanageusers` non crea chiavi per l'admin (403) |
+| Chiave propria (Basic) | `unrestricted` (cioè il titolare) | un utente normale si crea una chiave limitata ai propri store |
+
+### Conseguenza per la decisione B0-2 (da decidere)
+
+Il modello P1 approvato ("una chiave provisioner, store del provisioner,
+merchant aggiunto come Owner") **non funziona senza inviti** se la chiave non
+ha `btcpay.server.canmodifyserversettings`, un permesso che consente di
+cambiare le impostazioni dell'intero server. Alternative verificate:
+
+| Opzione | Chiavi conservate | Permessi | Note |
+| --- | --- | --- | --- |
+| **P1 + server settings** | 1 (provisioner) | `cancreateuser`, `canviewusers`, `canmodifystoresettings`, **`canmodifyserversettings`** | Una chiave sola ma molto potente; il provisioner resta membro di tutti gli store. |
+| **P3 (consigliata dall'agente)** | 1 provisioner + 1 per merchant | provisioner: solo `cancreateuser`, `canviewusers`; merchant: solo `canmodifystoresettings` sui propri store | Password casuale usata una volta per creare la chiave del merchant, poi scartata. Nessun permesso di server per gli store; danni limitati al singolo merchant. Le chiavi dei merchant vanno cifrate e revocabili. |
+| Invito | 1 | senza server settings | Escluso: richiede che il merchant accetti un invito su BTCPay. |
+
+Decisione richiesta all'utente (cambia B0-2) e al master (contratto B1).
+
+## Fase 2 - Matrice iniziale (superata dalla sezione sopra)
 
 Da eseguire tramite proxy di uscita su `https://btcpay.local`, CA verificata.
 Matrice da compilare:

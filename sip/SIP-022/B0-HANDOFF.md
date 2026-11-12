@@ -25,6 +25,18 @@ Correzioni della review di integrazione (B0-REVIEW-INTEGRAZIONE.md):
 | `f6be0a8` | B0-RV4: `isolated.sh` con controlli positivi e prova TCP sull'IP RPC |
 | `bc4d756` | blocco del backend nel gateway anche sui siti con `handle` |
 
+## Fase 2 (2026-11-12)
+
+- `63c0c25` test `docker/btcpay-regtest/tests/phase2.sh`: **22 PASS** su
+  istanza usa-e-getta, HTTP diretto solo sulla rete del test (autorizzazione
+  del master), nessun segreto stampato, nessuna risorsa residua.
+- Esiti e matrice in [B0-ESITI.md](B0-ESITI.md), sezione "Fase 2".
+- **Da decidere:** il modello P1 non funziona senza inviti se la chiave non ha
+  `btcpay.server.canmodifyserversettings`. Alternativa verificata P3 (chiave
+  per merchant creata con la sua password una volta, provisioner con soli
+  permessi utenti). Scelta dell'utente e contratto B1 del master.
+- Non modificati: local.sh, compose, gateway, file root (richiesta master).
+
 ## Correzioni
 
 ### B0-RV1 - percorsi e file privati
