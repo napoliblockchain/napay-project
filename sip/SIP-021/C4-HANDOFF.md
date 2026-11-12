@@ -12,7 +12,9 @@
     (policy R1 e test), senza modifiche;
   - `1c88626d` feat(pos): backoffice C4 parti A-C (scope, terminali, profili
     esistenti, grant, revoca D3);
-  - `0463cbc6` test(pos): suite C4 e runner dedicato.
+  - `0463cbc6` test(pos): suite C4 e runner dedicato;
+  - `842ea694` fix(pos): C4-RV1/RV2, letture correnti e revoca sotto lock;
+  - `704a9323` test(pos): gare a due connessioni per RV1 e RV2.
 - Ambiente di test isolato nel worktree: vendor installato da `composer.lock`
   del worktree (composer 2.10.3, `--no-dev`, pacchetti e versioni identici al
   checkout principale, nessun symlink); cartelle ignorate `runtime/` e
@@ -35,6 +37,36 @@
 - Parte D (inviti): contratto proposto nella sezione 5, in attesa di review.
   Nessuna migration né codice inviti.
 - Nessun uso di sandbox, DB, env o stack condivisi.
+
+## Correzioni review master (C4-REVIEW-MASTER.md)
+
+- **C4-RV1** (`842ea694`): ogni scrittura C4 apre la transazione in
+  `READ COMMITTED` (solo quella transazione, nessuna configurazione globale).
+  Dopo il lock `FOR UPDATE` del merchant, scope (`merchantForManager`) e gate
+  R1 leggono lo stato committato, non lo snapshot aperto dalle letture-indizio.
+  La policy R1 non è stata copiata né modificata.
+- **C4-RV2, lato C4** (`842ea694`): `operator-disable` blocca merchant e
+  profilo, poi legge con `FOR UPDATE` tutte le sessioni non revocate e le
+  revoca (`PosApi::revoke`, invariato); il lock del profilo resta fino al
+  commit. Le sessioni scadute ma non revocate vengono revocate anch'esse.
+- **Ordine dei lock C4**: merchant -> profilo operatore -> negozio ->
+  grant/terminale -> sessioni. Compatibile con il protocollo del master
+  (merchant, profilo, sessioni). Il login (master) deve controllare profilo
+  attivo e R1 sotto lock del profilo prima di inserire la sessione: con il
+  disable che tiene quel lock fino al commit, il login attende e poi trova il
+  profilo disabilitato.
+- **Test a due connessioni** (`704a9323`): la connessione B blocca la riga
+  merchant; la scrittura C4 (processo separato) apre la transazione, legge
+  l'indizio e attende il lock; B committa il cambio e rilascia. Casi:
+  - cambio titolare del merchant -> vecchio gestore negato (404);
+  - account operatore disattivato -> abilitazione profilo rifiutata;
+  - nuova sessione committata dopo lo snapshot -> revocata dal disable;
+  - riabilitazione -> nessuna sessione torna attiva.
+  Prova sul codice precedente (`0463cbc6`): falliscono tutti e tre i casi
+  RV1/RV2. Con la correzione: **53 PASS**, bootstrap no-op.
+- Non coperto qui (master): login API contro disable concorrente, profilo già
+  disabilitato al login. D3 non dichiarato chiuso finché il lato API non è
+  integrato e testato.
 
 ## File riservati
 
@@ -62,13 +94,13 @@
   punta a `pos/index`, controller che non esiste più. Patch proposta:
   `['label' => Yii::t('app', 'Terminali POS'), 'url' => ['pos-management/index'], 'iconStyle' => 'fas', 'icon' => 'mobile-alt', 'visible' => \app\components\pos\management\Scope::current() !== null]`.
   Rotte: nessuna modifica a `config/web.php`.
-- Integrazione di `5a39d763` (popup nuova versione).
 
 ## Test
 
 - `tests/docker/account-eligibility.sh` nel worktree: 24 PASS, bootstrap
   `already-complete`.
-- `tests/docker/pos-management.sh`: **49 PASS** + bootstrap `already-complete`.
+- `tests/docker/pos-management.sh`: **53 PASS** (49 + 4 gare RV1/RV2) +
+  bootstrap `already-complete`.
   Ruoli (admin, gestore, gestore altrui, merchant non qualificato, base,
   operatore, anonimo), scope di elenchi e selettori, UUID/ID altrui o
   malformati, POST con campi extra, CSRF assente 400, GET su scritture 405,
@@ -88,4 +120,5 @@
 
 ## Blocchi
 
-- Inviti: review del contratto e decisione sull'unicità email.
+- Inviti: codice e DDL bloccati fino all'indice UNIQUE sull'email normalizzata
+  (master). Timestamp `m261112_140000` resta riservato.
