@@ -10,6 +10,23 @@ li indica. Le regole di COORDINAMENTO.md restano valide.
 | --- | --- | --- |
 | `CODA-MASTER.md` | solo il master | agente Napay (controllo ogni ~20 minuti) |
 | `RISPOSTE-AGENTE-NAPAY.md` | solo l'agente Napay | master |
+| `STATO-AGENTE-NAPAY.md` | solo l'agente Napay | master |
+| `STATO-MASTER.md` | solo il master | agente Napay |
+
+## Stato dei lavori (per non pestarsi i piedi)
+
+Ognuno tiene aggiornato il **proprio** file di stato a ogni inizio e fine
+attività (un file a testa: stesso checkout, niente conflitti di scrittura):
+
+- **In corso:** cosa, branch/worktree, da quando.
+- **File che sto modificando adesso:** elenco esatto. L'altro non li tocca
+  finché compaiono qui.
+- **Risorse Docker in uso:** progetti/stack di test avviati (nomi), per non
+  riavviarli o pulirli per errore.
+- **Prossimo passo** e **in attesa di**.
+
+Prima di modificare un file, leggere lo stato dell'altro: se il file compare
+nel suo elenco, fermarsi e scrivere nella coda o nelle risposte.
 
 ## Formato di un incarico (in coda, in fondo al file)
 
