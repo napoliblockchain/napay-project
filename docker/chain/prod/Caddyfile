@@ -1,0 +1,20 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$POA_DOMAIN} {
+	# JSON-RPC solo dagli IP ammessi (VPS app napay, server Fidelity); gli altri: connessione chiusa
+	@rpc {
+		remote_ip {$RPC_ALLOWED_IPS}
+		method POST
+	}
+	handle @rpc {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy besu:8545
+	}
+	handle {
+		abort
+	}
+}

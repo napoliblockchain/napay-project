@@ -1,0 +1,87 @@
+# Chain POA di produzione (SIP-017): un validatore Besu QBFT dietro Caddy.
+# RPC raggiungibile solo dagli IP in RPC_ALLOWED_IPS (Caddy, remote_ip); Besu non pubblica porte.
+# Configurazione in .env accanto a questo file (vedi .env.example). Procedura: guida privata della VPS chain.
+name: napay-chain
+
+services:
+  # strumenti a riga di comando, mai in esecuzione continua:
+  #   docker compose run --rm tools node init.mjs | deploy.mjs | mint.mjs
+  tools:
+    build: ../tools
+    image: napay/chain-tools:prod
+    profiles: ["tools"]
+    environment:
+      CHAIN_ID: ${CHAIN_ID:?}
+      CHAIN_BLOCK_PERIOD: ${CHAIN_BLOCK_PERIOD:?}
+      CHAIN_FAUCET: "1"
+      CHAIN_RPC_URL: http://besu:8545
+      TTS_RECIPIENT: ${TTS_RECIPIENT:-}
+      TTS_AMOUNT: ${TTS_AMOUNT:-}
+    volumes:
+      - chain_data:/data
+    networks: [chain]
+
+  besu:
+    image: hyperledger/besu:26.9.0
+    restart: unless-stopped
+    user: "1000:1000"
+    command:
+      - --data-path=/data/db
+      - --genesis-file=/data/genesis.json
+      - --node-private-key-file=/data/key
+      - --rpc-http-enabled
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-api=ETH,NET,WEB3
+      - --host-allowlist=besu,${POA_DOMAIN:?}
+      - --min-gas-price=0
+      # validatore unico: niente discovery, nessun peer da attendere
+      - --discovery-enabled=false
+      - --sync-mode=FULL
+      - --sync-min-peers=0
+    environment:
+      BESU_OPTS: -Xmx${BESU_HEAP:-1g}
+    mem_limit: ${BESU_MEM_LIMIT:-1536m}
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - chain_data:/data
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8545"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    networks: [chain]
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    # 80 e 443 aperte a tutti: servono a Let's Encrypt; il filtro sugli IP e nel Caddyfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      POA_DOMAIN: ${POA_DOMAIN:?}
+      ACME_EMAIL: ${ACME_EMAIL:?}
+      RPC_ALLOWED_IPS: ${RPC_ALLOWED_IPS:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      besu:
+        condition: service_healthy
+    networks: [chain, edge]
+
+networks:
+  # besu e strumenti: nessuna uscita verso internet
+  chain:
+    internal: true
+  # solo caddy (certificati e client RPC)
+  edge: {}
+
+volumes:
+  # chiave del validatore, chiave faucet, genesis, indirizzo TTS e database: fare backup
+  chain_data:
+  caddy_data:
+  caddy_config:

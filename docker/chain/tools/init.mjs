@@ -1,4 +1,4 @@
-// Genera chiave del validatore e genesis QBFT a nodo singolo (sviluppo locale e produzione, SIP-023).
+// Genera chiave del validatore e genesis QBFT a nodo singolo (sviluppo locale e produzione, SIP-017).
 // Le chiavi sono create al primo avvio dentro il volume /data e non vanno mai nel repository.
 // Rieseguibile: se il genesis esiste gia non fa nulla.
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';

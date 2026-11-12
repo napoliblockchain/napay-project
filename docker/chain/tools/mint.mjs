@@ -1,4 +1,4 @@
-// Emette nuovi TTS verso un wallet (SIP-023): "caricare i token sul proprio wallet" dopo il deploy.
+// Emette nuovi TTS verso un wallet (SIP-017): "caricare i token sul proprio wallet" dopo il deploy.
 // Firma con la chiave del deployer/minter in /data/key (resta sulla VPS della chain).
 // Uso: TTS_RECIPIENT=0x... TTS_AMOUNT=1000.00 node mint.mjs
 import { readFileSync } from 'node:fs';
