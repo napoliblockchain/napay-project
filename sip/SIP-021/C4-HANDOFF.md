@@ -4,7 +4,10 @@
 
 - Worktree: `/var/www/blockchain-napoli/napay-worktrees/napay-backoffice-c4`.
 - Branch: `feature/v2-napay-backoffice-c4`, base `a3fd15f3` (C1 + test).
-- Worktree pulito; nessun commit Napay finora.
+- Commit sul branch:
+  - `5a39d763` fix(layout): testo leggibile nel popup "Aggiornamento Versione"
+    (`views/layouts/snackbar.php`, una riga, richiesta diretta dell'utente;
+    file di layout: da integrare a cura del master).
 
 ## Stato (2026-11-12)
 
