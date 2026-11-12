@@ -34,3 +34,17 @@ settings non devono essere letti dal worker ne eliminati senza revisione dati.
 
 Correzioni assegnate a CLA solo su B1-PROPOSTA.md. Nessun timestamp migration
 B1 o privilegio applicato; nessun provisioning reale autorizzato dalla review.
+
+## Seconda consegna e autorizzazione limitata
+
+c0d5d0c e1122ca4 correggono il disegno principale RV1-RV5. Prima del worker
+chiarire ancora: Retry-After numerico oltre86400 deve andare deferred, non
+nel fallback dei valori invalidi; terminali C4 nascono disabilitati, quindi
+provisioning alla creazione non puo richiedere is_enabled=1 senza un evento
+di enable e una politica di attesa espliciti. Non confondere configurazione
+remota con apertura/pagamenti: la disabilitazione operativa non e cancellazione.
+
+Autorizzata solo B1a, helper di cifratura puro e suoi test, secondo
+B1-A-CIFRATURA.md. Nessuna migration, DB user, client HTTP, worker, outbox o
+lettura di secret reali autorizzati implicitamente. Rotazione merchant resta
+decisione utente separata e non blocca il puro rewrap della KEK.
