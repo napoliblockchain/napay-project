@@ -15,6 +15,19 @@
 - `16e11c8c` feat: helper `CredentialEnvelope`.
 - `1b6754e8` test: 59 controlli e runner dedicato.
 
+- Correzioni della [review master](B1-A-REVIEW-MASTER.md):
+  - `dfeffa99` fix: RV1 `SensitiveParameter` anche sui parametri privati
+    (`unwrap` con le parti decodificate, costruzione della busta); RV2 tipo e
+    lunghezza codificata massima controllati prima di `base64_decode`;
+  - `a87b0164` test: visita ricorsiva degli argomenti di tutti i frame (salta
+    solo `SensitiveParameterValue`) cercando anche le parti binarie in 5 casi
+    d'errore; campo di 8 MiB rifiutato con picco di memoria < 1 MiB; lunghezza
+    appena oltre il limite rifiutata. **67 PASS.** Discriminazione: fallisce
+    sul componente precedente (RV1) e senza il controllo di lunghezza (RV2).
+  - Formato, primitive, API, contesto e write set invariati. Il tipo
+    `onboarding_password` resta compatibile con la decisione B (identificatore
+    stabile, non più segreto temporaneo).
+
 ## Implementazione rispetto al contratto
 
 - `encrypt(plaintext, context, kekVersion, kek)`, `decrypt(envelope, context,
@@ -47,7 +60,7 @@
 
 `sh tests/docker/btcpay-credential-envelope.sh` (immagine `napay/napay:dev`,
 PHP 8.3.36 con sodium, `--network none`, filesystem in sola lettura):
-**59 PASS**, lint del componente ok.
+**67 PASS** (59 iniziali + 8 della review), lint del componente ok.
 
 - Round trip per entrambi i tipi; forma e lunghezze; due buste dello stesso
   segreto indipendenti; 16384 byte accettati.
