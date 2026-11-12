@@ -43,7 +43,8 @@ non si confondono mai.
 
 | Tabella | Contenuto | Vincoli |
 | --- | --- | --- |
-| `btcpay_merchant_accounts` | merchant, instance, `ref` casuale (16 byte hex), email tecnica `m-<ref>@btcpay-merchants.jamprojects.it`, id utente remoto, stato, segreto onboarding cifrato (password, temporaneo), chiave merchant cifrata, impronta della chiave (SHA-256), generazione chiave, tentativi di creazione chiave, ultimo codice errore, versione | UNIQUE (instance, merchant), UNIQUE ref, UNIQUE (instance, email), UNIQUE (instance, remote_user_id) |
+| `btcpay_merchant_accounts` | merchant, instance, `ref` casuale (16 byte hex), email tecnica `m-<ref>@btcpay-merchants.jamprojects.it`, id utente remoto, stato, generazione chiave, tentativi di creazione chiave, ultimo codice errore, versione. **Nessun segreto.** | UNIQUE (instance, merchant), UNIQUE ref, UNIQUE (instance, email), UNIQUE (instance, remote_user_id) |
+| `btcpay_merchant_credentials` | account (PK e FK), password di onboarding cifrata (temporanea), chiave merchant cifrata, chiave dati cifrata, versione della KEK, impronta della chiave (SHA-256) | **leggibile e scrivibile solo dall'utente DB del worker** (sezione 5) |
 | `btcpay_store_links` | negozio, account merchant, `marker` casuale, id store remoto, stato, versione | UNIQUE (instance, store), UNIQUE marker, UNIQUE (instance, remote_store_id) |
 | `btcpay_pos_links` | terminale C1, store link, `marker`, id app remota, stato, versione | UNIQUE (instance, terminal), UNIQUE marker, UNIQUE (instance, remote_app_id) |
 | `btcpay_provisioning_jobs` | outbox: tipo, entità, generazione, stato, tentativi, prossimo tentativo, lease (owner, scadenza), ultimo codice errore | UNIQUE (tipo, entità, generazione) |
@@ -111,6 +112,16 @@ pronto resta `pending`, non fallisce.
 - Password di onboarding: esiste solo tra passo A e C, cifrata; cancellata
   quando la chiave del merchant è salvata e verificata.
 - Nessun segreto in outbox, errori, audit, log o argomenti di processi.
+- **Utenti DB separati** (decisione dell'utente, 2026-11-12):
+  - utente DB del **web**: nessun privilegio sulla tabella
+    `btcpay_merchant_credentials`; sulle altre tabelle B1 solo lettura degli
+    stati per il backoffice;
+  - utente DB del **worker**: lettura e scrittura su mapping, outbox e
+    credenziali; nessun altro privilegio oltre a quelli necessari;
+  - le migration restano dell'utente proprietario dello schema (bootstrap),
+    che concede i privilegi; nessun utente applicativo con GRANT o DDL.
+  Così una falla nel web (SQL injection, lettura arbitraria) non arriva
+  nemmeno ai valori cifrati, e il furto del DB senza KEK resta inutile.
 
 ## 6. Revoca e rotazione della chiave merchant
 
@@ -146,14 +157,18 @@ Test B1 previsti (regtest usa-e-getta + DB usa-e-getta, worker reale):
 - utente con la stessa email creato fuori da Napay: mai adottato né resettato;
 - chiave revocata: lavori sospesi, merchant non disattivato;
 - nessun segreto in DB in chiaro, log, outbox, errori, processi;
-- trasporto via proxy/TLS sullo stack del master (punto 9).
+- trasporto via proxy/TLS sullo stack del master (punto 9);
+- utente DB del web: `SELECT`/`UPDATE` su `btcpay_merchant_credentials`
+  rifiutati da MySQL; utente del worker: accesso consentito; nessun
+  privilegio GRANT o DDL agli utenti applicativi.
 
 ## 9. File (da assegnare dal master)
 
 Nuovi, nel dominio provisioning: modelli dei mapping e dell'outbox,
 `components/btcpay/provisioning/*` (client, cifratura, worker), comando
 console, migration (timestamp del master), test e runner dedicati.
-Condivisi (master): attivazione merchant R3b, creazione negozi
+Condivisi (master): utenti DB e privilegi nel bootstrap/stack (oggi un solo
+utente applicativo), attivazione merchant R3b, creazione negozi
 (`StoresController`, oggi con il vecchio `createStore` sincrono da sostituire),
 terminali C4, servizio worker nello stack, secret della KEK, egress/CA.
 
