@@ -185,3 +185,8 @@ verdi. Primo run con cap-drop ALL non leggeva CA0600 (curl77); corretto
 eseguendo client con UID/GID proprietario, senza allargare permessi del file
 o ripristinare capability. Successivo run interamente verde. Script e diff
 verificati; nessuna password/chiave o nuova identita nel regtest persistente.
+
+Gate aggiuntivo b53900f integrato8bbec1a e rieseguito dal master:
+phase2 ora23 controlli verdi, creazione ServerAdmin con provisioner403 e
+lookup404, cinque429 rispettati. Test usa-e-getta; nessun utente produzione.
+B1a assegnata separatamente, senza approvare worker/schema/privilegi B1.

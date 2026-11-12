@@ -43,3 +43,27 @@ implicitamente dal master. Parte D non ancora integrata nel checkout principale.
 Residuo dichiarato dall'agente: configurazione URL mail non valida puo
 produrre stato consegna diverso fra invito e semplice avviso (senza link).
 Risposta HTTP generica resta identica; SMTP reale e resa browser non collaudati.
+
+## Chiusura review e integrazione
+
+f89fa28b/5b26fcaf risolvono scope/quota; master riesegue nel worktree CLA:
+61 backoffice,62 inviti, log privi di token e bootstrap no-op verdi.
+Importati nel master, in ordine: e6a8c9af,c536b07c,384e380d,cf1643c9,
+047588fe,552d9de5,e293c5be,e5f5d86e. Conflitto nel solo runner risolto
+mantenendo sia nuovi test inviti sia controlli log. Nessuna sostituzione dei
+test congiunti master con copie delle gare CLA.
+
+Nel checkout integrato:56 backoffice e62 inviti,59 test congiunti C4/API,
+runtime completa con riavvio/DB preservato/bootstrap no-op verdi. Un primo
+run integrato ha fallito per permessi sorgenti600 ereditati dalla umask del
+backup, non per le logiche D. Ripristinati0644 su tutti i file di questa
+integrazione e0755 sulla nuova cartella view, senza modificare segreti;
+run confermato con RUNNER_EXIT=0. Log Apache senza token/chiavi.
+
+Sandbox locale: prima dell'upgrade era ancora pendente R2. Preflight in sola
+lettura: email vuote0 e gruppi duplicati0. Backup SQL privato0600 fuori repo,
+gzip verificato (nessuna prova di restore dichiarata). Applicate R2 e D
+tramite V2Bootstrap::run, senza LegacyImporter o reimport; readiness OK.
+Route HTTPS / e /pos-management/index302, invito invalido200;7 controlli
+trasporto BTCPay reali ancora verdi. Nessun invito/utente creato per test nel
+DB condiviso. SMTP reale e verifica grafica browser restano non eseguiti.
