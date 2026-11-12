@@ -128,3 +128,11 @@ Vedere [C4-REVIEW-MASTER.md](C4-REVIEW-MASTER.md): 49 controlli rieseguiti
 positivi, ma integrazione sospesa su snapshot/ownership e coordinamento D3-login.
 Dipendenza email: scelto vincolo UNIQUE normalizzato, niente ponte GET_LOCK;
 audit e migration utenti assegnati al master. Inviti ancora senza via libera DDL.
+
+## Dipendenze consegnate, 2026-11-12
+
+R2 `121fe3a2` e login/API `6487abbd` pronti e verificati. Gate email rimosso;
+via libera condizionato a D secondo [handoff R2/D3](../SIP-023/HANDOFF-R2-D3.md),
+che precisa normalizzazione, lock merchant prima dell'invito e vincoli di scopo.
+Nessun DDL condiviso autorizzato. A-C restano da correggere e riesaminare;
+la prova API/protocollo SQL non sostituisce l'integrazione C4 reale.

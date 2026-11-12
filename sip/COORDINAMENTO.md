@@ -143,3 +143,14 @@ migrazione/riaccensione della sandbox condivisa senza suo via libera.
   rete, egress e launcher condivisi integrate esclusivamente dal master.
 - Ordine agente: fix C4 e test concorrenti, poi stack B0 indipendente.
   Nessun riavvio gateway o provisioning senza integrazione/autorizzazione master.
+
+## Dipendenze R2/API consegnate - 2026-11-12
+
+Napay `121fe3a2` e `6487abbd`; POS docs `9984225`.
+[Handoff vincolante R2/D3](SIP-023/HANDOFF-R2-D3.md): cherry-pick nel worktree
+C4, niente edit ai file master. R2 supera 106 schema + 14 app; API/protocollo
+D3 119; C2 177; runtime completa, restart/no-op e regressioni recupero verdi.
+Gate email D rimosso, codice inviti autorizzato alle condizioni dell'handoff,
+non DDL sulla sandbox. C4 A-C e gara congiunta reale restano da chiudere.
+R3 (signup PF/PG, autoattivazione e portale soci/operatori) resta del master.
+Assegnazione stack B0 invariata. Nessun seed o riavvio condiviso eseguito.

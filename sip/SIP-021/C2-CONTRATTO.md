@@ -7,13 +7,14 @@
 ## API C2
 
 Precisazione successiva [SIP-023](../SIP-023-profili-soci-merchant-operatori.md):
-livello base e profilo/grant sono i filtri attuali, non la completa prova di
-separazione socio/operatore. Questa ulteriore esclusione e da progettare e
-implementare; il presente contratto non la dichiara gia disponibile.
+[LOGIN-R1-D3](LOGIN-R1-D3.md) integra R1 nel controllo delle sessioni: solo
+operatore base attivo dedicato, profilo abilitato e merchant qualificato.
+Soci, admin, gestori e identita incoerenti non accedono nemmeno con token legacy.
 
 `GET /api/pos/v1/terminals`, solo server-to-server, corpo vuoto.
 Header: `X-POS-Client-Key` e `Authorization: Bearer napos_<43 base64url>`.
-Riusa PosApi::authenticateClient/findActiveSession/throttle, senza modificarli.
+Riusa PosApi::authenticateClient/findActiveSession/throttle; findActiveSession
+e stato rafforzato dal micro-step LOGIN-R1-D3, senza duplicare la policy in C2.
 
 Ordine: client autenticato, formato bearer, budget client, sessione attiva,
 budget sessione, parametri e query catalogo. Chiave rimossa, scadenza, logout,
@@ -32,7 +33,8 @@ Risposta 200 esatta:
 - Scope SQL prima di ordinamento e paginazione: account base attivo (decisione
   D2 utente, 2026-11-12), profilo dell'utente autenticato
   abilitato, grant abilitato, negozio e terminale dello stesso merchant, terminale
-  abilitato. Nessun bypass per admin/merchant/base. No profilo/grant = lista vuota.
+  abilitato. Nessun bypass per admin/merchant/base. Nessun grant abilitato =
+  lista vuota; profilo assente/disabilitato o identita non idonea = 401 invalid_token.
 - Proiezione esatta dei campi sopra, nessun SIN, wallet, user ID o ID DB pubblico.
   `store_name` da stores.description; nomi UTF-8 non vuoti, massimo 256 caratteri.
   Dati incoerenti o schema mancante = 503, non catalogo vuoto inventato.
