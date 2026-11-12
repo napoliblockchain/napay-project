@@ -4,8 +4,9 @@
 - Riferimenti: SIP-021 (sezioni C1 e scomposizione), [handoff C1](C1-HANDOFF.md),
   [prompt](PROMPT-AGENTE-NAPAY.md), `napay/tests/application/POS-CATALOG.md`.
 - Base: Napay `a3fd15f3`, branch `feature/v2-napay-backoffice-c4`.
-- Stato: solo documento. Nessun codice finché il master non approva questo
-  allegato e l'utente non chiude le decisioni D1-D3.
+- Stato: solo documento. Decisioni D1-D3 confermate dall'utente il 2026-11-12
+  (sezione 4). Nessun codice finché il master non approva questo allegato e
+  non riserva il timestamp della migration inviti.
 
 ## 1. Rilevazioni sul backoffice (base `a3fd15f3`)
 
@@ -47,7 +48,9 @@ accesso a negozi per ruolo.
 
 ## 3. Funzioni
 
-Controller unico `PosManagementController` (`/pos-management/...`).
+Controller `PosManagementController` (`/pos-management/...`) per admin e
+merchant; controller `PosInvitationController` (`/pos-invitation/accept`) per
+l'utente invitato.
 
 | Action | Metodo | Admin | Merchant | Effetto |
 | --- | --- | --- | --- | --- |
@@ -55,9 +58,10 @@ Controller unico `PosManagementController` (`/pos-management/...`).
 | `terminal-create` | GET/POST | sì | sì | nome + negozio (solo negozi in scope); `merchant_id` dal negozio; nasce disabilitato |
 | `terminal-update` | GET/POST | sì | sì | solo nome |
 | `terminal-enable` / `terminal-disable` | POST | sì | sì | flag `is_enabled` |
-| `operator-link` | GET/POST | sì | **D1** | collega un account a un merchant; nasce disabilitato |
+| `invitation-create` | GET/POST | sì | sì | invito via email a diventare operatore di un merchant in scope (D1) |
+| `invitation-revoke` | POST | sì | sì | annulla un invito in attesa |
 | `operator-view` | GET | sì | sì | profilo + grant per negozio |
-| `operator-enable` / `operator-disable` | POST | sì | sì | flag profilo; disable revoca le sessioni POS (**D3**) |
+| `operator-enable` / `operator-disable` | POST | sì | sì | flag profilo; disable revoca subito le sessioni POS (D3) |
 | `grant-create` | POST | sì | sì | grant verso un negozio dello stesso merchant dell'operatore; nasce disabilitato |
 | `grant-enable` / `grant-disable` | POST | sì | sì | flag grant |
 
@@ -72,35 +76,49 @@ Identificativi:
 - grant: operatore cifrato + `store_id` cifrato.
 Decodifica fallita, tipo non scalare o lunghezza eccessiva: 404.
 
-## 4. Collegamento degli account operatore (decisioni richieste)
+## 4. Collegamento degli account operatore (decisioni dell'utente, 2026-11-12)
 
-**D1 - Chi collega un account esistente a un merchant come operatore.**
-Il merchant non può avere un elenco globale utenti né rivendicare un account
-indicando ID o email (chiunque conosca un'email potrebbe legarla al proprio
-merchant, e la PK `pos_operators.user_id` impedirebbe poi al vero merchant di
-usarla).
+**D1 - Invito del merchant, accettato dall'intestatario dell'account.**
+Il merchant non vede un elenco utenti e non può collegare un account con un ID
+o un'email: l'appartenenza nasce solo dal consenso dell'utente invitato.
 
-| Opzione | Come | Prova di assegnabilità | Costo |
-| --- | --- | --- | --- |
-| **A (consigliata per il 23/11)** | Solo l'admin collega: email esatta dell'account + merchant | verifica fuori banda dell'admin (come per la creazione dei merchant) | nessuna tabella nuova, nessun flusso email |
-| B | Il merchant invita un'email; l'utente accetta dal proprio account con link firmato | consenso dell'intestatario dell'account | nuova tabella inviti (migration da riservare), email, scadenza/revoca |
-| C | Il merchant crea l'account operatore | l'account nasce già suo | tocca `Users`/registrazione (file condivisi) |
+Invito (`invitation-create`, admin o merchant proprietario):
+- campi: email e merchant (solo tra quelli in scope; preselezionato se uno solo);
+- risposta sempre uguale, che l'account esista o no: nessun oracolo sugli utenti;
+- token: 32 byte casuali in base64url, nel DB solo SHA-256; scadenza 72 ore;
+- un nuovo invito per la stessa coppia merchant/email annulla quello in attesa;
+- email (`Yii::$app->mailer`, template nuovi in `mail/`): link
+  `/pos-invitation/accept?token=...`; se l'account non esiste, invita a
+  registrarsi prima con quell'indirizzo. Il token non va nei log (gli URL sono
+  già registrati senza query);
+- limite: 20 inviti l'ora per merchant e 3 al giorno per email, con il
+  componente esistente `Throttle` (riuso, nessuna modifica);
+- elenco inviti del merchant: email, scadenza, stato (in attesa, accettato,
+  scaduto, annullato).
 
-Con A il merchant gestisce in autonomia terminali, grant e abilitazioni dei
-propri operatori, ma non collega nuovi account: lo chiede all'admin.
-B è il passo successivo naturale se servirà autonomia.
+Accettazione (`PosInvitationController`, utente autenticato):
+- GET mostra merchant e richiesta di conferma; POST con CSRF accetta;
+- condizioni, tutte verificate in transazione con il record invito `FOR UPDATE`:
+  token valido, non scaduto, non annullato, non già usato; email dell'utente
+  connesso uguale a quella invitata (confronto normalizzato); account attivo di
+  livello base (D2); utente non già operatore di un merchant (PK `user_id`);
+- esito: riga `pos_operators` **disabilitata** (default C1) e invito segnato
+  come accettato. Il merchant poi abilita il profilo e concede i negozi;
+- qualunque condizione fallita: stesso messaggio generico, invito non consumato.
 
-**D2 - Quali account possono diventare operatori.**
-Proposta: solo account attivi (`is_active = 1`) di livello base (0), come
-indicato in SIP-021 punto 2. Esclusi admin e merchant: un titolare che vuole
-usare il POS usa un secondo account base. Account già operatore di un merchant:
-rifiutato con messaggio generico (PK `user_id`).
+Nuova tabella `pos_operator_invitations` (migration additiva, timestamp da
+riservare al master): `id`, `merchant_id` (FK RESTRICT), `email`
+VARCHAR(254), `token_hash` CHAR(64) UNIQUE, `created_by` (FK users),
+`created_at`, `expires_at`, `accepted_at`, `accepted_user_id`, `revoked_at`
+(BIGINT Unix come C1). Nessuna modifica alle tabelle C1.
 
-**D3 - Effetto della disabilitazione del profilo operatore.**
-Proposta: nella stessa transazione revocare tutte le sessioni POS attive
-dell'utente (`PosApi::revoke`, motivo `operator_disabled`). Grant e terminali
-disabilitati invece hanno effetto dalla richiesta API successiva (C2), senza
-revocare la sessione. Alternativa: nessuna revoca, solo controllo in C2.
+**D2 - Solo utenti base.** Operatori solo account attivi di livello 0. Admin e
+merchant esclusi; il titolare che usa la cassa usa un secondo account base.
+
+**D3 - Disconnessione immediata.** Disabilitando il profilo, nella stessa
+transazione si revocano tutte le sessioni POS attive dell'utente
+(`PosApi::revoke`, motivo `operator_disabled`). Grant e terminali disabilitati
+hanno effetto dalla richiesta API successiva (C2), senza revocare la sessione.
 
 ## 5. Regole di sicurezza delle scritture
 
@@ -109,7 +127,7 @@ revocare la sessione. Alternativa: nessuna revoca, solo controllo in C2.
 - Metodi: `VerbFilter` con POST su tutte le scritture; CSRF attivo
   (`ActiveForm` / `Html::beginForm`), nessuna eccezione.
 - Form dedicati in `models/forms/pos/*` con soli campi ammessi (nome, negozio
-  cifrato, email/merchant per D1). `merchant_id`, `public_id`, `is_enabled`,
+  cifrato, email e merchant cifrato per l'invito). `merchant_id`, `public_id`, `is_enabled`,
   timestamp e identità non arrivano mai dal client; i valori derivano dai record
   in scope. I tre AR C1 restano invariati e già bloccano le riassegnazioni.
 - Servizio `components/pos/management/*`: ogni scrittura in transazione, con
@@ -137,7 +155,11 @@ Runner dedicato `tests/docker/pos-management.sh` sul modello di
   negozio di altro merchant rifiutato; grant cross-merchant rifiutato.
 - CSRF assente o errato: 400; GET sulle scritture: 405.
 - Creazioni disabilitate per default; enable/disable con audit.
-- D1/D2: account non attivo, admin, merchant, già operatore: rifiutati.
+- Inviti: risposta identica con e senza account; token solo come digest;
+  scaduto, annullato, riusato, di un altro utente o con email diversa:
+  rifiutati senza consumarlo; due accettazioni concorrenti, una sola riesce;
+  limiti di invio; nessun token nei log.
+- D2: account non attivo, admin, merchant, già operatore: rifiutati.
 - D3: disabilitazione profilo revoca le sessioni attive dell'utente e non
   quelle di altri.
 - Nomi malevoli (`<script>`, `=formula`) codificati in tutte le viste.
@@ -152,11 +174,12 @@ Runner dedicato `tests/docker/pos-management.sh` sul modello di
 - Sicurezza (fuori C4, file condivisi): la registrazione pubblica permette di
   scegliersi il ruolo merchant; `User::getMerchantId()` prende il primo merchant
   in modo arbitrario.
-- Decisioni D1-D3 da far confermare all'utente.
+- Timestamp della migration `pos_operator_invitations` da riservare
+  nell'ordine delle migration.
 
 ## 8. Fuori perimetro
 
-Creazione o invito di account (salvo D1-B approvata), delete, trasferimenti e
+Creazione di account da parte del merchant, delete, trasferimenti e
 riassegnazioni, apertura/sblocco/disponibilità reale, API POS, modifiche ai
 modelli C1, a `Users`/`Stores`/`Merchants`, routing, layout, runner comune,
 BTCPay e import legacy.

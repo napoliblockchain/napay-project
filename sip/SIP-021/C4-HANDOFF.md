@@ -8,11 +8,11 @@
 
 ## Stato (2026-11-12)
 
-- Consegnato il contratto [C4-BACKOFFICE.md](C4-BACKOFFICE.md), in attesa di:
-  - approvazione del master;
-  - decisioni dell'utente D1 (chi collega gli account; proposta: solo admin),
-    D2 (solo account base attivi), D3 (revoca sessioni POS alla
-    disabilitazione del profilo).
+- Consegnato il contratto [C4-BACKOFFICE.md](C4-BACKOFFICE.md).
+- Decisioni dell'utente (2026-11-12): D1 invito del merchant accettato
+  dall'utente; D2 solo account base attivi; D3 revoca immediata delle sessioni
+  POS alla disabilitazione del profilo.
+- In attesa: approvazione del master e timestamp della migration inviti.
 - Nessun codice scritto. Nessun uso di sandbox, DB, env o stack condivisi.
 
 ## File riservati (verificati inesistenti su `a3fd15f3` e sul branch di integrazione)
@@ -23,11 +23,15 @@
 - `views/pos-management/*`
 - `tests/application/pos-management.php`
 - `tests/docker/pos-management.sh` (runner dedicato)
+- `controllers/PosInvitationController.php`, `views/pos-invitation/*`
+- `models/PosOperatorInvitations.php`
+- `mail/posOperatorInvitation.php`, `mail/posOperatorInvitation-text.php`
+- migration `m2611xx_xxxxxx_create_pos_operator_invitations.php` (timestamp dal master)
 
 ## Dipendenze in sola lettura (non modificate)
 
 `models/PosOperators.php`, `PosStoreOperators.php`, `PosTerminals.php`,
-`PosOperatorSessions.php`, `components/pos/PosApi.php` (solo `revoke`),
+`PosOperatorSessions.php`, `components/pos/PosApi.php` (solo `revoke`), `components/Throttle.php`,
 `components/User.php`, `components/Log.php`, `components/Crypt.php`,
 `components/web/LinkPager.php`, `Users`/`Stores`/`Merchants`.
 
@@ -51,4 +55,5 @@ Nessuno ancora (solo documento). Piano nella sezione 6 del contratto.
 
 ## Blocchi
 
-Codice fermo fino ad approvazione di C4-BACKOFFICE.md e decisioni D1-D3.
+Codice fermo fino ad approvazione di C4-BACKOFFICE.md e riserva del timestamp
+della migration inviti.
