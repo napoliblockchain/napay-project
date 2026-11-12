@@ -1,6 +1,6 @@
 # SIP-021 - POS: login operatori, negozi autorizzati e apertura esclusiva
 
-- Stato: IN_PROGRESS (login/logout backend e client POS implementati il 2026-11-11; catalogo e aperture da definire).
+- Stato: IN_PROGRESS (sessioni, C1 e catalogo C2/C3 implementati; backoffice C4 e aperture in lavorazione).
 - Area: POS / Autenticazione / Autorizzazioni / Integrazione Napay.
 - Repo: `pos`, `napay`; orchestratore per documentazione e integrazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
@@ -536,7 +536,11 @@ appartenenza; dati e schema non POS preservati; applicazione nuova, riesecuzione
 bootstrap e gestione DDL parziale senza perdita dati. Solo dopo test e accordo
 con l'altro agente potra essere migrata la sandbox condivisa.
 
-#### Contratto GET da finalizzare prima di C2
+#### Contratto GET C2 finalizzato (2026-11-12)
+
+Contratto normativo di questo micro-step: [C2-CONTRATTO.md](SIP-021/C2-CONTRATTO.md),
+documentato prima dell'implementazione su richiesta dell'utente di procedere.
+Fissa budget, cursor cifrato, errori e limite 16 KiB; prevale sulle proposte sotto.
 
 - Chiave client e bearer come sessioni; risposta solo JSON, `no-store`, niente
   cookie/CORS; stessa rete e TLS. Il browser non riceve token o chiave servizio.
@@ -617,6 +621,29 @@ eventuali worktree separati richiedono anche stack/DB di test isolati.
   Piano e ownership al 23/11: [coordinamento](COORDINAMENTO.md).
   Prompt secondo agente: [C4 Napay](SIP-021/PROMPT-AGENTE-NAPAY.md).
 
+#### Chiusura C2/C3 (2026-11-12)
+
+- Catalogo API e vista POS implementati sul contratto C2, senza nuove migration,
+  seed, lock o incassi. Sessione/grant/ruolo base ricontrollati a ogni pagina.
+- Napay `7ee57669`, `0275704f`; POS `74e0287`, `90fd41e`.
+- 169 controlli HTTP/DB catalogo, regressioni C1/sessioni, 37 client catalogo,
+  24 browser login/catalogo/logout e 24 anteprima passati. Nessun finding concreto
+  dalla revisione statica indipendente; nessuna pretesa di prova finanziaria.
+- [Handoff completo C2/C3](SIP-021/C2-HANDOFF.md).
+
+#### Decisioni C4 confermate e autorizzazione parallela (2026-11-12)
+
+- Il merchant inserisce email per un nuovo operatore; invito email, consenso
+  tramite link, password/conferma, nome e cognome. Nessun collegamento forzato
+  o reset password di account gia esistenti per semplice conoscenza dell'email.
+- Soli account base attivi; titolare con account base distinto per la cassa.
+  C2 controlla questa condizione anche quando esistessero grant manuali.
+- Disabilitazione profilo revoca le sessioni esistenti, con riabilitazione che
+  richiede nuovo login. Grant/terminale disabilitati sono riverificati da C2.
+- [Approvazione master C4](SIP-021/C4-APPROVAZIONE.md): terminali/profili/grant
+  e revoca possono procedere nel worktree assegnato. Inviti attendono schema
+  e contratto tecnico su email esistenti, consumo atomico e concorrenza con signup.
+
 ### Fasi e gate
 
 | Fase | Risultato | Gate prima del codice |
@@ -685,7 +712,7 @@ definizione e approvazione dei dettagli tecnici ancora aperti.
 - [SIP-004: migrazione e preview gia disponibile](SIP-004-pos-porting-yii1-yii2.md).
 - [Contratto funzionale POS/Napay](../pos/v2/docs/NAPAY-CONTRACT.md).
 - [OpenAPI proposta](../pos/v2/docs/pos-api.openapi.json):
-  `partial-backend-sessions-implemented`, login/logout disponibili; altre cinque operazioni bozze.
+  `partial-backend-catalog-implemented`, sessioni/catalogo disponibili; altre quattro operazioni bozze.
 - [Stato e limiti preview](../pos/v2/README.md).
 - Il test `pos/v2/tests/api-contract.cjs` controlla struttura e riferimenti
   della proposta, non e un test di integrazione del backend.

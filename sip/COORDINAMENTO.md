@@ -33,6 +33,9 @@ C1 chiuso: Napay `c357ec41`, `a3fd15f3`; [handoff](SIP-021/C1-HANDOFF.md).
 Agente Napay assegnato a `feature/v2-napay-backoffice-c4`, worktree
 `/var/www/blockchain-napoli/napay-worktrees/napay-backoffice-c4`, base `a3fd15f3`.
 Incarico immediato: [prompt C4](SIP-021/PROMPT-AGENTE-NAPAY.md).
+C2/C3 chiusi: [handoff catalogo](SIP-021/C2-HANDOFF.md). Napay `7ee57669`,
+`0275704f`; POS `74e0287`, `90fd41e`. Il master passa al contratto aperture;
+backoffice resta all'altro agente, nessuna apertura abilitata dal catalogo.
 Contratto C4 revisionato: [approvazione parziale](SIP-021/C4-APPROVAZIONE.md).
 Terminali, profili/grant e revoca D3 possono procedere. D1-D3 confermate:
 invito merchant con consenso e completamento profilo, solo account base attivi,
