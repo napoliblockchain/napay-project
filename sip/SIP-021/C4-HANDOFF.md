@@ -118,6 +118,16 @@
   `PosInvitationController::actionAccept` pubblica, GET non consuma,
   `no-store`/`no-referrer`, utente connesso mai collegato.
 - **Mail**: `mail/posOperatorInvitation*.php` (invito e avviso).
+- **Correzioni review D** (`C4-D-REVIEW-MASTER.md`): `c9de3db0` fix, `167d84fb`
+  test.
+  1. Password: limite 72 **byte** nel form (come reset/signup) e nel servizio.
+  2. Nome/cognome non testuali normalizzati a vuoto e rifiutati: niente 500.
+  3. `deliver`: esito scritto solo se `token_sha256` è ancora quello consegnato
+     (CAS); costruzione URL e parametri nel try.
+  Inviti **50 PASS** (9 nuovi); sul codice precedente fallisce il primo caso.
+  Residuo noto: con configurazione mail rotta l'invito a un indirizzo nuovo
+  risulta "Invio non riuscito", l'avviso a un indirizzo registrato no (non ha
+  link): la differenza è visibile al merchant solo in quel guasto.
 
 ## File riservati
 
