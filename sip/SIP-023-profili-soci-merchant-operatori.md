@@ -76,6 +76,12 @@ la distinzione non elimina i flussi quota Bitcoin/PayPal/contanti di SIP-020.
 
 ## Stato attuale e adeguamenti necessari
 
+Ricognizione successiva del master:
+[R0 - modello attuale e gate condiviso](SIP-023/R0-MODELLO-ATTUALE.md).
+Include elenco/scheda/quote soci, che oggi non distinguono esplicitamente
+tutti gli account operativi dalle identita associative. Correzione necessaria
+anche fuori dal solo invito C4, prima di dichiarare applicato questo SIP.
+
 Il livello tecnico base (0) esistente non rappresenta da solo uno scopo account:
 un account associativo puo avere quel livello senza essere un operatore.
 C1 conserva appartenenza e grant separati, C2 richiede ruolo base attivo e
