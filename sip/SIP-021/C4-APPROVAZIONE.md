@@ -1,0 +1,66 @@
+# C4 - Approvazione master, 2026-11-12
+
+Revisionati C4-BACKOFFICE.md e C4-HANDOFF.md. Confine file e impianto tecnico
+approvati: controlli record-level, scope prima dei conteggi, CSRF/POST, nuovi
+form/service/controller/view, C1 invariato, nessun delete/trasferimento/lock.
+
+## Via libera immediato
+
+Agente Napay puo implementare servizi comuni di scope, elenco/creazione/modifica
+nome/abilitazione terminali e relativi test nel worktree assegnato. Non occorre
+attendere D1-D3 per questa parte. Nessuna riga profilo/grant creata implicitamente.
+Non aggiungere menu o modificare file master: consegnare richiesta nell'handoff.
+
+## Decisioni utente recepite (2026-11-12)
+
+- D1: il merchant inserisce email del nuovo operatore; il sistema invia un
+  invito. Il destinatario accetta tramite link e imposta password/conferma,
+  nome e cognome. Altri dati solo se necessari; non introdurre campi superflui.
+  Non e approvato il collegamento admin senza consenso proposto in D1-A.
+- D2: soltanto account base attivi. Il titolare usa un account base distinto
+  per operare alla cassa. C2 applica questo controllo anche alla lettura API.
+- D3: disabilitare il profilo revoca le sessioni POS esistenti nella medesima
+  transazione; riabilitare non le riattiva, serve nuovo login.
+
+Via libera anche a gestione profili gia presenti, grant e disable/revoca D3
+secondo queste decisioni e sul write set C4 gia riservato. Non usare un link
+di invito per sovrascrivere password o rivendicare un account gia registrato.
+
+## Inviti: prossimo allegato tecnico prima del codice
+
+Aggiornare C4-BACKOFFICE.md con la scelta D1 e proporre schema/contratto inviti:
+token casuale, solo digest nel DB, scadenza, monouso/consumo atomico, revoca e
+rate limit; GET visualizza il form senza consumare, POST con CSRF completa.
+Creazione definitiva account base e appartenenza solo dopo consenso verificato,
+transazionali, senza grant o abilitazioni implicite in violazione di C1.
+
+Riservati all'agente Napay per la proposta (non ancora via libera al DDL):
+`migrations/m261112_140000_create_pos_operator_invitations.php`,
+`models/PosOperatorInvitations.php`, `controllers/PosInvitationController.php`,
+form/service/view/test dedicati sotto le aree C4. Niente edit a SignupForm o Users.
+
+Da consegnare al master prima del codice inviti: email gia esistente o ambigua,
+collisione con registrazione pubblica/accettazioni concorrenti, inviti di merchant
+diversi e gestione email fallita/reinvio. L'attuale schema utenti non garantisce
+unicita DB dell'email: non dichiarare risolta la concorrenza con un semplice
+findOne/validator. Eventuali hook nel flusso di registrazione condiviso li
+assegna/integra il master. Password/hash e ruoli devono riusare le primitive
+centrali sicure, non la scelta pubblica is_merchant o la logica primo-admin.
+Test mail su file; mai token/password nei log o in risposte al merchant.
+
+## Precisazioni vincolanti
+
+- Selezione di un merchant da parte dell'admin puo arrivare dal form come ID
+  cifrato/validato; e solo selettore. Servizio risolve il record in scope e
+  determina merchant_id, mai mass assignment su AR da POST.
+- Nei log errori nessun dump eccezioni/query/POST/sessione o credenziali: solo
+  classi/codici sicuri; audit dei nomi con Log::quote secondo contratto.
+- Ownership merchant ricontrollata dentro la transazione e sotto lock prima
+  della scrittura; non riusare ciecamente un modello letto prima del lock.
+- L'eventuale revoca D3 riguarda sessioni gia persistite, nella stessa
+  transazione del disable; nessuna promessa di disabilitare il login dell'account
+  Napay. C2 ricontrolla comunque profilo/grant a ogni richiesta.
+- Test CRUD non devono usare sandbox condivisa, chiamate finanziarie o dati reali.
+
+Aggiornare solo C4-HANDOFF.md/C4-BACKOFFICE.md e i file di codice riservati.
+Il master continua C2/C3 e integra menu/rotte solo dopo review dei commit C4.

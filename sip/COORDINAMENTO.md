@@ -33,6 +33,11 @@ C1 chiuso: Napay `c357ec41`, `a3fd15f3`; [handoff](SIP-021/C1-HANDOFF.md).
 Agente Napay assegnato a `feature/v2-napay-backoffice-c4`, worktree
 `/var/www/blockchain-napoli/napay-worktrees/napay-backoffice-c4`, base `a3fd15f3`.
 Incarico immediato: [prompt C4](SIP-021/PROMPT-AGENTE-NAPAY.md).
+Contratto C4 revisionato: [approvazione parziale](SIP-021/C4-APPROVAZIONE.md).
+Terminali, profili/grant e revoca D3 possono procedere. D1-D3 confermate:
+invito merchant con consenso e completamento profilo, solo account base attivi,
+revoca sessioni al disable. Prima del codice inviti serve allegato tecnico e
+risoluzione delle collisioni email/registrazione, come nell'approvazione C4.
 
 | Area | Responsabile | Confine |
 | --- | --- | --- |
