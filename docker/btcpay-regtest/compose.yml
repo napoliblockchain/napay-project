@@ -1,0 +1,120 @@
+# SIP-022 B0: BTCPay Server in regtest (bitcoin finti) solo per verificare il provisioning.
+# Avvio esclusivamente con local.sh: segreti in BTCPAY_LOCAL_STATE, fuori dal repository.
+# Nessuna porta sull'host e nessuna uscita internet; il gateway lo raggiunge sulla rete edge.
+# Versioni fissate per digest; tag uguali all'inventario dichiarato della produzione (da riverificare a ogni aggiornamento).
+name: btcpay-regtest
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  stop_grace_period: 30s
+
+services:
+  postgres:
+    <<: *service
+    image: postgres:18.6@sha256:e3d24f6906d0760bf4da0dae872415391ededefad23fd471c47dc53b0ddf3c42
+    env_file: ${BTCPAY_LOCAL_STATE:?}/regtest.env
+    environment:
+      POSTGRES_USER: btcpay
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "btcpay", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [regtest]
+
+  bitcoind:
+    <<: *service
+    image: btcpayserver/bitcoin:32.1@sha256:71d1fd5a89dde910094c2f0532366ccbfa380c0684347465580204ca312f6bec
+    environment:
+      BITCOIN_NETWORK: regtest
+      # RPC e P2P solo sulla rete interna regtest; nessun peer esterno
+      BITCOIN_EXTRA_ARGS: |
+        rpcport=43782
+        rpcbind=0.0.0.0:43782
+        rpcallowip=0.0.0.0/0
+        port=39388
+        whitelist=0.0.0.0/0
+        dnsseed=0
+        listenonion=0
+        fallbackfee=0.0002
+    volumes:
+      - bitcoin:/data
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-datadir=/data", "-rpcport=43782", "getblockchaininfo"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [regtest]
+
+  nbxplorer:
+    <<: *service
+    image: nicolasdorier/nbxplorer:2.6.21@sha256:117b061886f7b1f0a9ebdb0792c0195c77abda855b76dd51b0481bb4cae3fdc3
+    env_file: ${BTCPAY_LOCAL_STATE:?}/regtest.env
+    environment:
+      NBXPLORER_NETWORK: regtest
+      NBXPLORER_CHAINS: btc
+      NBXPLORER_BIND: 0.0.0.0:32838
+      NBXPLORER_BTCRPCURL: http://bitcoind:43782/
+      NBXPLORER_BTCNODEENDPOINT: bitcoind:39388
+      NBXPLORER_BTCRPCCOOKIEFILE: /bitcoin/regtest/.cookie
+      NBXPLORER_NOAUTH: "1"
+      NBXPLORER_AUTOMIGRATE: "1"
+    volumes:
+      - nbxplorer:/datadir
+      - bitcoin:/bitcoin:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:32838/v1/cryptos/btc/status"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+    depends_on:
+      postgres: {condition: service_healthy}
+      bitcoind: {condition: service_healthy}
+    networks: [regtest]
+
+  btcpayserver:
+    <<: *service
+    image: btcpayserver/btcpayserver:2.4.7@sha256:313b6178d8566784b8ec1811b80836df9157b9ee821098785bb0853ed1ef9df0
+    env_file: ${BTCPAY_LOCAL_STATE:?}/regtest.env
+    environment:
+      BTCPAY_NETWORK: regtest
+      BTCPAY_CHAINS: btc
+      BTCPAY_BIND: 0.0.0.0:49392
+      BTCPAY_BTCEXPLORERURL: http://nbxplorer:32838/
+      BTCPAY_DOCKERDEPLOYMENT: "true"
+      BTCPAY_UPDATEURL: ""
+    volumes:
+      - btcpay:/datadir
+    # pronto solo quando NBXplorer e il nodo sono sincronizzati
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/49392 && printf 'GET /api/v1/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '\"synchronized\":true' <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    depends_on:
+      postgres: {condition: service_healthy}
+      nbxplorer: {condition: service_healthy}
+    networks:
+      regtest: {}
+      edge:
+        aliases: [btcpay-regtest]
+
+networks:
+  # tutti i servizi: interna, nessuna uscita
+  regtest:
+    internal: true
+  # solo btcpayserver e, dopo l'integrazione del master, il gateway (creata da local.sh)
+  edge:
+    name: ${BTCPAY_EDGE_NETWORK:-btcpay_regtest_edge}
+    external: true
+
+# dati di test conservati agli stop; cancellati solo da "local.sh reset --yes"
+volumes:
+  postgres:
+  bitcoin:
+  nbxplorer:
+  btcpay:
