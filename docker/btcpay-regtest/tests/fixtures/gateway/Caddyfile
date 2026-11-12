@@ -1,0 +1,22 @@
+# Gateway proposto per B0 (vedi B0-HANDOFF): CA locale, snippet che rifiuta il backend BTCPay.
+# Nel gateway reale la subnet e' 10.252.0.0/24; qui arriva da EDGE_SUBNET per il test.
+{
+    local_certs
+    admin off
+}
+
+(no_btcpay_backend) {
+    @btcpay_backend remote_ip {$EDGE_SUBNET}
+    abort @btcpay_backend
+}
+
+https://btcpay.local {
+    import no_btcpay_backend
+    reverse_proxy btcpay-regtest:49392
+}
+
+# controfigura di un altro sito del gateway (napay.local, wallet.local, pos)
+https://napay.local {
+    import no_btcpay_backend
+    respond "napay-site"
+}
