@@ -1,7 +1,7 @@
 # SIP-026 - Napay: dashboard con grafici per ruolo
 
 - Stato: OPEN - proposta dell'agente Napay su richiesta dell'utente (2026-11-12);
-  numero da confermare dal master, che gestisce l'indice.
+  numero confermato dal master e inserito nell'indice (2026-11-12).
 - Area: Backoffice / UI / Reportistica.
 - Repo: `napay`; orchestratore per documentazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
@@ -93,3 +93,12 @@ dato", non un grafico vuoto.
 - Grafici dei pagamenti dei merchant (POS/BTCPay) solo quando esisterà il
   relativo SIP di pagamento; "Transazioni" non ha oggi dati v2.
 - Da fare dopo SIP-025, così la dashboard resta la pagina "Panoramica".
+
+## Decisione master e ordine
+
+Implementazione master dopo R3c e SIP-025. Prima contratto delle metriche e
+verifica dati effettivamente disponibili: non inventare date di iscrizione,
+attivita POS, importi o incassi merchant dai contatori legacy. Scelta libreria,
+versione/licenza e vulnerabilita restano da verificare prima di aggiungerla;
+questa conferma del numero non approva una nuova dipendenza. L'agente C4/B0
+prosegue fase2 senza attendere dashboard o file UI del master.

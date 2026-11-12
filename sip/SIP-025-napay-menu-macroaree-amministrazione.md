@@ -1,7 +1,7 @@
 # SIP-025 - Napay: menu per macroaree e amministrazione per sezioni
 
 - Stato: OPEN - proposta dell'agente Napay su richiesta dell'utente (2026-11-12);
-  numero da confermare dal master, che gestisce l'indice.
+  numero confermato dal master e inserito nell'indice (2026-11-12).
 - Area: Backoffice / UI / Navigazione.
 - Repo: `napay`; orchestratore per documentazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
@@ -99,3 +99,14 @@ nuovo oltre a quello di Tabler/Bootstrap già caricato.
 - Solo modifica della navigazione: nessuna nuova autorizzazione, nessun dato.
 - Il menu calcolato una volta per richiesta: `Scope::current()` e la policy
   fanno query, evitare chiamate ripetute per ogni voce.
+
+## Decisione master e ordine
+
+Implementazione riservata al master, insieme o immediatamente dopo R3c;
+prima R3a/R3b e controllo server-side del portale. Nessun edit concorrente
+sidebar/widget/SiteController da parte dell'agente C4/B0. SIP-026 segue SIP-025.
+Il profilo resta nel menu utente in alto a destra, come gia deciso dall'utente:
+non introdurre una seconda voce profilo nella barra laterale. Adeguare quindi
+"La mia area" al solo accesso associativo disponibile. Visibilita non sostituisce
+autorizzazioni; diritti amministrativi legacy vanno verificati sui controller,
+non riscritti per deduzione dal nome dei ruoli o per il solo raggruppamento UI.
