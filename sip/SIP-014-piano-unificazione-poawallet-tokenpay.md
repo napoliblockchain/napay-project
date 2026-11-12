@@ -1,4 +1,4 @@
-# TIP-014 - Piano unificazione: base Poawallet + moduli Tokenpay
+# SIP-014 - Piano unificazione: base Poawallet + moduli Tokenpay
 
 - Stato: COMPLETED
 - Area: Wallet Delivery
@@ -382,8 +382,8 @@ Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
   - `ContractTypesController` (CRUD tipi contratto): poawallet ha il modello `ContractType`, non le schermate; da riaprire solo se serve.
   - `VapidController`: superato, chiavi VAPID in `.env`.
   - `WalletsController`, `Inbox/Outbox`, componenti `Crypt/isValid/Show/Times/Push/Log/user`: equivalenti gia presenti o bridge.
-- tokenpay → ARCHIVED (TIP-015): rimosso servizio `tokenpay-staging` da `docker/compose/wallet.yml`, README del repo con avviso archived.
-- Aperti fuori da questa TIP: web-push 6.x → 10.x; `sc0vu/web3.php` (phpseclib 3).
+- tokenpay → ARCHIVED (SIP-015): rimosso servizio `tokenpay-staging` da `docker/compose/wallet.yml`, README del repo con avviso archived.
+- Aperti fuori da questa SIP: web-push 6.x → 10.x; `sc0vu/web3.php` (phpseclib 3).
 
 ### Follow-up: NotificationService (2026-10-23)
 
@@ -402,7 +402,7 @@ Check gitleaks (storia completa, tutti i repo; tutti pubblici tranne tokenpay):
 - Migrazione: i valori gia salvati nei browser (formato precedente) restano accettati con `CRYPTO_ACCEPT_LEGACY=true` e vengono convertiti al primo uso di PIN, seed o invio. Quando tutti gli utenti hanno usato il wallet impostare `CRYPTO_ACCEPT_LEGACY=false`.
 - Verifica: `tests/security/wallet-secrets.php` 28/28; integrazione chain 21/21 con invio reale tramite controller (password nuova e legacy, password di altro utente rifiutata). Da provare nel browser: richiesta PIN, rimozione PIN, mostra seed, invio.
 - Libreria web3 (poawallet `fix(deps)`): `sc0vu/web3.php` dev-master → `web3p/web3.php` 0.1.6 (stessa API, tag stabile, niente ReactPHP). phpseclib resta 2.x (richiesto anche da `web3p/ethereum-util`): usato solo `Math\BigInteger`, advisory residue non applicabili. Dockerfile: `--ignore-platform-req=php` al posto di `--ignore-platform-reqs`.
-- Verifica: `tests/chain/erc20-integration.php` 13/13 sulla chain di sviluppo (TIP-017) prima e dopo la sostituzione.
+- Verifica: `tests/chain/erc20-integration.php` 13/13 sulla chain di sviluppo (SIP-017) prima e dopo la sostituzione.
 
 ### Follow-up: PHP 8.3 in sviluppo, firma transazioni, segreti nei log (2026-10-30)
 

@@ -1,4 +1,4 @@
-# TIP-010 - CI/CD, branching e processo release multi-repo
+# SIP-010 - CI/CD, branching e processo release multi-repo
 
 - Stato: OPEN
 - Area: Delivery

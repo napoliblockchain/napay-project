@@ -1,4 +1,4 @@
-# TIP-012 - Dismissione runtime Yii 1.1.22
+# SIP-012 - Dismissione runtime Yii 1.1.22
 
 - Stato: OPEN
 - Area: Decommission

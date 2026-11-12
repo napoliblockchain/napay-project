@@ -1,4 +1,4 @@
-# TIP-007 - Packages condivisi: da submodule legacy a dipendenze versionate
+# SIP-007 - Packages condivisi: da submodule legacy a dipendenze versionate
 
 - Stato: OPEN
 - Area: Shared Libraries

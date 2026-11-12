@@ -1,4 +1,4 @@
-# TIP-020 - Napay: ripristino gestione associazione e migrazione dati legacy
+# SIP-020 - Napay: ripristino gestione associazione e migrazione dati legacy
 
 - Stato: IN_PROGRESS
 - Area: Backoffice / Associazione / Database
@@ -14,7 +14,7 @@ soci, quote associative, pagamento quote in Bitcoin, PayPal o contanti,
 transazioni dei commercianti, verbali e cariche. La v2 Yii2 (`new-version` e
 successivi) ha riscritto solo utenti, commercianti, negozi e impostazioni.
 
-TIP-019 limitava il perimetro dati al solo schema `napay_v2` (decisione utente
+SIP-019 limitava il perimetro dati al solo schema `napay_v2` (decisione utente
 del 2026-10-23). **Decisione utente del 2026-11-11: il perimetro si estende.**
 Le vecchie tabelle vanno migrate e le funzioni dell'associazione ripristinate
 in v2, compreso il pagamento quote dentro l'app e fuori dall'app, come nel
@@ -47,7 +47,7 @@ Funzioni di pagamento dei commercianti (prefisso `np_`):
 | Token TTS, wallet | Tokens, Assets | `bolt_tokens*`, `np_wallets`, `np_assets`, `np_mpk` |
 | Notifiche, log | Notifications, Log | `np_notifications*`, `np_log` |
 
-In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 2026-10-22).
+In totale lo schema legacy ha 52 tabelle e 13.839 righe (SIP-019, backup del 2026-10-22).
 
 ## Proposta (fasi, ognuna con l'ok dell'utente)
 
@@ -55,7 +55,7 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
    2026-10-22 in un DB separato `napay_legacy`, nel MySQL del sandbox napay.
    Utenti applicativi in sola lettura e nessun writer. Inventario di righe
    per tabella, colonne, chiavi e qualità dei dati. Mappa legacy → v2
-   (documento `TIP-020/mapping.md`).
+   (documento `SIP-020/mapping.md`).
 2. **Utenti e soci.** Riconciliazione `np_users` legacy ↔ `users` v2 per
    email: utenti già presenti in v2 conservati, quelli mancanti importati.
    Tipo socio, consensi e stato attivazione. Verifica che gli hash password
@@ -75,12 +75,12 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
      libreria v1 Bitpay;
    - contanti: registrazione manuale del pagamento dal backoffice.
 6. **Transazioni dei commercianti** e il resto dei moduli `np_`, valutati dopo
-   le fasi 1–5 in un TIP dedicato se il perimetro cresce.
+   le fasi 1–5 in un SIP dedicato se il perimetro cresce.
 7. **Cutover automatico** (decisione utente del 2026-11-11): nessun dump
    manuale. v2 legge il DB legacy all'avvio e migra in automatico, ripetendo
    l'import a ogni avvio finché la sorgente legacy è configurata. Lo
    spegnimento del vecchio sistema lo fa l'utente. Design e decisioni:
-   [TIP-020/mapping.md](TIP-020/mapping.md).
+   [SIP-020/mapping.md](SIP-020/mapping.md).
 
 ## Criteri di accettazione
 
@@ -104,10 +104,10 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
 
 - Produzione legacy servita in HTTP (browser: "Non sicuro"): password e
   pagamenti viaggiano in chiaro. Va messa in HTTPS o spenta il prima possibile,
-  indipendentemente da questo TIP.
+  indipendentemente da questo SIP.
 - Il backup contiene dati personali reali (soci, consensi, pagamenti): restano
   solo in locale, nessun dump nel repository o nei log.
-- Le chiavi di cifratura legacy non sono state recuperate (TIP-019): eventuali
+- Le chiavi di cifratura legacy non sono state recuperate (SIP-019): eventuali
   campi cifrati si migrano così come sono, senza decifrarli.
 - UI coerente con SIP-018 (Tabler).
 
@@ -119,8 +119,8 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (TIP-019, backup del 202
   nel MySQL del sandbox. Volume e container temporanei sono stati rimossi.
 - 52 tabelle e 13.839 righe: conteggi e `CHECKSUM TABLE EXTENDED` identici.
   Schema in `READ ONLY`, nessun grant all'utente dell'app.
-- Inventario: [TIP-020/inventario-legacy.md](TIP-020/inventario-legacy.md).
-  Bozza mappa: [TIP-020/mapping.md](TIP-020/mapping.md).
+- Inventario: [SIP-020/inventario-legacy.md](SIP-020/inventario-legacy.md).
+  Bozza mappa: [SIP-020/mapping.md](SIP-020/mapping.md).
 - **Il backup non è la produzione attuale**: pagamenti fino al 2022, mentre
   l'app online ha quote 2023–2026. Per riconciliazione e cutover serve un
   dump della produzione online.

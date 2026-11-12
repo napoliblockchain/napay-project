@@ -1,4 +1,4 @@
-# TIP-008 - Sicurezza: secret management e configurazioni sensibili
+# SIP-008 - Sicurezza: secret management e configurazioni sensibili
 
 - Stato: OPEN
 - Area: Security

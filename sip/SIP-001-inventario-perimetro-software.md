@@ -1,4 +1,4 @@
-# TIP-001 - Inventario software e perimetro tecnico Napay
+# SIP-001 - Inventario software e perimetro tecnico Napay
 
 - Stato: COMPLETED
 - Area: Architettura
@@ -17,7 +17,7 @@ Definire baseline tecnica unica con:
 - criticita tecniche da risolvere prima del cutover
 
 ## Criteri di accettazione
-- Esiste mappa completa software in `tips/README.md` con stato e area di ogni TIP.
+- Esiste mappa completa software in `sip/README.md` con stato e area di ogni SIP.
 - Ogni repo principale ha branch target v2 assegnato.
 - Sono elencati i punti legacy chiave (Yii1, secrets hardcoded, dipendenze datate, divergenza wallet).
 
@@ -30,7 +30,7 @@ Definire baseline tecnica unica con:
 - `pos`, `store-wallet`, `bolt` sono Yii1 bootstrap su `yii-1.1.22`.
 - `tokenpay` non ha send flow MVC completo (link a `send/index` senza `SendController`).
 - `packages` usa submodule multipli con dipendenze eterogenee.
-- `ttstoken` e il token ERC20 (TTS) deployato sulla blockchain POA Hyperledger Besu (chainId 2118). Non e un'app Yii ma un contratto Solidity/Vyper gestito con Truffle. Installato su VPS separata. Vedi TIP-017.
+- `ttstoken` e il token ERC20 (TTS) deployato sulla blockchain POA Hyperledger Besu (chainId 2118). Non e un'app Yii ma un contratto Solidity/Vyper gestito con Truffle. Installato su VPS separata. Vedi SIP-017.
 
 ## Verifica repository
 - `/var/www/napay-project/napay/composer.json`

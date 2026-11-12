@@ -1,4 +1,4 @@
-# TIP-020 - Inventario schema legacy `napay`
+# SIP-020 - Inventario schema legacy `napay`
 
 Fonte: backup datadir locale `/home/sergio/backup-mysql-datadir-2026-10-22.tgz`
 (MySQL 8.0.46), schema `napay`. Recuperato il 2026-11-11 come `napay_legacy`

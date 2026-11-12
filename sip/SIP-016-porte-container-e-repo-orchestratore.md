@@ -1,4 +1,4 @@
-# TIP-016 - Piano porte container e repo orchestratore unico
+# SIP-016 - Piano porte container e repo orchestratore unico
 
 - Stato: IN_PROGRESS
 - Area: Platform Governance / DevOps
@@ -19,7 +19,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 ## Criteri di accettazione
 - Esiste compose orchestratore unico (`docker-compose.yml` + `include` per area) con porte parametrizzate e non standard.
 - Esiste `.env.example` centrale con valori porta allineati.
-- `tips/README.md` include TIP-016 in indice.
+- `sip/README.md` include SIP-016 in indice.
 - Policy repo definita: orchestrazione centralizzata in `napay-project`, sviluppo applicativo nei singoli repo.
 
 ## Impatto
@@ -27,7 +27,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 - `napay-project/docker/gateway/conf.d/{napay,wallet}.caddy`
 - `napay-project/docker/gateway/Caddyfile`
 - `napay-project/.env.example`
-- `napay-project/tips/README.md`
+- `napay-project/sip/README.md`
 - Gestione container futuri `napay`, `poawallet`, `pos`, `store-wallet`, `tokenpay` (staging source)
 
 ## Note implementative
@@ -43,7 +43,7 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
   - `13000` grafana
   - `18110` websocket notifiche
 - Servizi app web non pubblicano porte host; accesso via reverse proxy interno.
-- `tokenpay` archiviato il 2026-10-23 (TIP-015): servizio `tokenpay-staging` rimosso dal compose.
+- `tokenpay` archiviato il 2026-10-23 (SIP-015): servizio `tokenpay-staging` rimosso dal compose.
 
 ## Log esecuzione
 
@@ -110,4 +110,4 @@ In parallelo serve decidere modello repository: multi-repo puro o repo orchestra
 - `/var/www/blockchain-napoli/napay-project/docker/compose/`
 - `/var/www/napay-project/docker/gateway/Caddyfile`
 - `/var/www/napay-project/.env.example`
-- `/var/www/napay-project/tips/README.md`
+- `/var/www/napay-project/sip/README.md`

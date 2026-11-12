@@ -5,7 +5,7 @@
 - Repo: `pos`, `napay`; orchestratore per documentazione e integrazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
 - Segnalato: 2026-11-11.
-- Dipendenze: TIP-004 (porting POS), TIP-009 (contratti API), TIP-020 (backend Napay).
+- Dipendenze: SIP-004 (porting POS), SIP-009 (contratti API), SIP-020 (backend Napay).
 - Regola di esecuzione: prima approvazione di questo SIP e dei dettagli della
   fase interessata, poi implementazione in piccoli commit verificati.
 
@@ -15,7 +15,7 @@ Il POS legacy usa un SIN nel login. La v2 dispone di una preview Yii2/PHP 8.3
 avviata in Docker su `https://pos.localhost`, con tastierino e verifica importi:
 non autentica operatori, non acquisisce POS e non esegue incassi.
 
-La preview e gia stata realizzata nel perimetro TIP-004. Questo SIP formalizza
+La preview e gia stata realizzata nel perimetro SIP-004. Questo SIP formalizza
 il lavoro successivo: non approva retroattivamente API o incassi inesistenti.
 Napay resta il backend autorevole, sviluppato in parallelo da un altro agente.
 
@@ -665,7 +665,7 @@ definizione e approvazione dei dettagli tecnici ancora aperti.
 
 ## Allegati e stato attuale
 
-- [TIP-004: migrazione e preview gia disponibile](TIP-004-pos-porting-yii1-yii2.md).
+- [SIP-004: migrazione e preview gia disponibile](SIP-004-pos-porting-yii1-yii2.md).
 - [Contratto funzionale POS/Napay](../pos/v2/docs/NAPAY-CONTRACT.md).
 - [OpenAPI proposta](../pos/v2/docs/pos-api.openapi.json):
   `partial-backend-sessions-implemented`, login/logout disponibili; altre cinque operazioni bozze.

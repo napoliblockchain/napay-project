@@ -1,4 +1,4 @@
-# Orchestratore piattaforma Napay v2 (TIP-016).
+# Orchestratore piattaforma Napay v2 (SIP-016).
 # Ogni area ha il suo file in docker/compose/: modificare solo quello della propria app.
 #   infra.yml  -> gateway, database, cache, tool operativi, observability
 #   wallet.yml -> poawallet (wallet-web, ws-notify) e chain di sviluppo Besu (profilo chain)

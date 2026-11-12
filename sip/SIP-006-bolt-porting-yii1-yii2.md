@@ -1,4 +1,4 @@
-# TIP-006 - Bolt: porting da Yii1 a Yii2
+# SIP-006 - Bolt: porting da Yii1 a Yii2
 
 - Stato: REJECTED
 - Area: Wallet Cittadino Legacy
@@ -13,17 +13,17 @@
 Proposta originale (poi scartata): portare `bolt` direttamente a Yii2/PHP 8.3.
 
 ## Criteri di accettazione
-- N/A (TIP rifiutata).
+- N/A (SIP rifiutata).
 
 ## Impatto
 - Nessuna implementazione diretta pianificata su `bolt`.
 
 ## Note implementative
 Motivo rifiuto:
-- Scelta architetturale approvata in TIP-013: base wallet `poawallet`.
+- Scelta architetturale approvata in SIP-013: base wallet `poawallet`.
 - `bolt` resta solo sorgente storica/riferimento.
-- `bolt` entra in policy archive (TIP-015), senza sviluppo feature nuove.
+- `bolt` entra in policy archive (SIP-015), senza sviluppo feature nuove.
 
 ## Verifica repository
 - `/var/www/napay-project/bolt/index.php`
-- `/var/www/napay-project/tips/TIP-013-selezione-base-wallet-eth-poa.md`
+- `/var/www/napay-project/sip/SIP-013-selezione-base-wallet-eth-poa.md`

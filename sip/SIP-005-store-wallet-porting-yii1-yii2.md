@@ -1,4 +1,4 @@
-# TIP-005 - Store Wallet: porting da Yii1 a Yii2
+# SIP-005 - Store Wallet: porting da Yii1 a Yii2
 
 - Stato: OPEN
 - Area: Wallet Merchant

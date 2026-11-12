@@ -1,4 +1,4 @@
-# TIP-019 / Inventario della sorgente Napay v2
+# SIP-019 / Inventario della sorgente Napay v2
 
 - Stato: riconciliazione schema implementata/testata su fixture e copia reale
   tramite bootstrap locale; runtime HTTP/cutover non verificati.
@@ -8,7 +8,7 @@
 ## Fonte e metodo
 
 Archivio `/home/sergio/backup-mysql-datadir-2026-10-22.tgz`, checksum nella
-[TIP principale](../TIP-019-napay-mysql-persistenza-migrazione.md).
+[SIP principale](../SIP-019-napay-mysql-persistenza-migrazione.md).
 Recupero esclusivamente su copia offline MySQL 8.0.46, senza rete o eventi.
 Ispezione information_schema, COUNT(*) e versioni della tabella migration.
 Non sono stati esportati dati personali, valori delle impostazioni, password,

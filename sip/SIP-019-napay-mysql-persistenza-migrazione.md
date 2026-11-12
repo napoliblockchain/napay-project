@@ -1,4 +1,4 @@
-# TIP-019 - Napay: MySQL dedicato, persistenza e ripristino dati v2
+# SIP-019 - Napay: MySQL dedicato, persistenza e ripristino dati v2
 
 - Stato: IN_PROGRESS
 - Area: Backoffice / Database / Docker
@@ -124,11 +124,11 @@ corretto successivamente dall'utente usa solo `napay_v2`.
 
 ## Analisi punti 1-2 e avvio automatico - 2026-10-23
 
-- [Inventario sorgente v2](TIP-019/inventario.md): tutte le 11 tabelle,
+- [Inventario sorgente v2](SIP-019/inventario.md): tutte le 11 tabelle,
   conteggi e metadati strutturali senza valori sensibili.
-- [Mapping v2 verso MySQL Docker](TIP-019/mapping-sorgente-v2.md): copia 1:1,
+- [Mapping v2 verso MySQL Docker](SIP-019/mapping-sorgente-v2.md): copia 1:1,
   conservazione identita/chiavi e upgrade compatibili, nessuna conversione legacy.
-- [Bootstrap automatico previsto](TIP-019/bootstrap-automatico.md): job dopo
+- [Bootstrap automatico previsto](SIP-019/bootstrap-automatico.md): job dopo
   MySQL healthy e writer dopo job riuscito, timeout e stato persistente.
 
 Blocchi verificati: `activationCode` mancante nel backup, migration utenti
@@ -179,4 +179,4 @@ Solo stack locale Napay. Compose centrale/poawallet intatti. Prove con vendor
 Yii isolato e writer CLI fittizio, NON sito HTTP completo. Chiavi fittizie nei
 test: decifratura/sessioni originali non provate. Da completare: vendor Napay,
 chiavi originali, smoke HTTP/login, backup/retention e integrazione gateway
-centrale/cutover approvato. Stato TIP resta IN_PROGRESS.
+centrale/cutover approvato. Stato SIP resta IN_PROGRESS.

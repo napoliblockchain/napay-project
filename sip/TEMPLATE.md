@@ -1,4 +1,4 @@
-# TIP-XXX - Titolo
+# SIP-XXX - Titolo
 
 - Stato: OPEN
 - Area: Area funzionale
@@ -23,4 +23,4 @@ Descrivi la modifica richiesta in termini funzionali e tecnici.
 - Vincoli, dipendenze, rischi e scelte architetturali.
 
 ## Verifica repository
-- Solo per TIP COMPLETED o VERIFY: indica file/comandi che confermano lo stato.
+- Solo per SIP COMPLETED o VERIFY: indica file/comandi che confermano lo stato.

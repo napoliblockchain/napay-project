@@ -1,4 +1,4 @@
-# TIP-003 - Napay Backoffice: hardening Yii2 su PHP 8.3
+# SIP-003 - Napay Backoffice: hardening Yii2 su PHP 8.3
 
 - Stato: IN_PROGRESS
 - Area: Backoffice
@@ -40,7 +40,7 @@
 - `docker/Dockerfile_Image`: `VARIANT` di default `8.2` → `8.3.36`.
 - `composer.json`: requisito PHP `>=7.4.0` → `>=8.3`.
 - Verifiche su `php:8.3.36-cli`: lint 162 file OK; build layer di sistema ed estensioni OK; risoluzione dipendenze runtime OK (yii2 2.0.55, mpdf 8.3.1, phpspreadsheet 1.30.7).
-- Aperto: `composer.lock` escluso da `.gitignore` (build non riproducibili); `require-dev` non risolvibile (`phpunit ~9.5.0` bloccato da security advisory); Dockerfile installa tool non necessari (htop, nano, certbot, nvm); credenziali MySQL passate come build arg e salvate nei layer dell'immagine (vedi TIP-008).
+- Aperto: `composer.lock` escluso da `.gitignore` (build non riproducibili); `require-dev` non risolvibile (`phpunit ~9.5.0` bloccato da security advisory); Dockerfile installa tool non necessari (htop, nano, certbot, nvm); credenziali MySQL passate come build arg e salvate nei layer dell'immagine (vedi SIP-008).
 
 ### Configurazione solo `.env` e build senza credenziali (2026-10-23)
 

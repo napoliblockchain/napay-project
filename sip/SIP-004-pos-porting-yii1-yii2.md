@@ -1,4 +1,4 @@
-# TIP-004 - POS: porting da Yii1 a Yii2
+# SIP-004 - POS: porting da Yii1 a Yii2
 
 - Stato: IN_PROGRESS
 - Area: POS

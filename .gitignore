@@ -19,7 +19,7 @@ vendor/
 */node_modules/
 node_modules/
 
-# Yii 1.x framework legacy - escluso interamente (48MB, dismissione prevista TIP-012)
+# Yii 1.x framework legacy - escluso interamente (48MB, dismissione prevista SIP-012)
 yii-1.1.22/
 
 # Runtime e cache applicativi

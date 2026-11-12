@@ -1,4 +1,4 @@
-# TIP-009 - Database e contratti API tra applicazioni
+# SIP-009 - Database e contratti API tra applicazioni
 
 - Stato: OPEN
 - Area: Data / Integration

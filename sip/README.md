@@ -1,36 +1,43 @@
-# TIP - Technical Improvement Proposals Napay
+# SIP - Proposte di aggiornamento Napay
 
-Le TIP (Technical Improvement Proposal) documentano il piano di ammodernamento completo della piattaforma Napay verso:
+I SIP documentano il piano di ammodernamento completo della piattaforma Napay verso:
 - orchestrazione Docker full-stack
 - eliminazione dipendenza runtime da Yii 1.x
 - allineamento applicativo a Yii2 + PHP 8.3
 
-Questo README e indice operativo. Ogni scheda e nel file dedicato `TIP-XXX-*.md` o `SIP-XXX-*.md` in questa cartella.
+Questo README e indice operativo. Ogni scheda e nel file dedicato `SIP-XXX-*.md` in questa cartella.
+
+## Standard documentale
+
+Dal 2026-11-12 la cartella canonica e `sip/` e tutti gli identificativi usano
+il prefisso `SIP-`. Numerazione, contenuti e stati precedenti restano preservati;
+la rinomina non implica nuove approvazioni. Anche gli allegati seguono `SIP-NNN/`.
+Riferimenti storici TIP nei vecchi commit restano parte della cronologia Git.
 
 ## Indice (ordinato per dipendenze)
 
 | ID | Titolo | Area | Stato |
 | -- | ------ | ---- | ----- |
-| [TIP-001](TIP-001-inventario-perimetro-software.md) | Inventario software e perimetro tecnico Napay | Architettura | COMPLETED |
-| [TIP-002](TIP-002-piattaforma-docker-unificata.md) | Piattaforma Docker unificata | DevOps / Runtime | OPEN |
-| [TIP-003](TIP-003-napay-yii2-php83-hardening.md) | Napay Backoffice: hardening Yii2 su PHP 8.3 | Backoffice | IN_PROGRESS |
-| [TIP-004](TIP-004-pos-porting-yii1-yii2.md) | POS: porting da Yii1 a Yii2 | POS | IN_PROGRESS |
-| [TIP-005](TIP-005-store-wallet-porting-yii1-yii2.md) | Store Wallet: porting da Yii1 a Yii2 | Wallet Merchant | OPEN |
-| [TIP-006](TIP-006-bolt-porting-yii1-yii2.md) | Bolt: porting da Yii1 a Yii2 | Wallet Cittadino Legacy | REJECTED |
-| [TIP-007](TIP-007-packages-ristrutturazione-libs.md) | Packages condivisi: da submodule legacy a dipendenze versionate | Shared Libraries | OPEN |
-| [TIP-008](TIP-008-sicurezza-segreti-configurazione.md) | Sicurezza: secret management e configurazioni sensibili | Security | OPEN |
-| [TIP-009](TIP-009-database-contratti-api.md) | Database e contratti API tra applicazioni | Data / Integration | OPEN |
-| [TIP-010](TIP-010-ci-cd-branching-release.md) | CI/CD, branching e processo release multi-repo | Delivery | OPEN |
-| [TIP-011](TIP-011-documentazione-operativa.md) | Documentazione tecnica e operativa della nuova piattaforma | Docs | OPEN |
-| [TIP-012](TIP-012-dismissione-yii1-runtime.md) | Dismissione runtime Yii 1.1.22 | Decommission | OPEN |
-| [TIP-013](TIP-013-selezione-base-wallet-eth-poa.md) | Scelta base wallet ETH/POA tra Bolt, Poawallet e Tokenpay | Wallet Architecture | COMPLETED |
-| [TIP-014](TIP-014-piano-unificazione-poawallet-tokenpay.md) | Piano unificazione: base Poawallet + moduli Tokenpay | Wallet Delivery | COMPLETED |
-| [TIP-015](TIP-015-policy-archiviazione-repository.md) | Policy archiviazione repository non core | Governance | COMPLETED |
-| [TIP-016](TIP-016-porte-container-e-repo-orchestratore.md) | Piano porte container non standard e repo orchestratore unico | Platform Governance / DevOps | IN_PROGRESS |
-| [TIP-017](TIP-017-blockchain-poa-besu-ttstoken.md) | Blockchain POA: Hyperledger Besu IBFT 2.0 + TTS Token deploy | Blockchain Infrastructure | OPEN |
+| [SIP-001](SIP-001-inventario-perimetro-software.md) | Inventario software e perimetro tecnico Napay | Architettura | COMPLETED |
+| [SIP-002](SIP-002-piattaforma-docker-unificata.md) | Piattaforma Docker unificata | DevOps / Runtime | OPEN |
+| [SIP-003](SIP-003-napay-yii2-php83-hardening.md) | Napay Backoffice: hardening Yii2 su PHP 8.3 | Backoffice | IN_PROGRESS |
+| [SIP-004](SIP-004-pos-porting-yii1-yii2.md) | POS: porting da Yii1 a Yii2 | POS | IN_PROGRESS |
+| [SIP-005](SIP-005-store-wallet-porting-yii1-yii2.md) | Store Wallet: porting da Yii1 a Yii2 | Wallet Merchant | OPEN |
+| [SIP-006](SIP-006-bolt-porting-yii1-yii2.md) | Bolt: porting da Yii1 a Yii2 | Wallet Cittadino Legacy | REJECTED |
+| [SIP-007](SIP-007-packages-ristrutturazione-libs.md) | Packages condivisi: da submodule legacy a dipendenze versionate | Shared Libraries | OPEN |
+| [SIP-008](SIP-008-sicurezza-segreti-configurazione.md) | Sicurezza: secret management e configurazioni sensibili | Security | OPEN |
+| [SIP-009](SIP-009-database-contratti-api.md) | Database e contratti API tra applicazioni | Data / Integration | OPEN |
+| [SIP-010](SIP-010-ci-cd-branching-release.md) | CI/CD, branching e processo release multi-repo | Delivery | OPEN |
+| [SIP-011](SIP-011-documentazione-operativa.md) | Documentazione tecnica e operativa della nuova piattaforma | Docs | OPEN |
+| [SIP-012](SIP-012-dismissione-yii1-runtime.md) | Dismissione runtime Yii 1.1.22 | Decommission | OPEN |
+| [SIP-013](SIP-013-selezione-base-wallet-eth-poa.md) | Scelta base wallet ETH/POA tra Bolt, Poawallet e Tokenpay | Wallet Architecture | COMPLETED |
+| [SIP-014](SIP-014-piano-unificazione-poawallet-tokenpay.md) | Piano unificazione: base Poawallet + moduli Tokenpay | Wallet Delivery | COMPLETED |
+| [SIP-015](SIP-015-policy-archiviazione-repository.md) | Policy archiviazione repository non core | Governance | COMPLETED |
+| [SIP-016](SIP-016-porte-container-e-repo-orchestratore.md) | Piano porte container non standard e repo orchestratore unico | Platform Governance / DevOps | IN_PROGRESS |
+| [SIP-017](SIP-017-blockchain-poa-besu-ttstoken.md) | Blockchain POA: Hyperledger Besu IBFT 2.0 + TTS Token deploy | Blockchain Infrastructure | OPEN |
 | [SIP-018](SIP-018-napay-migrazione-tabler.md) | Napay: migrazione AdminLTE a Tabler, riferimento Aura | Backoffice / UI | IN_PROGRESS |
-| [TIP-019](TIP-019-napay-mysql-persistenza-migrazione.md) | Napay: MySQL dedicato, persistenza e ripristino dati v2 | Backoffice / Database | IN_PROGRESS |
-| [TIP-020](TIP-020-napay-ripristino-associazione-legacy.md) | Napay: ripristino gestione associazione e migrazione dati legacy | Backoffice / Associazione | IN_PROGRESS |
+| [SIP-019](SIP-019-napay-mysql-persistenza-migrazione.md) | Napay: MySQL dedicato, persistenza e ripristino dati v2 | Backoffice / Database | IN_PROGRESS |
+| [SIP-020](SIP-020-napay-ripristino-associazione-legacy.md) | Napay: ripristino gestione associazione e migrazione dati legacy | Backoffice / Associazione | IN_PROGRESS |
 | [SIP-021](SIP-021-pos-login-operatori-apertura-esclusiva.md) | POS: login operatori, negozi autorizzati e apertura esclusiva | POS / Napay / Integrazione | OPEN |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
@@ -47,7 +54,7 @@ Perimetro software rilevato in `/var/www/napay-project`:
 - `packages` (monorepo di librerie e submodule)
 - `docs` (manuali e note funzionali)
 - `yii-1.1.22` (framework legacy usato dai repo Yii1)
-- `ttstoken` ([napoliblockchain/ttstoken](https://github.com/napoliblockchain/ttstoken.git)) - token ERC20 TTS su blockchain POA Besu, VPS separata, vedi TIP-017
+- `ttstoken` ([napoliblockchain/ttstoken](https://github.com/napoliblockchain/ttstoken.git)) - token ERC20 TTS su blockchain POA Besu, VPS separata, vedi SIP-017
 
 Criticita emerse:
 - configurazioni sensibili hardcoded in file legacy
@@ -88,7 +95,7 @@ Ogni repository ha branch dedicato sviluppo v2:
 - Compatibilita: mantenere parity funzionale tra legacy e v2 prima del cutover.
 - Rollout: migrazione progressiva per repo, con gate di test e smoke end-to-end.
 
-## Come gestire una TIP
+## Come gestire una SIP
 
 ### SIP Prima Dell'Implementazione
 
@@ -102,11 +109,11 @@ implementare. Per ogni nuovo intervento funzionale o architetturale:
 3. Implementare solo la fase documentata, con piccoli commit e test pertinenti.
 4. Riportare evidenze, limiti e stato reale; nuove decisioni tornano prima nel SIP.
 
-Per il POS il riferimento funzionale e SIP-021; TIP-004 resta il piano generale
+Per il POS il riferimento funzionale e SIP-021; SIP-004 resta il piano generale
 di porting. Lo stato OPEN non autorizza da solo l'implementazione.
 
 1. Assegna il prossimo ID progressivo.
-2. Crea `TIP-0XX-descrizione-breve.md` partendo da [`TEMPLATE.md`](TEMPLATE.md).
+2. Crea `SIP-0XX-descrizione-breve.md` partendo da [`TEMPLATE.md`](TEMPLATE.md).
 3. Aggiorna indice in questo README.
 4. Mantieni allineate note implementative con stato reale dei repository.
 
@@ -115,4 +122,4 @@ di porting. Lo stato OPEN non autorizza da solo l'implementazione.
 - Naming branch: `feature/v2-*` per sviluppo, `release/v2.*` per preparazione rilascio.
 - Naming immagini Docker: `napay/<repo>:<versione>`.
 - Naming container service: `<dominio>-<ruolo>` (es. `wallet-web`, `wallet-worker`).
-- Naming docs tecniche: file markdown in questa cartella con formato `TIP-XXX-*`.
+- Naming docs tecniche: file markdown in questa cartella con formato `SIP-XXX-*`.

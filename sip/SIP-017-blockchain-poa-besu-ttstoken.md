@@ -1,4 +1,4 @@
-# TIP-017 - Blockchain POA: Hyperledger Besu + TTS Token
+# SIP-017 - Blockchain POA: Hyperledger Besu + TTS Token
 
 - Stato: OPEN
 - Area: Blockchain Infrastructure

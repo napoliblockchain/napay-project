@@ -1,4 +1,4 @@
-# TIP-011 - Documentazione tecnica e operativa della nuova piattaforma
+# SIP-011 - Documentazione tecnica e operativa della nuova piattaforma
 
 - Stato: OPEN
 - Area: Docs

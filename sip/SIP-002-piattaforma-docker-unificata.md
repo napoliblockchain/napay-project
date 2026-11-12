@@ -1,4 +1,4 @@
-# TIP-002 - Piattaforma Docker unificata
+# SIP-002 - Piattaforma Docker unificata
 
 - Stato: OPEN
 - Area: DevOps / Runtime

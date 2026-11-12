@@ -1,4 +1,4 @@
-# TIP-013 - Scelta base wallet ETH/POA tra Bolt, Poawallet e Tokenpay
+# SIP-013 - Scelta base wallet ETH/POA tra Bolt, Poawallet e Tokenpay
 
 - Stato: COMPLETED
 - Area: Wallet Architecture

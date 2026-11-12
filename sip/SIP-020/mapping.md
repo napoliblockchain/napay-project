@@ -1,4 +1,4 @@
-# TIP-020 - Mappa legacy → v2 (bozza, fase 1)
+# SIP-020 - Mappa legacy → v2 (bozza, fase 1)
 
 Bozza da confermare prima delle fasi 2 e 3. Solo struttura, nessun dato.
 Inventario: [inventario-legacy.md](inventario-legacy.md).
@@ -63,7 +63,7 @@ ricevute (`progressivo_ricevute_*`), denominazioni.
 
 ## Fuori dal perimetro di questa mappa
 
-`bolt_*` (wallet cittadino, TIP-006 REJECTED), `dali_*` (altro progetto
+`bolt_*` (wallet cittadino, SIP-006 REJECTED), `dali_*` (altro progetto
 nello stesso schema), `np_comuni_italiani` (già presente in v2), moduli
 commercianti/POS/transazioni (fase 6).
 
@@ -105,7 +105,7 @@ commercianti/POS/transazioni (fase 6).
   Dopo lo spegnimento si toglie `LEGACY_DB_DSN` e resta l'ultima fotografia.
 - Finché l'import è attivo, il legacy è la fonte autorevole per i record
   importati. Gestione e pagamenti dell'associazione in v2 sono **in sola
-  lettura**, per non avere due sistemi che scrivono (vedi TIP-019).
+  lettura**, per non avere due sistemi che scrivono (vedi SIP-019).
 - Utente con email già presente in v2: si tiene l'utente v2 (password e
   privilegio), si collega l'ID legacy e gli si agganciano quote e pagamenti.
 - Ogni esecuzione registra conteggi e totali per anno, tipo e stato, e si
@@ -119,8 +119,8 @@ commercianti/POS/transazioni (fase 6).
 
 7. **Istituti: non si migrano** (né utenti di tipo Istituto né `np_institutes`).
    Era la funzione Covid-19 di Bolt (allarme dopo l'invio di token TTS); Bolt
-   è deprecato (TIP-006 REJECTED).
+   è deprecato (SIP-006 REJECTED).
 8. **POS: si migrano**, disattivati e con il tipo legacy conservato, finché il
-   modulo POS non è portato (TIP-004).
+   modulo POS non è portato (SIP-004).
 9. **Associazione in sola lettura in v2** finché l'import ripetuto è attivo
    (`LEGACY_DB_DSN` impostata): confermato.

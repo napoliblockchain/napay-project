@@ -87,7 +87,7 @@ printf 'Chain pronta.\n'
 
 step '3/5 Wallet'
 compose up -d --wait --no-deps wallet-web
-# migration mai automatiche (TIP-014): solo avviso
+# migration mai automatiche (SIP-014): solo avviso
 if ! docker exec wallet-web php yii migrate/new --interactive=0 2>/dev/null | grep -q 'No new migrations'; then
   printf 'ATTENZIONE: migration da applicare. Esegui:\n  docker exec -it wallet-web php yii migrate\n'
 fi

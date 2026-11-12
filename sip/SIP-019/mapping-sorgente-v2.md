@@ -1,4 +1,4 @@
-# TIP-019 / Mapping sorgente v2 e destinazione Docker
+# SIP-019 / Mapping sorgente v2 e destinazione Docker
 
 - Stato: mapping 1:1 documentato; compatibilita schema implementata e testata
   su fixture locale e copia reale. Bootstrap automatico collegato al compose

@@ -1,4 +1,4 @@
-# TIP-015 - Policy archiviazione repository non core
+# SIP-015 - Policy archiviazione repository non core
 
 - Stato: COMPLETED
 - Area: Governance
@@ -12,9 +12,9 @@ Per ridurre dispersione sviluppo, servono regole chiare su quali repo restano at
 ## Proposta
 Policy operativa:
 - `poawallet` = ACTIVE (repo base wallet)
-- `tokenpay` = ARCHIVED (2026-10-23: estrazione moduli conclusa, vedi TIP-014; sostituito da `poawallet`)
+- `tokenpay` = ARCHIVED (2026-10-23: estrazione moduli conclusa, vedi SIP-014; sostituito da `poawallet`)
 - `bolt` = ARCHIVE_NOW (freeze immediato, solo riferimento storico)
-- `packages` = DISMISSIONE (eliminare accoppiamento submodule filesystem; librerie versionate via composer/npm - vedi TIP-007)
+- `packages` = DISMISSIONE (eliminare accoppiamento submodule filesystem; librerie versionate via composer/npm - vedi SIP-007)
 - `store-wallet` = DA_VALUTARE (vedi sezione sotto)
 
 Regole archive:
@@ -36,7 +36,7 @@ Archive fisico (spostamento cartella o remote archiving) viene fatto solo dopo:
 1. estrazione moduli utili da `tokenpay` conclusa,
 2. smoke test wallet su `poawallet` verde.
 
-`packages` dismesso dopo che ogni repo che lo consuma ha migrato le dipendenze a versionate (vedi TIP-007).
+`packages` dismesso dopo che ogni repo che lo consuma ha migrato le dipendenze a versionate (vedi SIP-007).
 
 ## Valutazione store-wallet vs poawallet
 
@@ -68,11 +68,11 @@ Scenari possibili:
 - Il flow POS presuppone un wallet merchant separato o puo essere il wallet principale?
 - Come napay (backoffice) aggancia il wallet del merchant? Via API? Via DB condiviso?
 
-Decisione rimandata a dopo Step 1.4, quando poawallet e piu stabile. Aprire valutazione come TIP separata se l'analisi e complessa.
+Decisione rimandata a dopo Step 1.4, quando poawallet e piu stabile. Aprire valutazione come SIP separata se l'analisi e complessa.
 
 ## Verifica repository
-- `/var/www/napay-project/tips/TIP-013-selezione-base-wallet-eth-poa.md`
-- `/var/www/napay-project/tips/TIP-014-piano-unificazione-poawallet-tokenpay.md`
+- `/var/www/napay-project/sip/SIP-013-selezione-base-wallet-eth-poa.md`
+- `/var/www/napay-project/sip/SIP-014-piano-unificazione-poawallet-tokenpay.md`
 - `/var/www/napay-project/bolt`
 - `/var/www/napay-project/poawallet`
 - `/var/www/napay-project/tokenpay`

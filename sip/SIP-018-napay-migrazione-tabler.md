@@ -82,7 +82,7 @@ BTCPay/API v1, crittografia o dati salvati dovuta al cambio tema.
 - Mantenere PHP 8.3.36 e configurazione `.env`; nessun ritorno a `secrets.php`.
 - Prima della verifica funzionale completa e del rilascio servono dipendenze complete e `composer.lock` riproducibile:
   attualmente vendor Napay e parziale e `composer.lock` e ignorato.
-- Il vecchio vincolo PHPUnit 9.5 e la risoluzione dev segnalata in TIP-003 vanno
+- Il vecchio vincolo PHPUnit 9.5 e la risoluzione dev segnalata in SIP-003 vanno
   risolti in intervento dedicato, senza disattivare controlli advisory Composer.
 - Il rollout avviene per passi revisionabili; evitare sostituzioni globali di
   classi CSS o riscrittura integrale dei controller per ragioni estetiche.

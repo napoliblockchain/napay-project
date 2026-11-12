@@ -1,4 +1,4 @@
-# TIP-019 / Bootstrap automatico di Napay v2
+# SIP-019 / Bootstrap automatico di Napay v2
 
 - Stato: implementato nel compose locale Napay, verificato su copia reale del backup.
 - Fonte unica: dataset `napay_v2`. Nessun import dello schema `napay` legacy.
