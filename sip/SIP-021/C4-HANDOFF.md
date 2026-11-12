@@ -7,56 +7,57 @@
 - Commit sul branch:
   - `5a39d763` fix(layout): testo leggibile nel popup "Aggiornamento Versione"
     (`views/layouts/snackbar.php`, una riga, richiesta diretta dell'utente;
-    file di layout: da integrare a cura del master).
+    file di layout: da integrare a cura del master);
+  - `7ca815cf`, `dff150e3`: cherry-pick autorizzati di `5c1fd920` e `00afe16a`
+    (policy R1 e test), senza modifiche.
+- Ambiente di test isolato nel worktree: vendor installato da `composer.lock`
+  del worktree (composer 2.10.3, `--no-dev`, pacchetti e versioni identici al
+  checkout principale, nessun symlink); cartelle ignorate `runtime/` e
+  `web/assets/` create vuote come punti di mount.
 
 ## Stato (2026-11-12)
 
-- Consegnato il contratto [C4-BACKOFFICE.md](C4-BACKOFFICE.md).
-- Decisioni dell'utente (2026-11-12): D1 invito del merchant accettato
-  dall'utente; D2 solo account base attivi; D3 revoca immediata delle sessioni
-  POS alla disabilitazione del profilo.
-- In attesa: approvazione del master e timestamp della migration inviti.
-- Nessun codice scritto. Nessun uso di sandbox, DB, env o stack condivisi.
+- [C4-BACKOFFICE.md](C4-BACKOFFICE.md) riscritto sulle regole definitive
+  SIP-023: gate solo tramite `AccountEligibility`, scope del gestore da
+  `merchantForManager`, concessioni solo su merchant qualificati e account
+  operatore coerenti, riduzioni sempre possibili.
+- Parti A-C (scope, terminali, profili esistenti, grant, D3): in implementazione.
+- Parte D (inviti): contratto proposto nella sezione 5, in attesa di review.
+  Nessuna migration né codice inviti.
+- Nessun uso di sandbox, DB, env o stack condivisi.
 
-## File riservati (verificati inesistenti su `a3fd15f3` e sul branch di integrazione)
+## File riservati
 
-- `controllers/PosManagementController.php`
-- `models/forms/pos/*`
-- `components/pos/management/*`
-- `views/pos-management/*`
-- `tests/application/pos-management.php`
-- `tests/docker/pos-management.sh` (runner dedicato)
-- `controllers/PosInvitationController.php`, `views/pos-invitation/*`
-- `models/PosOperatorInvitations.php`
-- `mail/posOperatorInvitation.php`, `mail/posOperatorInvitation-text.php`
-- migration `m2611xx_xxxxxx_create_pos_operator_invitations.php` (timestamp dal master)
+- `controllers/PosManagementController.php`, `views/pos-management/*`
+- `models/forms/pos/*`, `components/pos/management/*`
+- `tests/application/pos-management.php`, `tests/docker/pos-management.sh`
+- Parte D, solo dopo review:
+  `migrations/m261112_140000_create_pos_operator_invitations.php`,
+  `models/PosOperatorInvitations.php`, `controllers/PosInvitationController.php`,
+  `views/pos-invitation/*`, `mail/posOperatorInvitation*.php`
 
 ## Dipendenze in sola lettura (non modificate)
 
-`models/PosOperators.php`, `PosStoreOperators.php`, `PosTerminals.php`,
-`PosOperatorSessions.php`, `components/pos/PosApi.php` (solo `revoke`), `components/Throttle.php`,
+`components/identity/AccountEligibility.php`, AR C1, `PosOperatorSessions`,
+`components/pos/PosApi.php` (solo `revoke`), `components/Throttle.php`,
 `components/User.php`, `components/Log.php`, `components/Crypt.php`,
 `components/web/LinkPager.php`, `Users`/`Stores`/`Merchants`.
 
-## Richieste per file condivisi (le applica il master)
+## Richieste al master
 
-- Sidebar: voce "Terminali POS" verso `pos-management/index` per admin e
-  merchant. Patch fornita alla consegna del codice.
-- Rotte: nessuna modifica a `config/web.php` necessaria (pretty URL senza
-  strict parsing).
-- Runner: dedicato; eventuale integrazione nel runner comune a scelta del master.
-
-## Segnalazioni
-
-- Registrazione pubblica: il ruolo merchant è scelto dall'utente
-  (`SignupForm::is_merchant`). C4 non si fida del solo livello.
-- `User::getMerchantId()` usa `merchants[0]`: ambiguo con più merchant per utente.
+- Unicità o serializzazione dell'email normalizzata su `users` (contratto
+  sezione 5, "Concorrenza ed email"): blocca il codice inviti.
+- Review della parte D e via libera alla migration `m261112_140000`.
+- Sidebar: voce "Terminali POS" verso `pos-management/index` (patch alla
+  consegna del codice A-C). Rotte: nessuna modifica a `config/web.php`.
+- Integrazione di `5a39d763` (popup nuova versione).
 
 ## Test
 
-Nessuno ancora (solo documento). Piano nella sezione 6 del contratto.
+- `tests/docker/account-eligibility.sh` nel worktree: 24 PASS, bootstrap
+  `already-complete`.
+- Test C4 A-C: in preparazione.
 
 ## Blocchi
 
-Codice fermo fino ad approvazione di C4-BACKOFFICE.md e riserva del timestamp
-della migration inviti.
+- Inviti: review del contratto e decisione sull'unicità email.
