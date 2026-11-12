@@ -92,3 +92,50 @@ mantiene lock fino a revoca e commit. L'isolamento adottato deve rendere visibil
 le sessioni gia committate quando il disable acquisisce il lock. Il master
 implementa lato API; l'agente puo correggere C4 e testarne il proprio lato senza
 modificare API o attendere una modifica a PosApi.php.
+
+## Seconda review A-C, 2026-11-12
+
+Fix `842ea694` e test `704a9323` risolvono snapshot e revoca lato C4:
+READ COMMITTED locale alla transazione, lettura corrente/lock delle sessioni,
+ordine compatibile con login master `6487abbd`. Integrazione selettiva prevista
+con `1c88626d`, `0463cbc6`, `842ea694`, `704a9323`, senza duplicare R1/snackbar.
+
+Ulteriore caso da correggere dal master nell'integrazione: Scope::current
+ricontrolla lo stato attivo del gestore tramite R1, ma non dell'admin
+(User::isAdministrator verifica soltanto il ruolo). Se admin disattivato mentre
+attende il lock merchant, scope ricalcolato puo ancora consentire la scrittura.
+Guardia minima su account corrente attivo, senza modificare User/R1 globali;
+regressione su admin disattivato durante attesa e nessuna scrittura persistita.
+Prima di chiudere D3 serve inoltre gara con servizio C4 reale contro API master,
+in due processi e in entrambi gli ordini, non solo simulazione SQL del protocollo.
+Sidebar integrata solo con Scope disponibile; nessun riavvio o DDL condiviso.
+
+Aggiornamento consegna agente: dipendenze `fef473f9`/`1a2f5d8a` (C2) prima di
+R2/login sono uno scostamento corretto: sul master C2 era gia presente; nessun
+nuovo cherry-pick delle copie R1/C2/R2/API. `bae55cdb` approvato: aggiunge lock
+utente nelle concessioni, dopo il profilo e prima dei record dipendenti.
+`b6b1653d` non importato: scenari gia coperti dalla suite congiunta master
+`pos-management-sessions.php` con hook transazionali deterministici, senza
+aggiungere una seconda implementazione della stessa gara. I test RV1/RV2
+gia importati restano. Dopo il fix lock si rieseguono entrambi i runner C4.
+
+## Chiusura A-C e D3 integrata
+
+Stato finale master, 2026-11-12:
+
+- Importati C4 `038591f6`, test `b27eb095`, fix RV1/RV2 `e1bad84c`, test
+  `8a3c9cb4`, ultimo lock utente `2bc89049` (origine `bae55cdb`).
+- Integrazione master `e0132f64`: guardia attivita admin, menu Terminali POS
+  via Scope e runner congiunto C4/API. Nessun edit a C4-BACKOFFICE.md.
+- Verificata identita esatta degli otto file di API `e54291b0` rispetto al
+  master `6487abbd`; ordine dipendenze C2 -> R2 -> API confermato corretto.
+- Eseguiti sul codice finale: **56 C4** (53 agente + menu/admin) e **59 C4/API**
+  in due processi, con entrambi gli ordini, token non riattivabili, logout anche
+  a profilo disabilitato, admin revocato durante lock e log senza segreti.
+- Runtime completa gia rieseguita dopo integrazione di scope/menu: verde,
+  incluso restart del web e bootstrap no-op. Sintassi PHP 8.3.36/shell e diff
+  verificati. Nessun test grafico browser o migrazione/riavvio condiviso.
+
+**A-C approvate e integrate; D3 sessioni chiusa.** Inviti D non implementati;
+restano autorizzati alle condizioni dell'handoff R2/D3 e del contratto agente.
+Non significa apertura esclusiva, sblocco POS, pagamenti o SIP-023 gia conclusi.

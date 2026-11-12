@@ -206,3 +206,11 @@ trasporto sicuro o SDK gia esistenti. Nessuna implementazione implicita da quest
   al merchant. Protezione/rotazione dei segreti e percorso di ownership dello store.
 - Politica utenti gia esistenti, cambi email, disabilitazioni, archiviazioni,
   cancellazioni e ruolo amministrativo del provisioner da approvare in B0.
+
+## Stato B0, review integrazione 2026-11-12
+
+Importati solo esiti/handoff documentali (`2306fe9`), non stack o patch condivise.
+[Review integrazione](SIP-022/B0-REVIEW-INTEGRAZIONE.md) sospende integrazione e
+fase 2 per protezioni filesystem, validazione reti e isolamento dal proxy egress.
+Due reti distinte backend/client sostituiscono la proposta edge condivisa con
+Squid. Correzioni all'agente nel branch B0; nessun provisioning B1 autorizzato.

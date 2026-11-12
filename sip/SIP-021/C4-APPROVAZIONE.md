@@ -136,3 +136,12 @@ via libera condizionato a D secondo [handoff R2/D3](../SIP-023/HANDOFF-R2-D3.md)
 che precisa normalizzazione, lock merchant prima dell'invito e vincoli di scopo.
 Nessun DDL condiviso autorizzato. A-C restano da correggere e riesaminare;
 la prova API/protocollo SQL non sostituisce l'integrazione C4 reale.
+
+## A-C approvate e integrate, 2026-11-12
+
+Prevale lo [stato finale della review](C4-REVIEW-MASTER.md): C4 A-C e D3 sessioni
+integrati, 56 controlli C4 e 59 congiunti C4/API rieseguiti sul codice finale.
+Fix admin/menu/test `e0132f64`, lock utente `2bc89049`. Dipendenze dell'agente
+corrette; otto file API verificati identici. Nessun bisogno di duplicare b6b1653d.
+Inviti D restano da implementare secondo contratto aggiornato; nessuna DDL sulla
+sandbox condivisa. Scope/menu/API sono ora integrazione master: non sovrascriverli.

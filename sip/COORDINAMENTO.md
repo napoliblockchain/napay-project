@@ -154,3 +154,22 @@ Gate email D rimosso, codice inviti autorizzato alle condizioni dell'handoff,
 non DDL sulla sandbox. C4 A-C e gara congiunta reale restano da chiudere.
 R3 (signup PF/PG, autoattivazione e portale soci/operatori) resta del master.
 Assegnazione stack B0 invariata. Nessun seed o riavvio condiviso eseguito.
+
+## Chiusura C4 A-C e review B0 - 2026-11-12
+
+- C4 A-C approvate e integrate nel master Napay: `038591f6`, `b27eb095`,
+  `e1bad84c`, `8a3c9cb4`, `e0132f64`, `2bc89049`. Runner finali 56 C4 e 59
+  C4/API; D3 sessioni chiusa, apertura/sblocco/pagamenti non ancora implementati.
+- Scostamento dipendenze agente C2 -> R2 -> API confermato: il master aveva
+  gia C2; `e54291b0` identico a `6487abbd` sugli otto file. `b6b1653d` non
+  duplicato: copertura presente nel runner congiunto master, con hook reali.
+- C4-BACKOFFICE.md lasciato all'agente (utente conferma aggiornamento parallelo);
+  ultimo contratto agente `3594f71`, nessuna modifica master a quel file.
+- B0 importata solo documentazione `2306fe9`; stack e patch condivise non
+  integrati. [Review B0](SIP-022/B0-REVIEW-INTEGRAZIONE.md): correzioni
+  filesystem, validazione rete, separazione backend/client e test discriminanti
+  all'agente, stesso write set/branch. Quattro casi filesystem riprodotti su
+  copia temporanea senza Docker reale. Nessun contatto con produzione.
+- Priorita agente: correggere B0 e consegnare nuova review, senza riavvii;
+  poi inviti D autorizzati, ancora senza codice. Master mantiene R3 e integrazione
+  rete/CA/launcher, separati dai file dell'agente. Nessun DDL condiviso autorizzato.

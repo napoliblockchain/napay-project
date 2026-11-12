@@ -1,0 +1,96 @@
+# SIP-022 B0 - Review integrazione master
+
+Data: 2026-11-12. Esaminati `57f0f29`, `1fcd03c`, `04c721a` nel worktree
+orchestratore `feature/btcpay-regtest-b0`, base `ecfa051`.
+
+## Esito
+
+Preparazione B0 valida come direzione, ma **integrazione e fase 2 sospese**
+per i finding sotto. Gli 11 PASS dell'agente non certificano questi casi.
+Il master non ha rieseguito la suite B0 attuale, non ha importato i commit,
+non ha applicato patch a gateway/infra/launcher/egress e non ha avviato stack
+persistente, creato utenti BTCPay o contattato produzione.
+
+## Finding bloccanti
+
+### B0-RV1 - P2: percorsi e file privati non confinati
+
+`docker/btcpay-regtest/local.sh:15-35`: confronto del percorso solo lessicale,
+nessuna normalizzazione di `..` o controllo antenati symlink. Percorso esterno
+puo risolvere dentro repository. `exec 9>control.lock` segue link e tronca il
+target prima di verificare file/lock; anche `status` puo modificare file estranei.
+
+`local.sh:37-49`: un `regtest.env` symlink pendente supera `! -e`, viene scritto
+tramite redirezione e rifiutato solo dopo. Il rifiuto arriva dopo il danno.
+
+Richiesto: canonicalizzazione prima di controlli/modifiche; niente stato sotto
+checkout applicativi, ne tramite alias/antenati symlink; validare tipo,
+proprietario e permessi di file esistenti prima di aprirli. Lock non troncante;
+creazione segreti atomica/no-clobber, mai sostituire input preesistente dubbio.
+Verificare anche `.gitignore`. Test negativi in albero temporaneo con sentinelle:
+nessun contenuto/permesso bersaglio alterato, nessun Docker necessario.
+
+### B0-RV2 - P2: rete esterna preesistente accettata
+
+`local.sh:60-63`: se esiste una rete omonima con Internal=false viene riusata.
+Lo stack non garantisce piu assenza di uscita. Richiesto: verificare rete
+internal/bridge e identita attesa, fallire senza modificarla se incompatibile.
+Stessi controlli nella futura patch al launcher master, non solo nell'avvio B0.
+
+### B0-RV3 - P2: patch proxy apre uscita indiretta dal regtest
+
+`B0-HANDOFF.md`, patch Napay: collegare `egress` alla stessa rete edge del
+container BTCPay rende Squid raggiungibile da BTCPay sulla 3128. Squid ascolta
+su tutte le interfacce e accetta sorgenti private; fra gli host permessi ci
+sono PayPal live e BTCPay produzione. Rete Docker internal non impedisce quel
+tunnel. Nessuna chiamata reale e stata eseguita per dimostrarlo.
+
+Correzione architetturale master prima del codice:
+
+- `btcpay_regtest_edge`: solo gateway e BTCPay, interna;
+- `btcpay_regtest_client`: solo gateway e proxy egress Napay, interna;
+- alias `btcpay.local` del gateway sulla client, non connettere egress alla edge;
+- Napay web resta sulle sue reti, nessun accesso diretto HTTP al backend BTCPay;
+- nessuna modifica permissiva alle ACL del proxy; CONNECT solo host esatto:443.
+
+L'agente aggiorna patch/handoff con questo disegno e test del percorso negativo;
+il master integra i file condivisi solo dopo nuova review. Non provare host reali:
+usare endpoint sentinella isolato per verificare assenza di tunnel in uscita.
+
+### B0-RV4 - P3: test di isolamento non discriminanti
+
+`tests/isolated.sh:45`: strumento assente puo equivalere a test egress passato.
+Riga 48: hostname RPC non risolto o risposta HTTP 401 (per effetto di curl -f)
+sono considerati isolamento, ma non dimostrano che IP/porta siano irraggiungibili.
+Richiesto: prerequisiti strumenti espliciti, controlli positivi, prova TCP verso
+IP effettivo RPC dalla rete edge; servizio raggiungibile con 401 deve far
+fallire il test. Testare anche client/backend separati e proxy indiretto con
+sentinelle locali, senza contattare produzione/Internet.
+
+## Assegnazione correzioni
+
+All'agente Napay, stesso branch/worktree B0 e write set originario:
+`docker/btcpay-regtest/*`, `sip/SIP-022/B0-{ESITI,HANDOFF}.md`.
+Nuovi test filesystem/reti ammessi sotto `docker/btcpay-regtest/tests/`.
+Nessun edit diretto ai file master di gateway/infra/start-localhost o Napay.
+Aggiornare patch proposte; commit piccoli, test eseguiti/non eseguiti espliciti.
+Nessun riavvio condiviso, reset persistente o provisioning B1.
+
+CA locale, trust nel futuro worker, eventuale hostname browser e policy del
+server restano gate della fase 2, non aggirati disabilitando TLS. La topologia
+approvata qui sostituisce la patch rete singola della prima consegna.
+
+## Verifica indipendente filesystem
+
+Master: quattro riproduzioni riuscite senza Docker reale, su copia del launcher
+in albero temporaneo e binario docker sostituito da stub locale innocuo:
+
+- `status` tronca una sentinella esterna tramite symlink control.lock;
+- `up` scrive target di regtest.env symlink pendente prima di rifiutarlo;
+- percorso con `..` viene accettato dentro la radice applicativa copiata;
+- antenato symlink viene accettato dentro la stessa radice copiata.
+
+Nessun file dei checkout, segreto persistente o servizio condiviso toccato;
+albero temporaneo e segreti generati dalla sonda eliminati. Verifiche di rete
+RV2/RV3/RV4 rimangono analisi del codice/configurazione, non traffico eseguito.
+La prova non sostituisce i nuovi test di regressione richiesti all'agente.
