@@ -21,19 +21,24 @@ Tag verificati sul registry e fissati per digest; nessun `latest`.
 I tag coincidono con l'inventario dichiarato della produzione; la produzione
 non è stata interrogata (review, punto 1).
 
-### Esiti `tests/isolated.sh`: 11 PASS
+### Esiti dopo la review di integrazione (B0-RV1..RV4)
 
-- I quattro servizi partono sani; NBXplorer e nodo sincronizzati dopo 101
-  blocchi minati al primo avvio (regtest parte in download iniziale).
-- Nessuna porta pubblicata; tutte le immagini con digest.
-- Cartella privata 0700, `regtest.env` 0600, `.gitignore` locale.
-- `GET /api/v1/health` dalla rete edge: `synchronized: true`.
-- **OpenAPI non pubblica:** `/swagger/v1/swagger.json` risponde 401 senza
-  credenziali. Si scarica nella fase 2 con l'utente admin di test.
-- Nessun container raggiunge internet; RPC del nodo non raggiungibile
-  dalla rete edge.
-- Stop/up conserva la chain senza minare di nuovo; reset rifiutato senza
-  `--yes`, con `--yes` rimuove solo i volumi del progetto di test.
+- `tests/filesystem.sh`: **27 PASS** senza Docker reale (percorsi, symlink,
+  file privati, reti omonime incompatibili; sentinelle intatte).
+- `tests/isolated.sh`: **14 PASS** sullo stack reale con progetto, rete e
+  stato temporanei:
+  - servizi sani dopo 101 blocchi; nessuna porta host; digest; 0700/0600;
+  - health `synchronized: true` dalla rete edge;
+  - **OpenAPI non pubblica** (401 senza credenziali): si scarica in fase 2;
+  - reti di ogni servizio verificate (solo interne; btcpayserver anche edge);
+  - sentinella su bridge normale raggiunta da lì, irraggiungibile dalle reti
+    regtest ed edge;
+  - RPC del nodo: 401 dalla rete regtest (POST), connessione impossibile dalla
+    edge sullo stesso IP; per nome non risolto;
+  - stop/up conserva la chain; reset solo con `--yes` e solo sul progetto.
+- `tests/topology.sh`: **11 PASS** sulla topologia proposta per l'integrazione
+  (reti edge e client separate, proxy solo sulla client, blocco del backend
+  nel gateway), solo controfigure locali.
 
 ## Fase 2 - Verifiche via TLS (dopo integrazione del master)
 
