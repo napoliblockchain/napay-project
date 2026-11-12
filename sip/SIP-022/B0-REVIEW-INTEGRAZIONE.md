@@ -133,3 +133,28 @@ con JSON di caddy adapt, verifica 22 casi inclusi controlli negativi con
 redirect anticipato. Tutti i siti HTTP/HTTPS devono rifiutare la subnet
 backend prima di risposte/proxy/redirect. Sintassi launcher e diff verificati.
 Questi controlli non sostituiscono fase 2 TLS/permessi su servizi avviati.
+
+## Avvio locale e trasporto reale
+
+Stack persistente regtest avviato il 2026-11-12 con stato privato esterno in
+BTCPAY_LOCAL_STATE; quattro servizi healthy, nessuna porta backend pubblicata.
+Ricreati solo gateway ed egress, senza avvio globale/bootstrap/migration Napay.
+
+Prove master effettivamente eseguite:
+
+- Dalla rete egress Napay: Squid -> https://btcpay.local/api/v1/health,
+  CA locale verificata, risposta synchronized=true.
+- Stesso percorso senza CA: rifiuto curl60, nessun TLS bypass.
+- Dalla rete backend edge: richieste HTTPS ai quattro host napay.local,
+  wallet.local, pos.localhost e btcpay.local interrotte da Caddy. Con
+  HTTP/1.1 curl52; con HTTP/2 curl92 (stream abort, non risposta applicativa).
+- Host locale -> gateway HTTPS -> health regtest: synchronized=true.
+- Disponibilita siti esistenti dopo riavvio: Napay302, POS200, wallet200.
+
+Il primo probe negativo ammetteva solo52/56, quindi si e fermato sul92 di
+HTTP/2. Ripetuto con HTTP/1.1 esplicito e IP effettivo edge: tutti quattro
+rifiutati. Nessun errore mascherato come isolamento e nessuna chiamata a
+endpoint finanziari reali. Non sono stati creati admin, utenti o API key
+nell'istanza persistente. Matrice endpoint/permessi fase2 resta all'agente
+sul suo stack usa-e-getta; B1 rimane non approvato fino alla review degli esiti.
+Il trasporto di rete non equivale ancora a un client provisioning Napay.
