@@ -23,3 +23,23 @@ approvata. Test dichiarati dall'agente non rieseguiti dal master in questa revie
 Correzioni assegnate all'agente nel suo worktree C4. Il master non modifica
 quei file; nuova review e test prima di cherry-pick. Nessuna modifica allo
 schema C1 o alle decisioni identita/SIP-023 autorizzata implicitamente.
+
+## Verifica correzioni e finding scope/quota
+
+Master riesegue tests/docker/pos-management.sh nel worktree C4 dopo
+c9de3db0/167d84fb: 61 controlli backoffice, 50 inviti, verifica log Apache
+senza token/chiavi e bootstrap no-op tutti verdi. Chiusi i tre finding
+iniziali; nessuna migration o modifica dati della sandbox condivisa.
+
+Resta da correggere: resend legge merchant/email per solo ID e chiama
+throttle prima di verificare scope. Richiesta non autorizzata puo consumare
+quote del tenant destinatario pur terminando404. Verificare scope corrente
+prima di conteggiare, mantenendo ricontrollo transazionale sotto lock;
+applicare stessa guardia al confine invite. Test: ripetuti tentativi tenant D
+su risorse E non riducono quota disponibile a E. Nessun cambiamento richiesto
+al componente Throttle condiviso. Fix assegnato all'agente, non applicato
+implicitamente dal master. Parte D non ancora integrata nel checkout principale.
+
+Residuo dichiarato dall'agente: configurazione URL mail non valida puo
+produrre stato consegna diverso fra invito e semplice avviso (senza link).
+Risposta HTTP generica resta identica; SMTP reale e resa browser non collaudati.

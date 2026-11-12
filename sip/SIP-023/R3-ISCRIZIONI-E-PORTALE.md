@@ -76,3 +76,25 @@ cancella/rinumera righe legacy. Nessuna prova grafica browser in questo passo.
 Nessuna migration R3a, conversione dati importati, quota o merchant automatico.
 
 Implementazione R3a: commit Napay `d50ee879`. R3b/R3c ancora da implementare.
+
+## R3c-0 - Risoluzione condivisa del merchant
+
+Prerequisito minimo indipendente da R3b: User::getMerchantId non deve piu
+selezionare merchants[0]. Riusare AccountEligibility::merchantForManager
+per l'account corrente: solo gestore attivo, unico merchant e PG coerente.
+Guest/identita assente, operatore, socio, admin, duplicati o conflitti email
+restituiscono0, compatibile con il filtro esistente stores.merchant_id.
+Nessun fallback a merchant arbitrario o dati non filtrati; errori schema
+propagati, non convertiti in autorizzazione. Nessuna scrittura o migrazione.
+
+File master: components/User.php e tests/application/account-eligibility.php.
+Test con session identity gia caricata, poi disabilitazione/conflitto nel DB:
+la policy deve rileggere stato aggiornato. Restano da completare R3b, portale
+R3c e verifiche record-level degli altri controller: questo helper non e
+una dichiarazione di sicurezza di tutte le rotte legacy.
+
+R3c-0 verificata:32 controlli policy/helper nel DB usa-e-getta e runtime
+completa, incluso riavvio con dati preservati/bootstrap no-op, tutti verdi.
+Sintassi PHP8.3.36 e diff controllati. Nessuna prova grafica browser o nuova
+migration. La mancata qualificazione di dati legacy ora nega la selezione
+implicita del merchant: richiede riconciliazione, non scelta arbitraria.
