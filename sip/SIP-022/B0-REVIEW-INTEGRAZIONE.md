@@ -158,3 +158,30 @@ endpoint finanziari reali. Non sono stati creati admin, utenti o API key
 nell'istanza persistente. Matrice endpoint/permessi fase2 resta all'agente
 sul suo stack usa-e-getta; B1 rimane non approvato fino alla review degli esiti.
 Il trasporto di rete non equivale ancora a un client provisioning Napay.
+
+## Regressione ripetibile del trasporto locale
+
+Master riserva tests/btcpay-local-transport.sh: rende ripetibili le prove gia
+eseguite sul regtest condiviso, senza creare admin/chiavi o cambiare servizi.
+NAPAY_CA_FILE deve indicare CA locale esistente; nessun percorso personale
+fissato nel codice. Controlla reti interne/identita attesa, TLS tramite proxy,
+rifiuto senza CA e guardia backend sui quattro siti; usa solo nomi locali.
+Non e prova dei permessi API ne del futuro worker B1.
+
+## Review indipendente fase 2 e scelta P3
+
+Master integra63c0c25 come cc6d36c e410e512 come e467390. Rieseguito
+phase2.sh:22 controlli verdi, incluse sei risposte429 gestite rispettando
+Retry-After. Verificati rimozione container/volumi/rete della sola istanza
+usa-e-getta. Confermati store/chiavi isolati fra merchant, chiave revocata401,
+assenza di privilegio mint da chiave merchant e nomi store non univoci.
+
+Utente conferma P3; decisione9e33cc9 e B0-DECISIONE-P3.md sostituiscono P1.
+Autorizzata proposta B1, non ancora codice/schema/worker: recovery delle
+credenziali e test negativi sul ruolo admin restano gate del contratto.
+
+Regressione trasporto effettivo: tests/btcpay-local-transport.sh,7 controlli
+verdi. Primo run con cap-drop ALL non leggeva CA0600 (curl77); corretto
+eseguendo client con UID/GID proprietario, senza allargare permessi del file
+o ripristinare capability. Successivo run interamente verde. Script e diff
+verificati; nessuna password/chiave o nuova identita nel regtest persistente.
