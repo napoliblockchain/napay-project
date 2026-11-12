@@ -125,6 +125,11 @@
   3. `deliver`: esito scritto solo se `token_sha256` è ancora quello consegnato
      (CAS); costruzione URL e parametri nel try.
   Inviti **50 PASS** (9 nuovi); sul codice precedente fallisce il primo caso.
+- **Scope prima dei limiti** (finding scope/quota della review): `invite` e
+  `resend` verificano scope dell'attore ed esistenza del merchant prima di
+  `Throttle`; ricontrollo autorevole invariato sotto lock. Test: tentativi di
+  un altro gestore non riducono i limiti del merchant (inviti **62 PASS**; sul
+  codice precedente fallisce). Commit nel worktree C4 (vedi log del branch).
   Residuo noto: con configurazione mail rotta l'invito a un indirizzo nuovo
   risulta "Invio non riuscito", l'avviso a un indirizzo registrato no (non ha
   link): la differenza è visibile al merchant solo in quel guasto.
