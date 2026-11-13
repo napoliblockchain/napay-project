@@ -81,3 +81,10 @@ backup, nuova migration/grant del backend POS prima della prova locale.
 Nessuna migration, password, configurazione privata o riavvio nella sandbox
 condivisa; readiness del Napay servito verificata ancora positiva.
 Modifiche utente `4df5b5e8` preservate nel branch come `b7af8cf0`.
+
+Residuo preesistente da verificare prima del P3 completo: le vecchie pagine
+negozio usano ancora `settings.btcpayApiKey`/host e `storesettings.bps_storeid`.
+La separazione implementata riguarda i nuovi secret DB e le credenziali B1;
+non certifica la bonifica di eventuali credenziali legacy nel DB importato.
+Il worker P3 non deve riusarle automaticamente: inventario senza valori in
+output e riconciliazione esplicita restano nel piano di rollout/provisioning.
