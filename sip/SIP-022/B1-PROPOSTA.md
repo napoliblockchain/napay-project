@@ -80,7 +80,7 @@ password. Store e app **non** hanno questa garanzia (sezione 3.2).
 
 Crash tra B e salvataggio: la chiave esiste su BTCPay ma non in Napay. Al
 riavvio il passo B riparte con una nuova generazione (limite 3); le chiavi
-orfane hanno label riconoscibile e si rimuovono a mano dall'admin BTCPay.
+orfane hanno label riconoscibile.
 Osservato su regtest per gli endpoint e l'autenticazione provati (B0-ESITI,
 rotazione): nessun elenco delle proprie chiavi nell'OpenAPI e revoca per
 identificativo con Basic non riuscita (400 `apikey-not-found`); secondo
