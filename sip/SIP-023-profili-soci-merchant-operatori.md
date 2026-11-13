@@ -32,6 +32,11 @@ Decisioni confermate dall'utente il 2026-11-12:
   Questa precisazione sostituisce l'ipotesi multi-merchant per account gestore
   riportata in precedenza negli allegati di lavoro e in SIP-022.
 
+Precisazione utente 2026-11-13: tipo PF/PG assegnato all'iscrizione e non
+modificabile dopo, nemmeno dall'admin. Editor senza checkbox; POST di cambio
+tipo rifiutati. Ragione sociale facoltativa per PF, obbligatoria per PG.
+Dettagli e verifiche: [R3 form soci](SIP-023/R3-ISCRIZIONI-E-PORTALE.md).
+
 ## Profili e capacita
 
 | Profilo | Ambito | Capacita | Esclusioni |

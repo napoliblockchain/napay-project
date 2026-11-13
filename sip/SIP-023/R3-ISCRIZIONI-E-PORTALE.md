@@ -192,3 +192,39 @@ Runtime completa verde dopo correzioni, inclusi gateway simulati, webhook,
 riavvio/DB preservato/bootstrap no-op. Sintassi PHP8.3.36 (8 file), shell e
 diff verificati. Nessuna prova grafica browser, nessuna migration o modifica
 dati sandbox. Restano elenco/scheda soci admin, dashboard e SIP-025 menu.
+
+## Correzione form soci PF/PG - 2026-11-13
+
+Decisione finale utente: ragione sociale facoltativa per PF, obbligatoria
+solo PG; tipo PF/PG immutabile dopo registrazione anche per admin. Supera
+precedente ipotesi di checkbox solo-admin. La registrazione pubblica mantiene
+scelta PF/PG gia prevista, non si modifica qui.
+
+Server MemberProfiles ha gia required condizionale, ma mancava whenClient:
+validazione Yii nel browser la imponeva anche PF. Allineare callback JS al
+tipo persistito mostrato in sola lettura, senza input is_corporate, mantenendo
+required server per PG senza JavaScript. Rifiutare POST contenenti il tipo,
+ed escluderlo da mass assignment e colonne salvate nell'editor. Guardia nel
+modello anche su update con save(false); nessuna promozione/demozione ruolo.
+Editor solo per profilo gia esistente con tipo valido, senza inventare PF
+per account legacy senza profilo o convertire operatori in soci. Registrazione
+e import iniziale restano i flussi che assegnano il tipo; nessuna correzione
+di tipo amministrativa automatica autorizzata. Nessuna migration o backfill.
+
+Coperto anche reimport legacy ripetibile: assegna PF/PG solo alla prima
+creazione; se fonte successiva propone tipo diverso dal profilo gia presente,
+import rifiutato e transazione intera rollback. Nessuna conversione silenziosa
+tramite SQL dell'importatore. Test solo su database sintetici; non viene
+avviato import o corretto alcun dato della sandbox condivisa.
+
+Verifiche master: runtime completa verde con81 controlli scritture associazione,
+116 signup PF/PG HTTP/DB/mail,44 bootstrap e36 import legacy sintetico;
+riavvio e bootstrap no-op verdi. Cinque controlli JS del required client,
+sintassi PHP8.3.36 dei6 file modificati e diff verificati. Nessuna prova grafica
+browser e nessuna nuova migration, reimport o modifica dati nella sandbox.
+
+Durante test corretti due problemi della fixture: ID cifrati vanno estratti
+dalle pagine della sessione HTTP corrente, non generati nella sessione CLI;
+la prova di email legacy ambigua richiede fixture temporaneamente pre-R2,
+con rimozione/ripristino UNIQUE solo nel DB usa-e-getta e cleanup in finally.
+I vincoli del database applicativo non sono stati allentati.
