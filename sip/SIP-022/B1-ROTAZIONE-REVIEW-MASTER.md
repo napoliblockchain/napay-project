@@ -25,3 +25,22 @@ Non autorizzato ampliare privilegi per far riuscire la sonda.
 Fix assegnato a CLA nel proprio write set regtest; master non modifica lo
 script concorrente. Password tecnica permanente e doppia generazione restano
 quelle gia approvate, nessuna modifica al worker o allo schema autorizzata.
+
+## Chiusura review - 2026-11-13
+
+0d8df98 corregge URL in argv (curl -K da file privato), password nelle
+espressioni python (ora stdin) e log retry senza percorsi.48b0a23 distingue
+osservazione degli endpoint provati da recupero universale e riporta limite
+UI admin come osservazione dell'utente, non prova browser del master.
+
+Master riesegue fase2 nel worktree CLA:30 controlli, exit0, cinque429 rispettati.
+R1-R4 confermati: nuova chiave limitata, stessi store/app, altro merchant403,
+vecchia valida fino a revoca, poi vecchia401/nuova200. Nessuna impostazione
+server o privilegio aggiunto. Integrata consegna; script nel master identico
+alla versione verificata, sintassi shell e diff controllati.
+
+Accettata review dei test, non worker production-ready. La probe di revoca
+per ID e la mancanza di elenco nell'OpenAPI non certificano assenza di ogni
+recupero possibile. Rimane prudenziale il limite generazioni e recupero
+amministrativo da dettagliare; evitare promessa di bonifica delle orfane.
+Nessun dato/chiave nel regtest persistente o produzione modificato.
