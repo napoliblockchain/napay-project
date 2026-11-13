@@ -112,7 +112,7 @@ senza originali, configurazione parziale o file mancanti bloccano ogni
 rigenerazione. Prima installazione automatica, esclusioni Git locali prima
 delle scritture; password root/login esistenti sempre preservate.
 
-Test master: preflight23 e locale17 con Compose/PHP reali e operazioni
+Test master: preflight26 e locale17 con Compose/PHP reali e operazioni
 persistenti intercettate; suite MySQL reale verde, compresi account gia
 presenti e backup/restore. Runtime completa con ruoli ristretti verde,
 bootstrap/readiness32; POS61 e negozi21 su fixture fresche; schema B1 148.
@@ -122,3 +122,13 @@ Nessun rollout condiviso ancora eseguito. Restano backup del DB servito,
 preflight della sua configurazione, integrazione con writer fermi, avvio
 tramite orchestratore e verifiche HTTP/TLS sullo stack locale. Il worker
 di provisioning W1-W5 segue il piano B1-F; non e attivato da questo launcher.
+
+Follow-up `528413a2`: password web validata dal modello Compose effettivo,
+non dal testo grezzo dell'env. Coperti interpolazione debole, riuso root/web
+e password interpolata valida. Preflight della configurazione locale reale
+superato su copia privata temporanea; originali e servizi invariati.
+
+E2E POS `872055f` (`feature/v2-pos-e2e-db-roles`):25 casi HTTP/TLS verdi sia
+legacy sia restricted. In restricted si applica davvero overlay B1, con
+readiness web/worker e controprove DDL, DELETE storico aperture e lettura
+credenziali BTCPay negate al web. Nessun deploy o pagamento.
