@@ -26,10 +26,10 @@
   altrimenti.
 - `in_flight_op`: `create_user`, `create_api_key`, `create_store`,
   `create_pos_app`, `revoke_api_key`.
-- Verifica dei CHECK: resa di MySQL 8.4.13, confrontata ignorando spazi,
-  backtick, escape e **introducer di charset**: dopo un `ALTER` qualunque
-  MySQL riscrive `_utf8mb4'x'` in `_ascii'x'` sulle colonne ascii (verificato).
-  Maiuscole e parentesi restano significative (regex KEK alterata: rifiutata).
+- Verifica dei CHECK e della colonna generata: resa di MySQL 8.4.13 (vedi
+  RV1 sotto). Dopo un `ALTER` qualunque MySQL riscrive `_utf8mb4'x'` in
+  `_ascii'x'` sulle colonne ascii (verificato): introducer ammessi solo
+  `_utf8mb4`/`_ascii`, fuori dai letterali.
 - `stores`: basta un UNIQUE equivalente a (`id`, `merchant_id`) con qualunque
   nome, come ammette C1.
 - Nessuna FK `jobs.merchant_id` (non prevista dallo schema approvato).
@@ -78,3 +78,19 @@
   `pos_terminals(id, store_id, merchant_id)`; `logs` solo INSERT.
 - Un terminale mappato non può cambiare negozio (FK RESTRICT): da gestire
   nel backoffice quando arriverà lo spostamento.
+
+## Correzione review master (B1-B-REVIEW-MASTER, RV1)
+
+- `ddcfadbc`: `information_schema` restituisce l'espressione con un livello
+  di escape in più (`\'`, `\\`, verificato su MySQL 8.4.13): prima si toglie,
+  poi si normalizzano spazi, backtick e introducer **solo fuori dai
+  letterali**; i letterali restano byte per byte (spazi, backslash, escape),
+  letterale non chiuso = incompatibile.
+- `64d042fa`: derive solo nei letterali (marker `'cur rent'`, dominio con
+  spazio, regex KEK con spazio e con backslash): ognuna rifiutata senza
+  ricreare la tabella mancante, poi replay dello schema esatto accettato.
+  B1b **148 PASS**, C1 55 PASS; con il verificatore precedente la suite
+  fallisce alla prima deriva. `runtime.sh` completo verde.
+- Nota fuori dal mio write set: `normalize()` di C1 e `clause()` di D tolgono
+  anch'essi gli spazi ovunque; oggi i loro CHECK non hanno letterali stringa,
+  quindi nessun effetto pratico.
