@@ -30,6 +30,15 @@
 rete assente, sola lettura). Controprova: con valori enormi trattati come
 non validi, o senza il massimo fra server e backoff, la suite fallisce.
 
+## Correzione review master (orologio al limite)
+
+- `3bcb3461`: orologio oltre `PHP_INT_MAX - 3600` rifiutato
+  (`invalid_now`), mai saturato: `now + backoff` restava intero solo fino lì
+  e saturare accorcerebbe l'attesa minima.
+- `40604ac0`: regressione al bordo con header assente, secondi e data:
+  limite esatto = intero, limite+1 e massimo rifiutati. **80 PASS**; il
+  componente precedente fallisce sul primo caso oltre il limite.
+
 ## Limiti
 
 - Il massimo di tentativi per lavoro (es. 10 nella SIP) non è qui: resta
