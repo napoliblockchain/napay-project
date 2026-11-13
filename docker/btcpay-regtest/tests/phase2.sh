@@ -29,11 +29,16 @@ trap 'exit 1' HUP INT TERM
 
 # api METODO PERCORSO [file-corpo] [file-intestazione] -> $code; risposta in $work/out.json (mai stampata intera)
 api() {
-    local method=$1 path=$2 body=${3:-} auth=${4:-} args
-    args=(-s -o /w/out.json -D /w/headers.txt -w '%{http_code}' -X "$method" --max-time 30 "http://btcpay-regtest:49392$path")
+    local method=$1 path=$2 body=${3:-} auth=${4:-} args arg
+    # URL (puo contenere una chiave) in un file di configurazione curl privato, mai negli argomenti di processo
+    printf 'url = "http://btcpay-regtest:49392%s"\n' "$path" > "$work/request.cfg"
+    args=(-s -o /w/out.json -D /w/headers.txt -w '%{http_code}' -X "$method" --max-time 30 -K /w/request.cfg)
     [[ -z $auth ]] || { [[ -s $work/$auth ]] || fail "missing credential file $auth"; args+=(-H "@/w/$auth"); }
     [[ -z $body ]] || args+=(-H 'Content-Type: application/json' --data-binary "@/w/$body")
+    # controllo automatico: nessun argomento di curl simile a un segreto (chiavi, password, token)
+    for arg in "${args[@]}"; do [[ ! $arg =~ [A-Za-z0-9+/=_-]{24,} ]] || fail 'secret-like value in process arguments'; done
     code=$(docker run --rm --user "$(id -u):$(id -g)" --network "$BTCPAY_EDGE_NETWORK" -v "$work:/w" --entrypoint curl "$client" "${args[@]}") || code=000
+    rm -f "$work/request.cfg"
 }
 # come api, ma su 429 rispetta Retry-After (massimo 3 attese da 90 s): comportamento atteso dal worker
 throttled=0
@@ -46,13 +51,14 @@ api_retry() {
         wait=$(sed -n 's/^[Rr]etry-[Aa]fter: *\([0-9]*\).*/\1/p' "$work/headers.txt" | head -1)
         [[ $wait =~ ^[0-9]+$ ]] || wait=10
         (( wait <= 90 )) || fail "Retry-After too long ($wait s)"
-        printf 'INFO: 429 on %s, Retry-After %s s\n' "$2" "$wait"
+        printf 'INFO: 429, Retry-After %s s\n' "$wait"
         sleep "$((wait + 1))"
     done
 }
 json() { python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); print($1)" "$work/out.json"; }
 # file corpo JSON costruito da python (valori mai in argomenti di processi docker)
-body() { python3 -I -c "import json,sys; open(sys.argv[1],'w').write(json.dumps($2))" "$work/$1"; }
+# corpo da stdin (anche le password): nessun valore negli argomenti di processo
+body() { python3 -I -c "import ast,json,sys; open(sys.argv[1],'w').write(json.dumps(ast.literal_eval(sys.stdin.read())))" "$work/$1" <<< "$2"; }
 basic() { printf 'Authorization: Basic %s\n' "$(printf '%s:%s' "$2" "$3" | base64 -w0)" > "$work/$1"; }
 # chiave dalla risposta in un file intestazione, poi risposta cancellata
 keyfile() { python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); open(sys.argv[2],'w').write('Authorization: token '+d['apiKey']+'\n')" "$work/out.json" "$work/$1"; rm -f "$work/out.json"; }
