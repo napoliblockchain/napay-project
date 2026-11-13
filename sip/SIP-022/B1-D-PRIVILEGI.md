@@ -118,7 +118,7 @@ presenti e backup/restore. Runtime completa con ruoli ristretti verde,
 bootstrap/readiness32; POS61 e negozi21 su fixture fresche; schema B1 148.
 Lint shell/PHP e diff verificati. Tutto su dati usa-e-getta.
 
-Nessun rollout condiviso ancora eseguito. Restano backup del DB servito,
+Nessun rollout condiviso ancora eseguito. Restano backup aggiornato alla manutenzione,
 preflight della sua configurazione, integrazione con writer fermi, avvio
 tramite orchestratore e verifiche HTTP/TLS sullo stack locale. Il worker
 di provisioning W1-W5 segue il piano B1-F; non e attivato da questo launcher.
@@ -140,3 +140,19 @@ poi check; `--check` senza env non genera credenziali. Configurazione legacy
 richiede preparazione esplicita dei ruoli. Compatibilita col vecchio codice
 servito mantenuta finche l'overlay non viene integrato. Test dedicato
 `tests/localhost-preflight.sh`: **7 PASS**, Docker interamente intercettato.
+
+## Backup Preliminare Del DB Servito
+
+2026-11-13: backup logico privato in
+`/var/www/blockchain-napoli/napay-local-data/backup-before-roles-20261113-tIgFffrj/`,
+directory0700, file0600, fuori Git. Snapshot e checksum conservati; prova
+di restore in MySQL usa-e-getta, stessa immagine del server sorgente,
+rete disabilitata e nessuna porta host, risorse rimosse alla fine.
+
+Primo confronto testuale segnalava34 colonne con esplicitazione ridondante
+di CHARACTER SET utf8mb4 accanto a COLLATE utf8mb4_* (nessuna differenza di
+INSERT). Confronto completo passato escludendo commenti e solo quel prefisso
+DDL ridondante: valori, collation, default e resto dello schema invariati.
+Nessuna normalizzazione di stringhe/dati o riscrittura del backup originale.
+Checksum verificato e readiness del Napay servito ancora positiva.
+Backup preliminare, non sostituisce snapshot fresco prima del rollout.

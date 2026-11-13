@@ -36,3 +36,17 @@ dei mapping nella transazione interna: owner/version/lease prima della
 mutazione, tempo fresco sul CAS finale, rollback di job e mapping insieme.
 Le transazioni esterne restano vietate, HTTP sempre fuori transazione.
 Worker/console W3b dopo review del fencing; nessun deploy in questa fase.
+
+Approvato e integrato `c586a4f0`, `89285cbf`: **18 PASS** master con worker
+ristretto, due connessioni, crash e scadenza nel callback. Le mutazioni che
+restituiscono CAS false/null devono essere controllate dal callback ed
+alzare eccezione: la coda non puo dedurre il significato di un return void.
+
+## W3b - Executor Account
+
+CLA autorizzato al codice, prima solo merchant_account/runOnce. Account
+serializzato anche tra generazioni diverse, checkpoint e mapping atomici,
+HTTP fuori transazione, identita attiva verificata prima e dopo la rete.
+qualifiedMerchant da solo non controlla is_active: usare anche riscontro
+merchantForManager del gestore. Store/app, riconciliazione automatica e
+daemon non sono inclusi in questo primo executor.
