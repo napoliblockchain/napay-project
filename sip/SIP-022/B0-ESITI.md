@@ -74,6 +74,27 @@ nessuna risorsa residua.
 | Chiave per un altro utente | `btcpay.server.canmanageusers` | **richiede `btcpay.server.canmodifyserversettings`** (non documentato); `canmanageusers` non crea chiavi per l'admin (403) |
 | Chiave propria (Basic) | `unrestricted` (cioè il titolare) | un utente normale si crea una chiave limitata ai propri store |
 
+### Rotazione della chiave merchant (decisione B, 2026-11-13)
+
+`phase2.sh` esteso (**30 PASS**, istanza usa-e-getta, nessun segreto stampato):
+
+| Passo | Esito |
+| --- | --- |
+| R1 | Con la password tecnica (Basic) il merchant crea una seconda chiave limitata a `canmodifystoresettings`. |
+| R2 | La nuova chiave vede esattamente gli stessi store e le stesse app POS; store di altri merchant 403. |
+| R3 | La vecchia chiave resta valida finché non viene revocata. |
+| R4 | Revoca esplicita (`DELETE /api/v1/api-keys/current` con la vecchia chiave): vecchia 401, nuova 200. |
+| — | La nuova chiave non crea altre chiavi (403). |
+
+Chiavi orfane (crash dopo la creazione e prima del salvataggio):
+- l'OpenAPI 2.4.7 **non ha un endpoint per elencare** le proprie chiavi;
+  `GET /api/v1/api-keys` con Basic non risponde 200;
+- `DELETE /api/v1/api-keys/{apiKeyId}` con Basic e il valore della chiave
+  risponde **400 `apikey-not-found`** e la chiave **resta valida**;
+- l'unica revoca che funziona è `DELETE /api/v1/api-keys/current` con la
+  chiave stessa: una chiave orfana (valore perso) si rimuove solo
+  dall'interfaccia admin di BTCPay. Il limite di generazioni resta necessario.
+
 ### Conseguenza per la decisione B0-2 (da decidere)
 
 Il modello P1 approvato ("una chiave provisioner, store del provisioner,
