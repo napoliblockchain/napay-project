@@ -5,7 +5,7 @@
 - Base: SIP-021 (decisioni 5-6, criteri di accettazione), bozza OpenAPI
   `pos/v2/docs/pos-api.openapi.json` (percorsi e campi invariati),
   `NAPAY-CONTRACT.md` sezione "Lock e revoca".
-- Stato: **da approvare** (sezione 7). Nessun codice prima dell'approvazione.
+- Stato: **APPROVATO dall'utente il 2026-11-13** (decisioni sezione 7: 1 sì, 2 sì, 3 sì).
 
 ## 1. Modello
 
@@ -77,18 +77,17 @@ nella sessione server POS; heartbeat ogni 30 s tramite endpoint POS con
 CSRF; chiusura esplicita e al logout; 409 mostrati come "POS occupato" o
 "apertura terminata, rientra". Nessun lock nel browser.
 
-## 7. Decisioni richieste all'utente
+## 7. Decisioni dell'utente (2026-11-13)
 
 1. **Apertura il cui titolare non può più agire** (sessione scaduta dopo
    12 h o revocata, profilo/grant/terminale disabilitati): un'altra
    acquisizione la può chiudere automaticamente (`owner_ineligible`)?
    Non è un takeover di un dispositivo vivo: quel titolare non può più fare
-   richieste. **Proposta: sì.** Alternativa: resta bloccata fino allo
-   sblocco del manager.
-2. Heartbeat ogni 30 s, solo informativo: confermi?
+   richieste. **Approvato: sì** (`owner_ineligible`).
+2. Heartbeat ogni 30 s, solo informativo. **Approvato.**
 3. Il gestore merchant può sbloccare solo i POS del proprio merchant, l'admin
-   tutti (come SIP-021 decisione 6): confermi che basta il pulsante in
-   `pos-management` senza conferma via email?
+   tutti (SIP-021 decisione 6): pulsante in `pos-management` con conferma a
+   schermo, CSRF e registro attività, nessuna email. **Approvato.**
 
 ## 8. Test previsti (DB usa-e-getta)
 
