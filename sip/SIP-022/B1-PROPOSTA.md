@@ -226,6 +226,28 @@ per account alla volta. Generazione corrente `n`, nuova `n+1`:
 - La rotazione della chiave BTCPay è separata dalla rotazione della KEK
   (sezione 5): sono comandi e calendari distinti.
 
+### Verifica su regtest usa-e-getta (piano, assegnato dal master il 2026-11-13)
+
+Estensione di `docker/btcpay-regtest/tests/phase2.sh`, istanza regtest
+usa-e-getta, nessun worker, schema o segreto persistente, nessun accesso
+umano del merchant a BTCPay, nessun permesso server aggiunto:
+
+1. la password tecnica del merchant (conservata solo nella cartella 0700 del
+   test) crea con Basic una **seconda chiave** limitata a
+   `canmodifystoresettings` (R1);
+2. la nuova chiave vede **gli stessi** store e le stesse app POS della
+   vecchia, e nessuno store di altri merchant (R2);
+3. la vecchia chiave **resta valida** finché non viene revocata (R3);
+4. revoca esplicita della vecchia con `DELETE /api/v1/api-keys/current`:
+   poi vecchia 401, nuova 200 (R4);
+5. la nuova chiave non crea altre chiavi (403);
+6. recupero delle chiavi orfane: verificare nell'OpenAPI e con chiamate
+   reali se l'utente può **elencare** o **revocare** le proprie chiavi senza
+   conoscerle; registrare l'esito senza assumerlo.
+
+Esiti in [B0-ESITI](B0-ESITI.md); la sezione 3.1 (chiavi orfane) si aggiorna
+solo con le evidenze ottenute.
+
 ### Recupero amministrativo
 
 Password tecnica non più valida (401), account bloccato o stato non
