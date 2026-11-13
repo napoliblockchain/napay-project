@@ -113,3 +113,14 @@ parallelo, replay, fencing, sblocco, logout, `owner_ineligible`, vincolo DB);
 regressioni verdi: C4 56+62, catalogo 177, sessioni/logout, runtime completa.
 Codici errore come la bozza OpenAPI (`not_found`, `terminal_in_use`,
 `idempotency_conflict`, `opening_invalid`).
+
+## 10. Stato implementazione POS (2026-11-13)
+
+Repo `pos`, branch `feature/v2-pos-openings-client`: `f28dabb` client e
+custodia server, `4a976a1` apertura dal catalogo/cassa verificata/chiusura,
+`48158ab` mobile-first e PWA (manifest, icone, service worker solo guscio
+statico, `offline.html`), `2186776` test, `d5afdb4` documentazione. Test PHP
+(trasporto simulato): aperture 44, PWA/mobile 30, catalogo 37, login 37,
+logout 18, importi 18, configurazione 13; `api-contract.cjs` verde (i
+metadati OpenAPI indicano ancora le quattro operazioni come bozza). Prova su
+dispositivo reale e browser dopo integrazione nello stack locale.
