@@ -170,7 +170,9 @@ pass 'canmanageusers cannot mint keys for the admin (403)'
 for m in a b; do
     api POST /api/v1/api-keys merchant-key.json "basic-$m.hdr"
     [[ $code == 200 && $(json "d['permissions']") == "['btcpay.store.canmodifystoresettings']" ]] || fail "merchant $m own key ($code)"
-    keyfile "key-$m.hdr"; rm -f "$work/basic-$m.hdr"
+    keyfile "key-$m.hdr"
+    # decisione B: la password tecnica del merchant a resta (cifrata nel worker reale; qui solo nella cartella 0700 del test)
+    [[ $m == a ]] || rm -f "$work/basic-$m.hdr"
     body "store-$m.json" "{'name': 'Negozio $m'}"
     api POST /api/v1/stores "store-$m.json" "key-$m.hdr"
     [[ $code == 200 ]] || fail "merchant $m store ($code)"
@@ -193,6 +195,75 @@ pass 'P3: merchant store key cannot create further keys (403)'
 api GET "/api/v1/stores/$(cat "$work/store-a")/apps" "" key-a.hdr
 [[ $code == 200 && $(json "len(d)") == 1 ]] || fail "apps listing ($code)"
 pass 'Reconciliation: POS apps of a store listed with the merchant key'
+
+# --- decisione B: rotazione della chiave del merchant con la password tecnica conservata (R1-R4)
+ids() { json "sorted(x['id'] for x in d)"; }
+api GET /api/v1/stores "" key-a.hdr; stores_old=$(ids)
+api GET "/api/v1/stores/$(cat "$work/store-a")/apps" "" key-a.hdr; apps_old=$(ids)
+api POST /api/v1/api-keys merchant-key.json basic-a.hdr
+[[ $code == 200 && $(json "d['permissions']") == "['btcpay.store.canmodifystoresettings']" ]] || fail "R1 new key ($code)"
+keyfile key-a2.hdr
+pass 'R1: stored technical password mints a second key limited to store settings'
+api GET /api/v1/stores "" key-a2.hdr
+[[ $code == 200 && $(ids) == "$stores_old" ]] || fail 'R2 stores'
+api GET "/api/v1/stores/$(cat "$work/store-a")/apps" "" key-a2.hdr
+[[ $code == 200 && $(ids) == "$apps_old" ]] || fail 'R2 apps'
+api GET "/api/v1/stores/$(cat "$work/store-b")" "" key-a2.hdr
+[[ $code == 403 ]] || fail "R2 foreign store ($code)"
+pass 'R2: new key sees exactly the same stores and POS apps, not other merchants'
+api GET /api/v1/stores "" key-a.hdr
+[[ $code == 200 ]] || fail "R3 old key ($code)"
+pass 'R3: old key still valid while the new one is in place'
+api POST /api/v1/api-keys unrestricted.json key-a2.hdr
+[[ $code == 403 ]] || fail "new key minting ($code)"
+pass 'New key cannot create further keys (403)'
+api DELETE /api/v1/api-keys/current "" key-a.hdr
+[[ $code == 200 ]] || fail "R4 revoke ($code)"
+api GET /api/v1/stores "" key-a.hdr; old_after=$code
+api GET /api/v1/stores "" key-a2.hdr
+[[ $old_after == 401 && $code == 200 ]] || fail "R4 after revoke (old $old_after, new $code)"
+pass 'R4: after explicit revoke old key 401, new key 200'
+mv "$work/key-a2.hdr" "$work/key-a.hdr"
+
+# --- recupero di chiavi orfane: cosa offre davvero l'API all'utente (nessuna ipotesi)
+python3 -I - "$work/swagger.json" <<'PYEOF' > "$work/apikey-ops.txt"
+import json, sys
+d = json.load(open(sys.argv[1]))
+for path, ops in sorted(d['paths'].items()):
+    if '/api-keys' in path:
+        for method, op in ops.items():
+            if isinstance(op, dict):
+                perms = ', '.join(p for s in op.get('security', []) for p in s.get('API_Key', [])) or '-'
+                print(f"{method.upper()} {path} | dichiarato: {perms}")
+PYEOF
+sed 's/^/MATRIX: /' "$work/apikey-ops.txt"
+if grep -q '^GET /api/v1/api-keys |' "$work/apikey-ops.txt"; then
+    api GET /api/v1/api-keys "" basic-a.hdr
+    printf 'INFO: GET /api/v1/api-keys with Basic -> %s\n' "$code"
+else
+    printf 'INFO: no endpoint to list own API keys in OpenAPI\n'
+fi
+api GET /api/v1/api-keys "" basic-a.hdr
+[[ $code != 200 ]] || fail 'unexpected own-key listing (update the orphan-key plan)'
+pass 'No listing of own keys: orphan keys cannot be discovered through the API'
+if grep -q '^DELETE /api/v1/api-keys/{apiKeyId} |' "$work/apikey-ops.txt"; then
+    api POST /api/v1/api-keys merchant-key.json basic-a.hdr
+    [[ $code == 200 ]] || fail "orphan simulation ($code)"
+    keyfile key-a3.hdr
+    key3=$(sed 's/^Authorization: token //' "$work/key-a3.hdr" | tr -d '\n')
+    api DELETE "/api/v1/api-keys/$key3" "" basic-a.hdr; revoke_basic=$code; unset key3
+    revoke_error=$(json "[e.get('code') for e in (d if isinstance(d, list) else [d])]" 2>/dev/null || true)
+    api GET /api/v1/stores "" key-a3.hdr
+    printf 'INFO: DELETE /api/v1/api-keys/{apiKeyId} with Basic and the key value -> %s %s; key then -> %s\n' "$revoke_basic" "$revoke_error" "$code"
+    # evidenza 2.4.7: la revoca per identificativo con Basic non trova la chiave appena creata; resta valida
+    [[ $revoke_basic == 400 && $revoke_error == "['apikey-not-found']" && $code == 200 ]] || fail 'revoke-by-id behaviour changed (update the orphan-key plan)'
+    api DELETE /api/v1/api-keys/current "" key-a3.hdr
+    api GET /api/v1/stores "" key-a3.hdr
+    [[ $code == 401 ]] || fail 'cleanup of the extra key'
+    pass 'Revoke by id with Basic does not work (400 apikey-not-found); only the key itself can revoke it'
+else
+    fail 'DELETE /api/v1/api-keys/{apiKeyId} missing from OpenAPI (update the plan)'
+fi
 
 # --- riconciliazione per nome non affidabile
 api POST /api/v1/stores store-a.json key-a.hdr
