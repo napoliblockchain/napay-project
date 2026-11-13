@@ -173,3 +173,22 @@ File master: AccountEligibility, MembershipFee, PayFeeController, sidebar,
 fixture pay-fee/pay-btc/paypal-webhook e test membership-portal dedicato.
 Elenco/scheda soci admin, dashboard e macroaree menu restano passi successivi:
 questo micro-step non dichiara chiuso l'intero portale R3c/SIP-025.
+
+## R3c-1 verificata - 2026-11-13
+
+Master esegue70 controlli HTTP/DB/policy: POS dedicato, account senza profilo,
+identita socio+operatore incoerente e admin senza profilo associativo negati
+su tutte le route quote; PF/PG e gestore PG accedono; menu coerente, nessun
+pagamento/profilo creato dai tentativi negati; disabilitazione account riletta
+anche con identita gia caricata, PG incompleta negata. Guest torna al login.
+
+Due errori di fixture/test emersi e corretti senza allargare autorizzazioni:
+il link menu usa alias /quota (ora controllo entrambe le route via DOM), e
+la fixture Bitcoin merchant richiedeva profilo PG esplicito. Soci delle
+fixture PayPal/Bitcoin/webhook dichiarati positivamente e ripuliti solo nei
+DB temporanei. Nel codice applicativo nessuna iscrizione implicita.
+
+Runtime completa verde dopo correzioni, inclusi gateway simulati, webhook,
+riavvio/DB preservato/bootstrap no-op. Sintassi PHP8.3.36 (8 file), shell e
+diff verificati. Nessuna prova grafica browser, nessuna migration o modifica
+dati sandbox. Restano elenco/scheda soci admin, dashboard e SIP-025 menu.
