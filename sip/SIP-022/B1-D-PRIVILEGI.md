@@ -88,3 +88,11 @@ La separazione implementata riguarda i nuovi secret DB e le credenziali B1;
 non certifica la bonifica di eventuali credenziali legacy nel DB importato.
 Il worker P3 non deve riusarle automaticamente: inventario senza valori in
 output e riconciliazione esplicita restano nel piano di rollout/provisioning.
+
+## Integrazione Negozi E Aperture POS
+
+Consegne CLA approvate integrate nel branch isolato. `pos_terminal_openings`
+richiede solo SELECT/INSERT/UPDATE al web, nessun DELETE (storico audit),
+nessun privilegio al worker BTCPay. Suite separate su dati freschi per
+runtime generale, negozi e aperture: nessuna regressione esclusa. Tutte
+usano il medesimo overlay ruoli; POS e negozi non richiedono BTCPay attivo.
