@@ -51,6 +51,12 @@ timeout totale ~15 s e di connessione ~5 s; nessun segreto nei frame del
 client. Controprova (mutazioni): senza SensitiveParameter, con redirect,
 senza `NOPROXY` o senza limite del corpo la suite fallisce.
 
+## Correzione review master (runner)
+
+- `d51ca713`: certificati e chiavi di prova restano in cartella 0700 con file
+  0600; i container girano con uid/gid dell'host (come i test di trasporto
+  B0), senza allargare permessi né `DAC_OVERRIDE`. **94 PASS**.
+
 ## Limiti
 
 - Gli errori TLS sono `outcome_unknown` anche se la richiesta non è partita
