@@ -18,3 +18,19 @@ esterni e gli introducer charset ammessi. Test DB richiesti: marker con
 spazio, dominio con spazio, regex con spazio/backslash; deriva rifiutata
 prima di qualunque DDL e replay dello schema corretto ancora valido.
 Finding trasmesso nel file condiviso; fix nello stesso worktree B1b.
+
+## Esito Finale - Approvata, Integrazione Isolata
+
+RV1 corretta da `ddcfadbc`/`64d042fa`: letterali preservati, normalizzazione
+solo esterna, escape information_schema trattati separatamente. Master ha
+rieseguito il runner: C1 **55**, B1b **148 PASS**, comprese le quattro derive.
+Integrazione su `feature/v2-btcpay-b1-integration`, base UI `3c72454c`:
+`6602f348`, `10630e0b`, `e4d983bd`, `7be3a3e0`. File consegnati identici;
+`runtime.sh` completa verde sul branch integrato, exit0, restart con DB
+preservato/bootstrap no-op. Harness iniziale corretto predisponendo vendor
+locale e directory runtime/assets ignorate necessarie ai mount read-only.
+
+Nessuna migration nel checkout live: il suo hash bootstrap e i suoi GRANT
+schema-wide impongono prima la separazione dei ruoli DB. Sandbox principale
+verificata ancora ready, nessun backfill/provisioning/segreto reale aggiunto.
+Prossimo codice CLA: coda worker secondo `B1-C-CODA.md`; bootstrap/ruoli master.
