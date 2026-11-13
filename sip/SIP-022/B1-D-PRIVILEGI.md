@@ -96,3 +96,29 @@ richiede solo SELECT/INSERT/UPDATE al web, nessun DELETE (storico audit),
 nessun privilegio al worker BTCPay. Suite separate su dati freschi per
 runtime generale, negozi e aperture: nessuna regressione esclusa. Tutte
 usano il medesimo overlay ruoli; POS e negozi non richiedono BTCPay attivo.
+
+## Launcher Completato Nel Branch Isolato
+
+Commit Napay `e1f8cb5d`, `35bcb7a3`: up richiede env privato esterno e
+include sempre overlay ruoli. Preflight verifica modello Compose completo
+(profilo db-check incluso nella sola ispezione), account/secret distinti,
+percorsi canonici senza symlink, proprietario e permessi di env/secret/dataset.
+Nessun servizio o volume creato prima della validazione; nessun fallback legacy.
+
+`local.sh prepare-roles` prepara una sandbox esistente senza avviarla:
+verifica in sola lettura l'assenza dei due account dedicati, poi genera
+solo i due nuovi secret e aggiunge i riferimenti all'env. Account esistenti
+senza originali, configurazione parziale o file mancanti bloccano ogni
+rigenerazione. Prima installazione automatica, esclusioni Git locali prima
+delle scritture; password root/login esistenti sempre preservate.
+
+Test master: preflight23 e locale17 con Compose/PHP reali e operazioni
+persistenti intercettate; suite MySQL reale verde, compresi account gia
+presenti e backup/restore. Runtime completa con ruoli ristretti verde,
+bootstrap/readiness32; POS61 e negozi21 su fixture fresche; schema B1 148.
+Lint shell/PHP e diff verificati. Tutto su dati usa-e-getta.
+
+Nessun rollout condiviso ancora eseguito. Restano backup del DB servito,
+preflight della sua configurazione, integrazione con writer fermi, avvio
+tramite orchestratore e verifiche HTTP/TLS sullo stack locale. Il worker
+di provisioning W1-W5 segue il piano B1-F; non e attivato da questo launcher.
