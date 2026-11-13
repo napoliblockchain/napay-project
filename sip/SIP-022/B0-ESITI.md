@@ -86,14 +86,24 @@ nessuna risorsa residua.
 | R4 | Revoca esplicita (`DELETE /api/v1/api-keys/current` con la vecchia chiave): vecchia 401, nuova 200. |
 | — | La nuova chiave non crea altre chiavi (403). |
 
-Chiavi orfane (crash dopo la creazione e prima del salvataggio):
-- l'OpenAPI 2.4.7 **non ha un endpoint per elencare** le proprie chiavi;
+Chiavi orfane (crash dopo la creazione e prima del salvataggio). Osservato
+su BTCPay 2.4.7, **solo per gli endpoint e l'autenticazione provati**; non
+prova l'assenza di ogni possibile via di recupero:
+- nell'OpenAPI non compare un endpoint per elencare le proprie chiavi;
   `GET /api/v1/api-keys` con Basic non risponde 200;
-- `DELETE /api/v1/api-keys/{apiKeyId}` con Basic e il valore della chiave
-  risponde **400 `apikey-not-found`** e la chiave **resta valida**;
-- l'unica revoca che funziona è `DELETE /api/v1/api-keys/current` con la
-  chiave stessa: una chiave orfana (valore perso) si rimuove solo
-  dall'interfaccia admin di BTCPay. Il limite di generazioni resta necessario.
+- `DELETE /api/v1/api-keys/{apiKeyId}` con Basic, usando come identificativo
+  il valore della chiave, ha risposto **400 `apikey-not-found`** e la chiave
+  è rimasta valida;
+- ha funzionato solo `DELETE /api/v1/api-keys/current` con la chiave stessa;
+- verifica dell'utente sull'interfaccia: l'admin del server **non vede** le
+  chiavi API degli altri utenti.
+Conseguenza per B1: le chiavi orfane non si possono individuare né revocare
+da Napay o dall'admin; restano limitate al merchant e al limite di
+generazioni. Il limite resta necessario.
+
+Prova eseguita senza segreti negli argomenti di processo (URL via file di
+configurazione curl, corpi JSON via stdin, controllo automatico nello
+script); output solo esiti.
 
 ### Conseguenza per la decisione B0-2 (da decidere)
 
