@@ -148,3 +148,28 @@ grafica browser di questo form. Nessun dato o schema sandbox modificato.
 
 Resta R3c (portale soci/operatori/menu), oltre a B1 e prontezza incassi di
 SIP-022. Il commit R3b non dichiara conclusi inviti D, provisioning o POS.
+
+## R3c-1 - Quote riservate ai soci, contratto prima del codice
+
+Aggiungere AccountEligibility::isMemberAccount: account attivo con identita
+PF/PG coerente secondo policy R1, nessun bypass amministrativo. PG che ha
+attivato merchant mantiene diritto associativo; account operatore POS non
+acquista diritti socio da ruolo, login o presenza di pagamenti storici.
+
+PayFeeController applica gate a tutte le proprie action (GET e POST), anche
+callback nel browser: un operatore non avvia, conferma o aggiorna quote e
+non legge storico quota. Guest resta redirect login, autenticato non socio403.
+MembershipFee::quote torna non pagabile/not_member senza leggere storico
+per identita non autorizzata. Webhook gia firmati restano invariati: continuano
+a riconciliare pagamenti avviati in precedenza, non creano iscrizioni.
+
+Sidebar Paga quota visibile solo con stessa policy. Nessun campo cliente puo
+scegliere socio/user_id o ottenere profilo associativo. Nessuna modifica a
+prezzi, durata quote, stato associativo o requisiti legali. Solo fixture test
+rese esplicitamente PF/PG dove il vecchio test deduceva socio dal login;
+level40 fixture chiamata operator non e operatore POS, testata come socio PF.
+
+File master: AccountEligibility, MembershipFee, PayFeeController, sidebar,
+fixture pay-fee/pay-btc/paypal-webhook e test membership-portal dedicato.
+Elenco/scheda soci admin, dashboard e macroaree menu restano passi successivi:
+questo micro-step non dichiara chiuso l'intero portale R3c/SIP-025.

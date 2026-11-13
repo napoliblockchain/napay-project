@@ -37,3 +37,12 @@ busta, contesto, primitive crittografiche o politica dei segreti.
 Fix e test assegnati a CLA nel suo write set; review prima dell'integrazione.
 Nessun ostacolo architetturale rilevato nel doppio AEAD/AD/rewrap esaminato;
 questa review non certifica schema DB, caricamento KEK o worker non implementati.
+
+## Chiusura B1a - 2026-11-13
+
+dfeffa99/a87b0164 risolvono RV1/RV2: annotazioni private e controllo della
+lunghezza codificata prima di decode. Master esegue67 test verdi nel worktree
+CLA e nel checkout integrato, runner senza rete/DB e sola lettura; incluso
+controllo ricorsivo dei frame binari e input8MiB senza crescita di memoria
+oltre1MiB. Importati b318c5fe,08d6361b,bc8cbaea,9e6edbda. Helper approvato.
+Nessuna password/KEK reale generata, nessuna migrazione o worker attivato.
