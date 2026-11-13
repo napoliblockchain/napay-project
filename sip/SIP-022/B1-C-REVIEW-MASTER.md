@@ -9,3 +9,8 @@ Fix fcf2fd5f/0ff5fbf0 approvati dopo mio runner: **63 PASS**, due connessioni
 worker limitate, gare, lease, CAS e bootstrap no-op. Integrati sul branch
 isolato feature/v2-btcpay-b1-integration come8b50d448/12f87fbb/e6928322/
 2c7f116a. Nessun daemon, lock mapping, HTTP o provisioning reale in B1c.
+
+Runtime completa master sul branch integrato verde, exit0, restart DB
+preservato. RetryPolicy successiva rieseguita **80 PASS** anche dopo
+integrazione: max(server, backoff), deferred >24h, guardia clock che non puo
+rappresentare il backoff massimo. Nessun HTTP/daemon attivato.
