@@ -1,7 +1,6 @@
 # SIP-025 - Napay: menu per macroaree e amministrazione per sezioni
 
-- Stato: OPEN - proposta dell'agente Napay su richiesta dell'utente (2026-11-12);
-  numero confermato dal master e inserito nell'indice (2026-11-12).
+- Stato: IMPLEMENTED - navigazione, gruppi e redirect verificati (2026-11-13).
 - Area: Backoffice / UI / Navigazione.
 - Repo: `napay`; orchestratore per documentazione.
 - Branch target: `feature/v2-yii2-php83-docker`.
@@ -110,3 +109,20 @@ non introdurre una seconda voce profilo nella barra laterale. Adeguare quindi
 "La mia area" al solo accesso associativo disponibile. Visibilita non sostituisce
 autorizzazioni; diritti amministrativi legacy vanno verificati sui controller,
 non riscritti per deduzione dal nome dei ruoli o per il solo raggruppamento UI.
+
+## Avvio implementazione - 2026-11-13
+
+Master: widget/sidebar/dashboard e redirect admin, test HTTP e widget.
+R3c-1 quota e R3b attivazione gia implementate. Preservati diritti esistenti:
+livelli gia autorizzati >=40 vedono Utenti, solo admin50 vede privilegi,
+impostazioni e registro. Esercenti per admin/gestore qualificato; quota solo
+soci coerenti. Nessun nuovo permesso assegnato dalla navigazione. Rimozione
+link dashboard pos/index e invoices/index non esistenti; niente grafici qui.
+
+Codice Napay c0a55ecb. Verificati101 controlli HTTP/widget per ruolo e runtime
+completa con restart/no-op. Browser reale:13 controlli a1280/390px, gruppi,
+frecce tastiera, Escape, link e stato attivo; TLS verificato, account sandbox
+locale, nessuna scrittura anagrafica/configurazione. Primo smoke corretto per
+selettore login del test; nessun bypass TLS globale. Filtri/ordinamenti dei
+controller dedicati preservati. Vecchie view admin non piu raggiunte dall'index,
+conservate per la finestra di compatibilita prevista; grafici fuori SIP-025.
