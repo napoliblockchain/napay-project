@@ -34,3 +34,24 @@ noti prima del collegamento allo stack. Nessun rilascio autorizzato finche
 risolti. DR3 verificata con il vero Log::save/Yii sul PDO worker: scrittura
 riuscita e riga verificata; suite ora **61 PASS**, commit test nel branch
 integrato. Nessun SELECT su logs aggiunto al worker per far passare il test.
+
+## Collegamento Bootstrap - Contratto Implementativo
+
+Overlay dedicato `docker-compose.roles.yml`, nessun deploy sandbox in questo
+step. Root e password migrator solo nel bootstrap, password worker solo in
+bootstrap/worker-db-check; web conserva esclusivamente propria password.
+Secret esterni 0600, directory private, lettura con controllo file/permessi.
+Bootstrap crea solo account dedicati mancanti (nessuna rotazione implicita),
+verifica credenziali, restringe web/worker prima delle DDL, migra col migrator,
+poi applica matrice completa. Nessun fallback al root per migrazioni fallite.
+Ripetere bootstrap con writer fermi: GRANT non transazionali, possibili errori
+transitori se altri servizi interrogano il DB durante la riconfigurazione.
+
+Readiness ristretta verifica marker complete/hash codice/storia migration e
+privilegi propri senza DDL, GRANT OPTION o scritture sul marker; web mai sulle
+credenziali. Verifica hash schema completo resta al bootstrap/migrator prima
+di sbloccare servizi. Worker legge soltanto colonne marker e migration.version.
+`worker-db-check` e una verifica one-shot, non il daemon di provisioning.
+Test: avvio reale overlay, credenziali sbagliate, secret mancanti/permissivi,
+readiness con utenti reali ristretti, bootstrap ripetuto senza reimport, HTTP
+con ruoli applicati e credenziali privilegiate assenti dal web.
