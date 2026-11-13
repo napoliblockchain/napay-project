@@ -33,13 +33,13 @@ sessione del chiamante = sessione dell'apertura e ancora valida
 (`findActiveSession`); `instance_id` e `generation` coincidono; profilo,
 grant del negozio, terminale e merchant ancora abilitati/qualificati.
 Altrimenti: apertura altrui o fuori scope **404**; propria non più valida
-**409 `opening_closed`**. Nessuna operazione la "resuscita".
+**409 `opening_invalid`**. Nessuna operazione la "resuscita".
 
 ## 3. Operazioni operatore (API POS, stessi header di sessioni/catalogo)
 
 | Operazione | Comportamento |
 | --- | --- |
-| `POST /terminals/{terminal_id}/openings` + `Idempotency-Key` (UUID v4) + `{instance_id}` | In una transazione READ COMMITTED, lock nell'ordine C4 (merchant, profilo, utente, negozio, grant, terminale, sessione), ricontrollo scope, poi lettura dell'apertura attiva del terminale. Libera: nuova `generation` = max+1, **201** con `{id, terminal_id, instance_id, generation, state}`. Occupata da apertura utilizzabile: **409 `terminal_in_use`**, anche stesso utente/altra scheda; nessuna sostituzione. Replay stessa chiave e stesso corpo: **200** con l'apertura originale se ancora attiva, altrimenti **409 `opening_closed`**; stessa chiave, corpo diverso: **409 `idempotency_conflict`**. |
+| `POST /terminals/{terminal_id}/openings` + `Idempotency-Key` (UUID v4) + `{instance_id}` | In una transazione READ COMMITTED, lock nell'ordine C4 (merchant, profilo, utente, negozio, grant, terminale, sessione), ricontrollo scope, poi lettura dell'apertura attiva del terminale. Libera: nuova `generation` = max+1, **201** con `{id, terminal_id, instance_id, generation, state}`. Occupata da apertura utilizzabile: **409 `terminal_in_use`**, anche stesso utente/altra scheda; nessuna sostituzione. Replay stessa chiave e stesso corpo: **200** con l'apertura originale se ancora attiva, altrimenti **409 `opening_invalid`**; stessa chiave, corpo diverso: **409 `idempotency_conflict`**. |
 | `GET /openings/{id}` | Solo verifica (sezione 2), **200** o 404/409. Non acquisisce né riprende. |
 | `POST /openings/{id}/heartbeat` `{instance_id, generation}` | Verifica, aggiorna `last_seen_at`, **204**. Serve solo a mostrare al manager l'ultimo contatto. |
 | `POST /openings/{id}/release` `{instance_id, generation}` | Chiusura normale del titolare: `released`, **204**; replay su apertura già chiusa dalla stessa sessione **204**. Non è lo sblocco forzato. |
@@ -72,6 +72,10 @@ l'apertura con la stessa funzione).
 
 ## 6. Lato POS (`pos/v2`)
 
+**Requisito utente (2026-11-13): vista mobile-first obbligatoria e PWA ready**
+(terminalino con stampante o smartphone): una colonna, pulsanti grandi,
+manifest e service worker installabili.
+
 Selezione di un terminale dal catalogo -> apertura; dati dell'apertura solo
 nella sessione server POS; heartbeat ogni 30 s tramite endpoint POS con
 CSRF; chiusura esplicita e al logout; 409 mostrati come "POS occupato" o
@@ -99,3 +103,13 @@ acquisizione 201 con generazione maggiore; operatore non può sbloccare,
 gestore di altro merchant 404; logout chiude l'apertura; disable/grant
 revocato rende l'apertura inutilizzabile; vincolo DB rifiuta una seconda
 `active` anche con INSERT diretto.
+
+## 9. Stato implementazione backend (2026-11-13)
+
+Napay `feature/v2-pos-openings` da `4df5b5e8`: `ba74d824` schema, `9742a44b`
+API e logout, `7d203f06` sblocco manager e disponibilità nel backoffice,
+`2f3ef78e` test. `tests/docker/pos-openings.sh` **61 PASS** (3 gare reali in
+parallelo, replay, fencing, sblocco, logout, `owner_ineligible`, vincolo DB);
+regressioni verdi: C4 56+62, catalogo 177, sessioni/logout, runtime completa.
+Codici errore come la bozza OpenAPI (`not_found`, `terminal_in_use`,
+`idempotency_conflict`, `opening_invalid`).
