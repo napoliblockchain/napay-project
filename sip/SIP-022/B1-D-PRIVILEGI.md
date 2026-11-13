@@ -28,3 +28,9 @@ colonna mancante, schema underscore senza wildcard, replay idempotente.
 Root secret montato esclusivamente nel bootstrap di test; no-op finale verde.
 Lint PHP8.3.36/shell e diff verificati. Nessuna modifica DB/sandbox condivisa.
 Collegamento bootstrap/compose/secret/readiness ancora da implementare.
+
+Review CLA: DR1 readiness web e DR2 readiness worker confermano i blocchi
+noti prima del collegamento allo stack. Nessun rilascio autorizzato finche
+risolti. DR3 verificata con il vero Log::save/Yii sul PDO worker: scrittura
+riuscita e riga verificata; suite ora **61 PASS**, commit test nel branch
+integrato. Nessun SELECT su logs aggiunto al worker per far passare il test.
