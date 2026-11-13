@@ -63,3 +63,10 @@ senza `NOPROXY` o senza limite del corpo la suite fallisce.
   (scelta prudente richiesta: nessuna falsa prova).
 - Interpretazione degli stati, Retry-After (RetryPolicy) e riconciliazione
   restano al chiamante; nessuna query string supportata.
+
+## Review Master
+
+Client e runner privato verificati **94 PASS**, anche sul branch integrato.
+Commit integrati `f6824e5e`, `3a8bc1a9`, `f413d94e`. Nessuna modifica al
+flusso quote o chiamata al BTCPay persistente/produzione. Trasporto worker
+pronto; orchestratore provisioning e servizio daemon ancora da implementare.
