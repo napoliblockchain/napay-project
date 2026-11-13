@@ -22,4 +22,17 @@ Autorizzato al codice CLA, solo nuove classi steps e test. Riusa callable
 del client HTTP gia approvato; nessun trasporto parallelo, DB, hook o daemon.
 Tabelle B1-PROPOSTA 3.1/3.2 vincolanti: checkpoint persistiti a carico W3,
 nessun secondo POST store/app dopo esito ignoto, marker unico esatto per
-adozione, credenziali non verificate mai correnti. In attesa della consegna.
+adozione, credenziali non verificate mai correnti.
+
+Approvato: master **89 PASS**, integrato `bee8de2a`, `7fe6cabd`,
+`2ac221e0`, `7fed6e85`. Review risolte: app solo PointOfSale e liste valide,
+link sospesi mai completati per un vecchio ID, permessi chiave esatti,
+429 sulla creazione chiave deferred (nessun retry automatico).
+
+## W3a - Fencing Atomico
+
+CLA autorizzato a estendere le API CAS della coda con mutazione opzionale
+dei mapping nella transazione interna: owner/version/lease prima della
+mutazione, tempo fresco sul CAS finale, rollback di job e mapping insieme.
+Le transazioni esterne restano vietate, HTTP sempre fuori transazione.
+Worker/console W3b dopo review del fencing; nessun deploy in questa fase.

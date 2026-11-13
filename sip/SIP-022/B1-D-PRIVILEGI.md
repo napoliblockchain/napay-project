@@ -112,7 +112,7 @@ senza originali, configurazione parziale o file mancanti bloccano ogni
 rigenerazione. Prima installazione automatica, esclusioni Git locali prima
 delle scritture; password root/login esistenti sempre preservate.
 
-Test master: preflight26 e locale17 con Compose/PHP reali e operazioni
+Test master: preflight26 e locale20 con Compose/PHP reali e operazioni
 persistenti intercettate; suite MySQL reale verde, compresi account gia
 presenti e backup/restore. Runtime completa con ruoli ristretti verde,
 bootstrap/readiness32; POS61 e negozi21 su fixture fresche; schema B1 148.
@@ -132,3 +132,11 @@ E2E POS `872055f` (`feature/v2-pos-e2e-db-roles`):25 casi HTTP/TLS verdi sia
 legacy sia restricted. In restricted si applica davvero overlay B1, con
 readiness web/worker e controprove DDL, DELETE storico aperture e lettura
 credenziali BTCPay negate al web. Nessun deploy o pagamento.
+
+Fail-fast orchestratore: quando il checkout Napay contiene l'overlay ruoli,
+`start-localhost.sh` ne esegue il preflight prima di avviare altri servizi.
+Prima installazione normale: `local.sh init` prepara solo input privati,
+poi check; `--check` senza env non genera credenziali. Configurazione legacy
+richiede preparazione esplicita dei ruoli. Compatibilita col vecchio codice
+servito mantenuta finche l'overlay non viene integrato. Test dedicato
+`tests/localhost-preflight.sh`: **7 PASS**, Docker interamente intercettato.

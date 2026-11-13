@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Avvio locale di tutto lo stack: wallet (poawallet) con chain Besu e backoffice napay. Solo sviluppo.
 # Un solo gateway su 127.0.0.1:80/443: https://wallet.local e https://napay.local, senza porte.
-# Non cancella volumi, non esegue migration, non fa git pull: le stampa se servono.
+# Non cancella volumi o fa git pull. Wallet: migration manuali; Napay: bootstrap automatico.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -61,6 +61,15 @@ if ! docker ps --format '{{.Names}}' | grep -qx napay-gateway; then
     ! ss -ltnH "sport = :$port" 2>/dev/null | grep -q . \
       || fail "porta $port gia' occupata da un altro servizio (es. altro progetto): fermalo prima."
   done
+fi
+if [[ -f "$ROOT/napay/docker-compose.roles.yml" ]]; then
+  # Older checkouts lack this overlay; once installed, role preflight is mandatory.
+  if [[ ! -f "$NAPAY_STATE/local.env" ]]; then
+    $CHECK && fail 'prima installazione Napay: --check non genera credenziali; avvia senza --check con NAPAY_IMPORT_DIR revisionato.'
+    bash "$ROOT/napay/docker/local.sh" init || fail 'preparazione privata Napay fallita; nessun servizio avviato.'
+  fi
+  bash "$ROOT/napay/docker/local.sh" check \
+    || fail 'preflight Napay fallito; nessun servizio avviato. Per sandbox legacy, prepara prima i ruoli come da LOCAL-BROWSER.md.'
 fi
 printf 'OK.\n'
 $CHECK && { printf 'Solo verifica: nessun servizio avviato.\n'; exit 0; }
