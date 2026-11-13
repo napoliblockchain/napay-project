@@ -139,3 +139,25 @@ Ancora aperto:
 - Migrare login/layout dedicati, verificare PDF/Excel e cache PWA di rilascio,
   poi eliminare definitivamente AdminLTE e le dipendenze Bootstrap residue.
 - Nessun deploy, commit o modifica a poawallet eseguito in questo intervento.
+
+## Uniformazione elenchi e profilo (2026-11-13)
+
+Riferimento approvato: `association/payments`. Applicare tabelle Tabler,
+ID tecnici non visibili, azioni finali a destra e intestazioni responsive.
+Primo lotto: griglie legacy utenti/aziende/negozi/POS/log/ruoli/impostazioni/
+fatture; titoli dettaglio senza ID e scheda utente con tab native Bootstrap5.
+Conservare filtri, sort, pager, URL cifrati, scope e CSRF; nessuna modifica DB.
+Form utente limitato allo stato, come il controller: niente campi ruolo/tenant
+non aggiornabili. Test su DB usa-e-getta e browser desktop/mobile, anche XSS,
+accessi negati e azioni con CSRF. Altri form/dettagli restano lotti successivi.
+
+Lotto implementato in Napay `3c72454c`: 65 controlli HTTP/widget, 61 prove
+Chrome desktop1280/mobile390, runtime completa e lint PHP/JS/shell verdi.
+Risolto overflow del pager mobile; nessuna DDL o modifica dati condivisi.
+POS e fatture legacy ricevono il componente, ma le rispettive route non
+riattivate non sono coperte dal browser; altri form/dettagli restano aperti.
+
+Direzione brand concordata: wordmark `napay` minuscolo serif deciso,
+verde profondo/avorio come riferimento fornito; Napay senza sottotitolo,
+`POINT OF SALE` esclusivamente POS. Ridisegno simbolo/logo ancora da realizzare,
+non incluso nel lotto UI e non bloccante per provisioning/pagamenti.
