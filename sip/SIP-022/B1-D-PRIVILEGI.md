@@ -17,3 +17,14 @@ Lotto NON collegato allo stack: prima del rilascio servono secret bootstrap/
 worker non visibili al web, migrazioni con migrator e readiness web limitata
 al marker bootstrap di sola lettura (verifica schema completa al migrator).
 Nessuna modifica o revoca nella sandbox condivisa durante questo step.
+
+## Esito Primo Lotto
+
+Codice master `afa6e702` nel branch isolato: DatabaseRoles e runner dedicato.
+**59 PASS** con tre account reali usa-e-getta: restrizione grant storico,
+colonne outbox, credenziali vietate al web anche COUNT/SHOW CREATE, worker
+minimo, DDL solo migrator, preflight senza revoche su errori, account bloccato,
+colonna mancante, schema underscore senza wildcard, replay idempotente.
+Root secret montato esclusivamente nel bootstrap di test; no-op finale verde.
+Lint PHP8.3.36/shell e diff verificati. Nessuna modifica DB/sandbox condivisa.
+Collegamento bootstrap/compose/secret/readiness ancora da implementare.
