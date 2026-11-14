@@ -60,3 +60,19 @@ con transfer del pagatore di test, come `openings-e2e`.
 
 Libreria: `tecnickcom/tcpdf`, la stessa del legacy, usata anche per il QR in SVG
 (nessuna libreria nel browser).
+
+## 6. Stato implementazione (2026-11-14)
+
+Repo `pos`, branch `feature/v2-pos-tts-client`, portato con fast-forward nel
+main locale `feature/v2-yii2-php83-docker` (HEAD `688f0b1`, nessun push):
+`e7dcbe8` ricevuta A7 e QR (tc-lib-pdf 8.84, tc-lib-barcode 2.17; metriche
+Helvetica convertite una volta, nessun download in build), `0397dee` testi con
+Yii::t e catalogo italiano, `71fa491` incasso dal tastierino, `688f0b1` test.
+
+Verdi: client/controller simulati 49, importi 21, aperture 44, login 37,
+logout 18, catalogo 37, config 13, PWA 30, contratto API e stato locale;
+e2e reale con ruoli DB ristretti: pagamenti 17 + log (chain Besu usa-e-getta,
+transfer reale), aperture 25 + log. Review non indipendente (stesso autore).
+
+Restano: storico incassi (API di lista), sandbox locale (variabili TTS e rete
+verso la chain in Napay, ricostruzione immagine POS) solo con ok utente.
