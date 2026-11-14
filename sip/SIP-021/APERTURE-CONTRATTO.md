@@ -124,3 +124,14 @@ statico, `offline.html`), `2186776` test, `d5afdb4` documentazione. Test PHP
 logout 18, importi 18, configurazione 13; `api-contract.cjs` verde (i
 metadati OpenAPI indicano ancora le quattro operazioni come bozza). Prova su
 dispositivo reale e browser dopo integrazione nello stack locale.
+
+## Integrazione client POS (2026-11-14, CLA master ad interim)
+
+Client aperture, layout mobile-first/PWA ed e2e uniti con fast-forward nel main
+locale POS `feature/v2-yii2-php83-docker` (HEAD `872055f`, nessun push). Verifica
+contro l'integrazione Napay `814e515c` con ruoli DB ristretti: e2e reale
+POS-gateway TLS-Napay **25 PASS** + log senza bearer/chiave/password. Test client in
+container usa-e-getta (mai nella sandbox): amount 18, config 13, login 37, logout 18,
+catalogo 37, aperture 44, PWA 30, contratto API e stato locale verdi. `transport.php`
+richiede backend TLS reale: coperto dai casi CA dell'e2e. La sandbox POS in esecuzione
+usa ancora l'immagine precedente: rebuild/riavvio solo con ok utente.
