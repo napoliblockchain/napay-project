@@ -37,3 +37,27 @@ istanziata senza chiavi web o amministratore; nessuna connessione DB/rete.
 Coperti anche keyring multiversione, dump e trace senza segreti, secret
 root/migrator montati per errore e APP_DEBUG=true con Yii gia caricato.
 CLI/compose e prova con executor restano allo step successivo; nessun deploy.
+
+## Primo Comando One-Shot
+
+Prossimo codice master: entrypoint `php yii-btcpay btcpay-provision/run --once`
+con allowlist esatta della rotta/opzione, configurazione isolata, errori fissi
+senza trace. Controller costruisce i componenti gia approvati, verifica
+readiness ristretta prima di processare il lavoro, senza migrazioni o fallback.
+Solo account merchant W3b: nessun daemon o flusso store/POS dichiarato pronto.
+Esito pubblico soltanto `idle`/`job-processed`, non equivale a pagamento pronto.
+File specificati tramite BTCPAY_PROVISIONER_KEY_FILE/BTCPAY_KEK_KEYRING_FILE,
+origine BTCPAY_PROVISION_ORIGIN, CA facoltativa BTCPAY_PROVISION_CA_FILE;
+PAYMENT_PROXY obbligatorio, sempre trasporto esistente con TLS verificato.
+
+## CLI Verificata
+
+2026-11-14: codice `a9443f0d`, test `1dbd63ce` nel branch master isolato.
+**14 PASS** su MySQL/overlay ruoli reali: idle, job inesistente fallito senza
+mapping, comandi estranei/daemon vietati, secret mancanti, proxy assente,
+origine HTTP, credenziali errate, migrator con password valida ma privilegi
+troppo ampi. Errori fissi anche su file bootstrap mancanti; nessuna trace,
+valore segreto, chiave web o migrazione. Console limitata anche dall'ID/ruolo
+del bootstrap dedicato. Config/loader39 test riconfermati.
+Nessuna chiamata BTCPay reale: non certifica ancora onboarding regtest completo
+o servizio continuo. Nessuna modifica allo stack condiviso.

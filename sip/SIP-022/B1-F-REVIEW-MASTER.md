@@ -50,3 +50,37 @@ HTTP fuori transazione, identita attiva verificata prima e dopo la rete.
 qualifiedMerchant da solo non controlla is_active: usare anche riscontro
 merchantForManager del gestore. Store/app, riconciliazione automatica e
 daemon non sono inclusi in questo primo executor.
+
+Review W3b iniziale:30 test master verdi, ma RV1 trace di dipendenze/callback,
+RV2 GET key_saved senza guardia iniziale, RV3 ensureAccount fuori fencing,
+RV4 entity_id non verificato restano aperti. Correzioni passate al master
+alle19:15 dopo assenza di presa in carico; worktree CLA conservato intatto.
+
+2026-11-14: RV1..4 chiuse dal master e integrate nel solo branch isolato:
+`9c0cb8d1` codice, `5fdfcd9f` test (base CLA `d096282f`/`81498b5f`).
+**37 PASS** worker, **63** coda, **18** fencing; review indipendente senza
+nuovi finding. Preparazione CAS running prima di ensureAccount e snapshot
+GET, controllo entity_id=merchant_id, tenant fresco anche sui retry,
+parametri sensibili e boundary senza trace native/previous. Coperti mapping
+assenti su merchant inesistente/disabilitato, lease scaduta anche tra prima
+preparazione e GET, disabilitazione durante429, HTTP sempre fuori transazione.
+CLI dedicata collegata come documentato in B1-G. Nessun deploy o pagamento.
+
+## W4a - Outbox Negozi E Terminali
+
+CLA autorizzato su file distinti: ProvisioningOutbox e hook StoresController/
+PosManagement. Web riceve solo digest pubblico BTCPAY_PROVISION_INSTANCE
+(SHA256 dell'origine worker); vuoto mantiene feature non attiva, valore
+non vuoto malformato blocca la transazione. Nessuna chiave o HTTP nel web.
+Inserimento job generation1 idempotente nella stessa transazione della
+nuova risorsa, scope merchant/negozio/terminale verificato. Solo colonne
+WEB_ENQUEUE, nessun UPDATE o INSERT IGNORE che nasconda errori diversi da
+duplicato1062. Hook attivazione merchant assegnato a CLA il2026-11-14 per
+parallelizzare senza toccare Worker/Jobs/CLI del master.
+Test con utente web ristretto, rollback congiunto, replay e feature disattiva.
+
+Review W4a: master34 test verdi con overlay reale, richiesti fix Connection
+SensitiveParameter e current read del replay sotto REPEATABLE READ, con
+controprove dedicate. W4b include enqueueMerchant nella medesima transazione
+di creazione merchant/promozione PG, rollback congiunto; nessuna modifica
+alle policy identita, schema, GRANT o chiavi.
