@@ -5,7 +5,6 @@
 - Repo: `napay`
 - Branch target: `feature/v2-yii2-php83-docker`
 - Segnalato: 2026-10-23
-- Riferimento: `/var/www/levitas/aura/docs/sip/SIP-058-tema-tabler-switch-chiaro-scuro.md`
 
 ## Contesto
 
@@ -18,11 +17,11 @@ runtime.
 Il `pathMap` in `config/web.php` punta a `themes/adminlte`, directory assente
 nell'albero attuale; le viste disponibili sono sotto `views/`. Il primo passo e
 verificare quali viste Yii risolve realmente, senza creare una seconda copia del
-tema o replicare direttamente il pathMap di Aura.
+tema o replicare pathMap di altri progetti.
 
-Aura ha completato un passaggio analogo con `TablerAsset`, mapping degli asset
-Bootstrap tramite il tema Yii, componenti menu e inizializzazione chiaro/scuro.
-Questi sono riferimenti tecnici; branding e regole business restano Napay.
+Approccio tecnico: `TablerAsset`, mapping degli asset Bootstrap tramite il tema
+Yii, componenti menu e inizializzazione chiaro/scuro. Branding e regole business
+restano Napay.
 
 ## Proposta
 
@@ -32,13 +31,13 @@ BTCPay/API v1, crittografia o dati salvati dovuta al cambio tema.
 
 1. Inventariare grafo asset e pagine raggiungibili, con baseline desktop/mobile.
 2. Integrare asset Tabler locali e versione fissata, mantenendo licenza. Baseline
-   di confronto: Aura usa Tabler 1.6.1 con CSS locale e Bootstrap JS 5.3.8.
+   di confronto: Tabler 1.6.1 con CSS locale e Bootstrap JS 5.3.8.
    Confermare compatibilita nel lock Napay prima di adottare la stessa coppia.
 3. Migrare layout, navbar, sidebar, contenuto e footer con un pilota dashboard
    e form merchant/POS. Conservare dati del menu e condizioni `User::is*`.
 4. Adeguare griglie, widget Yii/Kartik, modali e form; poi login, profilo,
    amministrazione, documentazione Swagger e stati vuoti/errore.
-5. Integrare comando chiaro/scuro secondo Aura, solo dopo baseline asset stabile:
+5. Integrare comando chiaro/scuro, solo dopo baseline asset stabile:
    preferenza locale validata `light`/`dark`, applicata prima del rendering,
    funzionamento senza storage, cambio senza perdita dei form compilati.
 6. Rimuovere AdminLTE e dipendenze obsolete solo dopo test di tutti i consumatori.
@@ -75,10 +74,9 @@ BTCPay/API v1, crittografia o dati salvati dovuta al cambio tema.
 
 ## Note implementative
 
-- Riferimenti riutilizzabili Aura: `assets/TablerAsset.php`,
-  `themes/adminlte`, `widgets/TablerSidebarMenu.php`, configurazione tema in
-  `config/web.php`, test del menu e SIP-058. Non copiare namespace, palette,
-  etichette o scelte di navigazione Aura.
+- Componenti previsti: `assets/TablerAsset.php`, `widgets/TablerSidebarMenu.php`,
+  configurazione tema in `config/web.php` e test del menu. Namespace, palette,
+  etichette e navigazione sono propri di Napay.
 - Mantenere PHP 8.3.36 e configurazione `.env`; nessun ritorno a `secrets.php`.
 - Prima della verifica funzionale completa e del rilascio servono dipendenze complete e `composer.lock` riproducibile:
   attualmente vendor Napay e parziale e `composer.lock` e ignorato.
@@ -91,8 +89,7 @@ BTCPay/API v1, crittografia o dati salvati dovuta al cambio tema.
 
 Analisi iniziale: controllati `assets/AppAsset.php`, `views/layouts/main.php`,
 `views/layouts/sidebar.php`, `views/layouts/login.php`, `config/web.php` e
-`composer.json`. Consultati SIP-058, `config/env.php` e `assets/TablerAsset.php`
-di Aura. La successiva implementazione pilota e descritta nel log seguente.
+`composer.json`. La successiva implementazione pilota e descritta nel log seguente.
 
 ## Log implementazione pilota (2026-10-23)
 
@@ -100,7 +97,7 @@ di Aura. La successiva implementazione pilota e descritta nel log seguente.
   il tema assente. `NapayTheme` intercetta beforeRender prima dei widget e sostituisce
   gli asset solo per layout applicativo main. Login e layout dedicati esclusi.
 - Tabler 1.6.1 e Bootstrap JS 5.3.8 locali, con licenze e provenienza; nessun CDN
-  per il pilota. CSS e JS originali riusati da Aura, hash registrati in VERSION.md.
+  per il pilota. CSS e JS originali dei pacchetti, hash registrati in VERSION.md.
   Niente JS completo Tabler e niente Bootstrap 4 nel grafo applicativo migrato.
 - `BackofficeAsset` sostituisce AppAsset nelle pagine applicative: nessun CSS
   AdminLTE/Bootstrap 4. AppAsset e dipendenze Composer legacy restano per i
@@ -119,7 +116,7 @@ di Aura. La successiva implementazione pilota e descritta nel log seguente.
 
 Verifiche eseguite:
 
-- 35 controlli PHP/Yii reali su PHP 8.3.36, con SQLite in memoria e vendor Aura
+- 35 controlli PHP/Yii reali su PHP 8.3.36, con SQLite in memoria e un vendor esterno
   compatibile montato in sola lettura nel solo container di test.
 - 26 controlli Chromium/Playwright: 375/768/1440 px, assenza overflow, menu mobile,
   sidebar ridotta, tema persistente, preferenze invalide/storage bloccato, form

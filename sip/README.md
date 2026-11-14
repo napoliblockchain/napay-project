@@ -38,7 +38,7 @@ Piano condiviso Napay/POS, ownership file e obiettivo 23/11/2026:
 | [SIP-015](SIP-015-policy-archiviazione-repository.md) | Policy archiviazione repository non core | Governance | COMPLETED |
 | [SIP-016](SIP-016-porte-container-e-repo-orchestratore.md) | Piano porte container non standard e repo orchestratore unico | Platform Governance / DevOps | IN_PROGRESS |
 | [SIP-017](SIP-017-blockchain-poa-besu-ttstoken.md) | Blockchain POA: Hyperledger Besu IBFT 2.0 + TTS Token deploy | Blockchain Infrastructure | OPEN |
-| [SIP-018](SIP-018-napay-migrazione-tabler.md) | Napay: migrazione AdminLTE a Tabler, riferimento Aura | Backoffice / UI | IN_PROGRESS |
+| [SIP-018](SIP-018-napay-migrazione-tabler.md) | Napay: migrazione AdminLTE a Tabler | Backoffice / UI | IN_PROGRESS |
 | [SIP-019](SIP-019-napay-mysql-persistenza-migrazione.md) | Napay: MySQL dedicato, persistenza e ripristino dati v2 | Backoffice / Database | IN_PROGRESS |
 | [SIP-020](SIP-020-napay-ripristino-associazione-legacy.md) | Napay: ripristino gestione associazione e migrazione dati legacy | Backoffice / Associazione | IN_PROGRESS |
 | [SIP-021](SIP-021-pos-login-operatori-apertura-esclusiva.md) | POS: login operatori, negozi autorizzati e apertura esclusiva | POS / Napay / Integrazione | OPEN |

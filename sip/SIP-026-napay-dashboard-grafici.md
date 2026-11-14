@@ -20,7 +20,7 @@ Situazione verificata:
   transazioni), filtrati con `User::can(40)`. "Transazioni" e "POS" fanno
   riferimento a dati che nella v2 non esistono più nella forma legacy.
 - `SiteController::actionIndex`: solo codice commentato del vecchio sistema.
-- Nessuna libreria di grafici nel progetto, né in Aura.
+- Nessuna libreria di grafici nel progetto.
 
 ## Proposta
 

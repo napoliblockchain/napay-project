@@ -46,7 +46,7 @@
 
 - Runtime fissato a PHP `8.3.36`, come gia impostato; requisito minimo Composer
   aggiornato a `>=8.3.36`. Nessuna attestazione di assenza CVE basata sul solo pin.
-- `config/env.php` riprende il pattern Aura: `.env` locale, precedenza variabili
+- `config/env.php` adotta il pattern `.env` locale, precedenza variabili
   del processo, booleani e ambiente validati, default produzione/debug disattivo.
 - `config/db.php`, `params.php`, `web.php`, entrypoint web e console migrati:
   nessun caricamento `secrets.php`. DB, cookie e chiave cifratura obbligatori;
@@ -62,8 +62,8 @@
 - Aperto: configurare ambiente operativo, wiring env del servizio `napay-web`
   nell'orchestratore condiviso e smoke login/API con DB di test. Dipendenze vendor
   incomplete e assenza di lock impediscono ancora di dichiarare l'app pronta.
-- Nuova [SIP-018: migrazione Tabler](SIP-018-napay-migrazione-tabler.md), basata sul
-  lavoro Aura. Solo proposta tecnica; implementazione UI non iniziata.
+- Nuova [SIP-018: migrazione Tabler](SIP-018-napay-migrazione-tabler.md).
+  Solo proposta tecnica; implementazione UI non iniziata.
 
 Verifiche eseguite sull'intervento `.env`: 23 controlli configurazione isolati
 con immagine `php:8.3.36-apache`, lint dei file PHP coinvolti e validazione del

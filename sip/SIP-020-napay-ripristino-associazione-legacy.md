@@ -224,13 +224,13 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (SIP-019, backup del 202
   dell'import; pagamento quota in app e da pagina pubblica (PayPal e BTCPay).
 
 ### Pager unico dell'applicazione (COMPLETED, 2026-11-11)
-- Su richiesta dell'utente, come in Aura: `components/web/LinkPager`
+- Su richiesta dell'utente: `components/web/LinkPager`
   (Bootstrap 5/Tabler) registrato nel container DI al posto di
   `yii\widgets\LinkPager`. Tutte le griglie lo usano senza configurazione.
   Il backoffice non carica più `yiipager.css` (Yii1).
 - Commit napay `85a8a7c0`. Test nella suite runtime: 40 controlli.
 
-### Registro attività come in Aura (COMPLETED, 2026-11-11)
+### Registro attività (COMPLETED, 2026-11-11)
 - Su richiesta dell'utente: `components/Log` con tipo evento (attività, dati,
   sicurezza, esportazione), `components/audit` (creazioni, modifiche con i soli
   nomi dei campi, cancellazioni, export, accessi negati, CSRF).
@@ -238,8 +238,7 @@ In totale lo schema legacy ha 52 tabelle e 13.839 righe (SIP-019, backup del 202
   - IP falsificabile, ora preso da `TRUSTED_PROXIES`;
   - IPv6 scartato, ora colonna da 45 caratteri;
   - anonimi registrati come utente 1, ora senza utente.
-- Il registro salva solo il percorso, mai la query (token di reset). Lo stesso
-  difetto c'era in Aura, corretto lì sul branch `fix/registro-sicurezza-senza-query`.
+- Il registro salva solo il percorso, mai la query (token di reset).
 - Commit napay `a27bfe5a`. Test `audit.php`: 20 controlli.
 
 ### Passo 5a - Gestione dal backoffice (COMPLETED, 2026-11-11)
