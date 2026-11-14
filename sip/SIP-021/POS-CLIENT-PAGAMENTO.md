@@ -1,4 +1,4 @@
-# SIP-021 fase 3 - Client POS: porting dell'incasso dal POS legacy (PROPOSTA)
+# SIP-021 fase 3 - Client POS: porting dell'incasso dal POS legacy (APPROVATO)
 
 Bozza 2026-11-14 (CLA master ad interim). Completa il
 [contratto pagamento TTS](PAGAMENTO-TTS-CONTRATTO.md) lato `pos/v2`.
@@ -31,7 +31,7 @@ importo e riferimento, un processo per fattura, ID cifrati come unica protezione
 | Pagina QR | Nuova pagina pagamento: importo, negozio/cassa, QR dal campo `qr`, scadenza, indirizzo copiabile | Da fare. QR generato lato server POS, nessuna libreria esterna nel browser. |
 | Stato | Polling dal browser al server POS, che legge `GET /payments/{id}` | Da fare. Stati v2: `pending`, `paid`, `expired`, `cancelled` (niente parziale/eccedente: importo esatto). |
 | Annulla | `POST /payments/{id}/cancel` | Da fare. Nuovo rispetto al legacy. |
-| Ricevuta | Pagina stampabile dal browser (CSS di stampa), stessi dati del legacy piu hash abbreviato | Da fare. Niente PDF lato server. |
+| Ricevuta | PDF A7 generato dal server POS come nel legacy (TCPDF), stessi dati piu hash abbreviato | Da fare. |
 | Fattura BTC | Fuori dalla fase 3 (SIP-022). | Pulsante non mostrato. |
 | Storico | Richiede una lista nel backend (non esiste) | Proposta: fase successiva. |
 | Messaggi, impostazioni, contatti | Non portati in fase 3. | — |
@@ -53,7 +53,10 @@ Unitari del client (creazione, replay, stati, errori), pagina QR e ricevuta
 senza dati sensibili, e2e reale POS -> gateway TLS -> Napay -> chain usa-e-getta
 con transfer del pagatore di test, come `openings-e2e`.
 
-## 5. Decisioni per l'utente
+## 5. Decisioni dell'utente (2026-11-14)
 
-1. Ricevuta come pagina stampabile dal browser invece del PDF A7 legacy.
-2. Storico incassi rimandato a un passo successivo (serve una nuova API di lista).
+1. Ricevuta in PDF A7 come nel legacy (non pagina stampabile).
+2. Storico incassi dopo il flusso di incasso (serve una nuova API di lista).
+
+Libreria: `tecnickcom/tcpdf`, la stessa del legacy, usata anche per il QR in SVG
+(nessuna libreria nel browser).
