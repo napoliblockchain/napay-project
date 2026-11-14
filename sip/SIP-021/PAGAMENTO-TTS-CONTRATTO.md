@@ -103,3 +103,12 @@ errato. POS: e2e reale con wallet di test, nessun mock del backend.
 
 Pagamenti BTC, rimborsi, trasferimenti tra merchant, wallet per negozio,
 cambio valuta, produzione.
+
+## 11. Gate pre-codice: riferimento accodato (2026-11-14)
+
+Prova su chain usa-e-getta (Besu, chain id 2118, `TTSToken` pubblicato da
+`chain-deploy`, stack rimosso a fine prova): 6 PASS. Il trasferimento con
+riferimento di 16 byte accodato riesce, l'evento Transfer ha destinatario e
+importo esatti, il saldo cresce dell'importo esatto, i dati della transazione
+minata finiscono con il riferimento; il trasferimento senza riferimento resta
+valido. Evoluzione con funzione di spesa dedicata: [SIP-028](../SIP-028-nuovo-token-tts-sconto-temporaneo.md).
