@@ -84,3 +84,18 @@ SensitiveParameter e current read del replay sotto REPEATABLE READ, con
 controprove dedicate. W4b include enqueueMerchant nella medesima transazione
 di creazione merchant/promozione PG, rollback congiunto; nessuna modifica
 alle policy identita, schema, GRANT o chiavi.
+
+2026-11-14: W4a approvato, **44 PASS** master e **32** bootstrap ruoli;
+test integrati e runtime completa verdi. W4b approvato dopo rimozione del
+backfill implicito: **33 PASS** master anche sul branch integrato.
+Commit W4b `af0e095f`, `93379868`, `42e81adc`, `48b8c46c`, `09876b57`.
+Attivazione avvenuta a feature spenta + replay dopo enable NON accoda;
+un eventuale recupero dei merchant esistenti richiede azione esplicita.
+Nessun rollout, modifica privilegi o onboarding BTCPay reale.
+
+## Prossimi Executor
+
+Contratto [W3c link](B1-H-LINK-WORKER.md) assegnato a CLA su nuovi file;
+master mantiene Jobs/CLI e [W3d GET-only](B1-I-RECONCILIATION-QUEUE.md).
+Worktree separati, nessuna modifica al checkout servito. Riconciliazione
+automatica e routing CLI link non sono ancora collegati.
