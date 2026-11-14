@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Avvio locale di tutto lo stack: wallet (poawallet) con chain Besu e backoffice napay. Solo sviluppo.
-# Un solo gateway su 127.0.0.1:80/443: https://wallet.local e https://napay.local, senza porte.
+# Un solo gateway su 127.0.0.1 (80/443, oppure porte proprie dietro un proxy SNI locale che tiene 80/443):
+# https://wallet.local e https://napay.local, senza porte.
 # Non cancella volumi o fa git pull. Wallet: migration manuali; Napay: bootstrap automatico.
 set -euo pipefail
 
@@ -54,10 +55,15 @@ if $BUILD || ! docker image inspect napay/poawallet:dev napay/chain-tools:dev >/
 fi
 [[ -f "$NAPAY_STATE/local.env" || -n "${NAPAY_IMPORT_DIR:-}" ]] \
   || fail 'primo avvio napay: imposta NAPAY_IMPORT_DIR=<dataset v2 revisionato> (vedi napay/docker/LOCAL-BROWSER.md).'
-[[ "$(env_value GATEWAY_HTTPS_PORT)" == 443 && "$(env_value GATEWAY_HTTP_PORT)" == 80 ]] \
-  || fail 'in .env servono GATEWAY_HTTP_PORT=80 e GATEWAY_HTTPS_PORT=443 (vedi .env.example).'
+HTTP_PORT="$(env_value GATEWAY_HTTP_PORT)"
+HTTPS_PORT="$(env_value GATEWAY_HTTPS_PORT)"
+[[ "$HTTP_PORT" =~ ^[1-9][0-9]{0,4}$ && "$HTTPS_PORT" =~ ^[1-9][0-9]{0,4}$ && "$HTTP_PORT" != "$HTTPS_PORT" ]] \
+  || fail 'in .env servono GATEWAY_HTTP_PORT e GATEWAY_HTTPS_PORT numerici e distinti (vedi .env.example).'
+# porte diverse da 80/443: gli URL senza porta passano da un proxy SNI locale su 127.0.0.1:80/443
+BEHIND_PROXY=false
+[[ "$HTTP_PORT" == 80 && "$HTTPS_PORT" == 443 ]] || BEHIND_PROXY=true
 if ! docker ps --format '{{.Names}}' | grep -qx napay-gateway; then
-  for port in 80 443; do
+  for port in "$HTTP_PORT" "$HTTPS_PORT"; do
     ! ss -ltnH "sport = :$port" 2>/dev/null | grep -q . \
       || fail "porta $port gia' occupata da un altro servizio (es. altro progetto): fermalo prima."
   done
@@ -135,11 +141,13 @@ done
 docker cp napay-gateway:/data/caddy/pki/authorities/local/root.crt "$CA" >/dev/null
 chmod 600 "$CA"
 for url in https://wallet.local/robots.txt https://napay.local/site/login; do
-  curl --noproxy '*' --fail --silent --output /dev/null --cacert "$CA" \
+  # verifica diretta sul gateway, indipendente dal proxy
+  curl --noproxy '*' --fail --silent --output /dev/null --cacert "$CA" --connect-to "::127.0.0.1:$HTTPS_PORT" \
     --retry 15 --retry-connrefused --retry-delay 2 --retry-all-errors "$url" \
     || fail "$url non risponde (docker logs napay-gateway)."
 done
 
 printf '\nPronto:\n  Wallet:     https://wallet.local\n  Backoffice: https://napay.local (email browser-admin@example.invalid, password in %s/browser-password)\n' "$NAPAY_STATE"
 printf '  CA locale da importare una volta nel browser: %s\n' "$CA"
+$BEHIND_PROXY && printf '  Gateway su 127.0.0.1:%s/%s: gli URL senza porta richiedono il proxy SNI locale attivo su 80/443.\n' "$HTTP_PORT" "$HTTPS_PORT"
 printf 'Stop: bash %s/stop-localhost.sh\n' "$ROOT"

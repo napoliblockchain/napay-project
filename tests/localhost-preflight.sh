@@ -66,4 +66,12 @@ pass 'Failed private initialization blocks startup without service operations'
 rm "$work/project/napay/docker-compose.roles.yml"
 run_launcher --check; [[ ! -s $work/calls ]]
 pass 'Older Napay checkout remains compatible until role overlay integration'
+ports() { printf 'NAPAY_LOCAL_STATE=%s\nGATEWAY_HTTP_PORT=%s\nGATEWAY_HTTPS_PORT=%s\n' "$work/state" "$1" "$2" > "$work/project/.env"; }
+ports 30480 30443
+run_launcher --check
+pass 'Gateway on custom loopback ports behind a local SNI proxy is accepted'
+ports 30443 30443; reject --check
+pass 'Gateway with identical HTTP and HTTPS ports is rejected'
+ports 80 'x443'; reject --check
+pass 'Non-numeric gateway port is rejected'
 printf 'PASS %s localhost preflight checks\n' "$checks"
