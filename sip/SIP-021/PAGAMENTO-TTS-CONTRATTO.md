@@ -112,3 +112,31 @@ riferimento di 16 byte accodato riesce, l'evento Transfer ha destinatario e
 importo esatti, il saldo cresce dell'importo esatto, i dati della transazione
 minata finiscono con il riferimento; il trasferimento senza riferimento resta
 valido. Evoluzione con funzione di spesa dedicata: [SIP-028](../SIP-028-nuovo-token-tts-sconto-temporaneo.md).
+
+## 12. Stato implementazione (2026-11-14)
+
+Napay, integrato con fast-forward in `feature/v2-btcpay-b1-integration`
+(HEAD `bd5ce13d`, da `feature/v2-pos-tts-payments`):
+
+- `29e6e0c7` symfony/yaml 7.4.23 (CVE-2026-123792, solo dev), `2b1b9453`
+  kornrunner/keccak (stessa libreria del wallet) per EIP-55;
+- `4745c3b9` schema: wallet del merchant e richieste di pagamento, grant web
+  senza DELETE, nessun accesso del worker BTCPay;
+- `c7ea3cdb` API `POST /openings/{id}/payments`, `GET /payments/{id}`,
+  `POST /payments/{id}/cancel`, client JSON-RPC in sola lettura con verifica
+  del chain id, configurazione `TTS_RPC_URL`, `TTS_CHAIN_ID`,
+  `TTS_TOKEN_ADDRESS` (tutte vuote = funzione spenta);
+- `8e2647df` pagina backoffice "Wallet TTS" (gestore sul proprio merchant);
+- `ffa00971` comando `php yii tts-payments/sweep --once`;
+- `bd5ce13d` test su stack e chain usa-e-getta con transfer reali: 79 PASS.
+
+Regressioni: aperture 65, runtime 693, runtime con ruoli ristretti 738.
+
+Wallet `poawallet`, branch `feature/v2-tts-payment-reference` (`0b650b4`, non
+ancora nel branch v2): riferimento accodato quando il messaggio del QR e un
+riferimento Napay; test chain su MySQL e Besu usa-e-getta 33 PASS
+(`tests/chain/run-disposable.sh`).
+
+Review non indipendente (stesso autore). Mancano: client `pos/v2` (tastierino,
+QR, attesa, ricevuta) e configurazione della sandbox locale (variabili TTS e
+rete verso la chain), quest'ultima con riavvio e quindi solo con ok utente.
