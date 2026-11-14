@@ -48,3 +48,12 @@ disabilitato prima e durante la GET, lease scaduta, risorsa occupata, mai POST,
 mapping mancante. CLI: i tre comandi raggiungono `idle` con grant reali, comandi
 estranei rifiutati prima del bootstrap. Regressioni: link, worker, coda,
 fencing, riconciliazione, CLI.
+
+## Esito (2026-11-14)
+
+Integrato con fast-forward in `feature/v2-btcpay-b1-integration` (HEAD
+`814e515c`): `be001143` reconcileOnce, `b3207946` WorkerSecrets::keyringOnly,
+`2dabae89` CLI links/reconcile, `e970be6b` e `814e515c` test. Verdi: link 57
+(di cui 20 W3e), CLI 17, config/segreti 41, worker account 37, coda 63,
+fencing 18, riconciliazione 27. Review non indipendente (stesso autore).
+Nessun daemon, cron o deploy: i tre comandi restano one-shot manuali.
