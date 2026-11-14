@@ -1,7 +1,7 @@
-# SIP-021 fase 3 - Primo pagamento TTS locale: contratto (PROPOSTA)
+# SIP-021 fase 3 - Primo pagamento TTS locale: contratto (APPROVATO)
 
-Bozza 2026-11-14 (CLA master ad interim). Nessun codice prima dell'approvazione
-dell'utente sulle decisioni del paragrafo 8. Solo chain locale, nessun denaro reale.
+Bozza 2026-11-14 (CLA master ad interim), decisioni del paragrafo 8 approvate
+dall'utente lo stesso giorno. Solo chain locale, nessun denaro reale.
 
 ## 1. Evidenze
 
@@ -86,6 +86,10 @@ dell'utente sulle decisioni del paragrafo 8. Solo chain locale, nessun denaro re
    fase 3. Proposta: si, con blocco esplicito prima dell'uso reale.
 3. Verifica durante il polling del POS piu comando one-shot, senza daemon.
    Proposta: si.
+
+Esito (2026-11-14): approvate tutte e tre le proposte. Il daemon in ascolto
+sulla chain resta un possibile miglioramento futuro, descritto in
+[SIP-027](../SIP-027-tts-listener-daemon.md); non fa parte della fase 3.
 
 ## 9. Test previsti (chain e DB usa-e-getta)
 

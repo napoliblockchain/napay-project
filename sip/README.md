@@ -47,6 +47,7 @@ Piano condiviso Napay/POS, ownership file e obiettivo 23/11/2026:
 | [SIP-024](SIP-024-websocket-nodejs-notifiche.md) | WebSocket Node.js al posto del motore socket PHP | Realtime / Docker / Sicurezza | OPEN |
 | [SIP-025](SIP-025-napay-menu-macroaree-amministrazione.md) | Menu per macroaree e amministrazione per sezioni | Backoffice / Navigazione | IMPLEMENTED |
 | [SIP-026](SIP-026-napay-dashboard-grafici.md) | Dashboard con grafici per ruolo | Backoffice / Reportistica | OPEN |
+| [SIP-027](SIP-027-tts-listener-daemon.md) | Listener continuo dei pagamenti TTS (evoluzione futura) | Pagamenti / Blockchain | OPEN |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 
