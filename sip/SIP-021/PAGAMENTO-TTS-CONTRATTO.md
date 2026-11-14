@@ -44,6 +44,11 @@ dall'utente lo stesso giorno. Solo chain locale, nessun denaro reale.
   Risposta: identificativo, importo, scadenza (15 minuti), contenuto del QR.
 - Lettura stato: solo richieste del terminale e dell'apertura correnti.
 - Annullamento: solo se `pending` e da parte della stessa apertura.
+- Storico (`GET /openings/{id}/payments`, aggiunto 2026-11-15): con apertura
+  propria e utilizzabile, ultime 50 richieste del terminale negli ultimi 30
+  giorni, piu recenti prima; per voce importo, stato, date, hash e flag
+  "propria"; mai QR, riferimento o destinatario. Al massimo 5 richieste in
+  attesa verificate sulla chain per lettura.
 - Apertura revocata o scaduta: nessuna nuova richiesta; le richieste gia
   create possono ancora risultare pagate e restano visibili al gestore.
 
@@ -129,6 +134,8 @@ Napay, integrato con fast-forward in `feature/v2-btcpay-b1-integration`
 - `8e2647df` pagina backoffice "Wallet TTS" (gestore sul proprio merchant);
 - `ffa00971` comando `php yii tts-payments/sweep --once`;
 - `bd5ce13d` test su stack e chain usa-e-getta con transfer reali: 79 PASS.
+- `c7e17f56` (branch `feature/v2-pos-tts-payments`, integrazione portata con
+  fast-forward solo dopo ok) storico del terminale: test 82 PASS, aperture 65.
 
 Regressioni: aperture 65, runtime 693, runtime con ruoli ristretti 738.
 

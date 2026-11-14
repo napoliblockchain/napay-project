@@ -33,7 +33,7 @@ importo e riferimento, un processo per fattura, ID cifrati come unica protezione
 | Annulla | `POST /payments/{id}/cancel` | Da fare. Nuovo rispetto al legacy. |
 | Ricevuta | PDF A7 generato dal server POS come nel legacy (TCPDF), stessi dati piu hash abbreviato | Da fare. |
 | Fattura BTC | Fuori dalla fase 3 (SIP-022). | Pulsante non mostrato. |
-| Storico | Richiede una lista nel backend (non esiste) | Proposta: fase successiva. |
+| Storico | Pagina "Storico incassi" da `GET /openings/{id}/payments`: ultimi 50 del terminale in 30 giorni, ricevuta per i pagati | Fatto (Napay `c7e17f56`, POS `2f9344a`). |
 | Messaggi, impostazioni, contatti | Non portati in fase 3. | — |
 
 ## 3. Regole del client
@@ -74,5 +74,10 @@ logout 18, catalogo 37, config 13, PWA 30, contratto API e stato locale;
 e2e reale con ruoli DB ristretti: pagamenti 17 + log (chain Besu usa-e-getta,
 transfer reale), aperture 25 + log. Review non indipendente (stesso autore).
 
-Restano: storico incassi (API di lista), sandbox locale (variabili TTS e rete
-verso la chain in Napay, ricostruzione immagine POS) solo con ok utente.
+Storico incassi (2026-11-15): POS `2f9344a` sul branch `feature/v2-pos-tts-client`
+(non ancora nel main locale). Ricevuta anche per incassi di aperture precedenti,
+senza nome operatore. Verdi: client/controller 69, e2e pagamenti 20 + log,
+e2e aperture 25 + log, altre suite invariate.
+
+Restano: merge nei branch serviti dalla sandbox e configurazione sandbox
+(variabili TTS e rete verso la chain in Napay, ricostruzione immagini).
