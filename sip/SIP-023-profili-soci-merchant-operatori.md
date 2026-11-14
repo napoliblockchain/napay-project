@@ -37,6 +37,10 @@ modificabile dopo, nemmeno dall'admin. Editor senza checkbox; POST di cambio
 tipo rifiutati. Ragione sociale facoltativa per PF, obbligatoria per PG.
 Dettagli e verifiche: [R3 form soci](SIP-023/R3-ISCRIZIONI-E-PORTALE.md).
 
+Area socio in consultazione completata il2026-11-14: verbali e ricevute
+proprie pagate, senza attivazione merchant. Contratto e135 test verificati:
+[R4 area socio](SIP-023/R4-AREA-SOCIO.md).
+
 ## Profili e capacita
 
 | Profilo | Ambito | Capacita | Esclusioni |
