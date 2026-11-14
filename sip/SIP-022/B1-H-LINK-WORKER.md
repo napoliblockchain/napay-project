@@ -31,3 +31,18 @@ Test DB worker ristretto + HTTP W2 simulato: happy path, dipendenze, scope
 negativi, lease scaduta, disabilitazione/cambio scope durante rete, 429,
 401/403, esito ignoto, nuova generazione dopo vecchio in_flight (zero POST),
 marker zero/uno/multipli e tipo app errato. Nessun pagamento.
+
+## Esito (2026-11-14, CLA master ad interim)
+
+Chiuso e integrato nel branch isolato `feature/v2-btcpay-b1-integration`:
+`3a7407c5` worker, `ea29ff4c` test/runner, `54939645` fix scope POS (anche
+`merchant_id` del terminale), `41c45542` test negativo terminale di altro
+merchant. Review non indipendente (stesso agente autore): compensata con
+verifica punto per punto del contratto e regressioni complete sul branch
+integrato. Verdi: link 38, worker account 37, coda 63, fencing 18,
+riconciliazione GET-only 27, passi 89, store 53.
+
+Limiti noti: cambio di negozio/terminale durante la rete non e provocabile
+con mapping esistenti (FK composite lo impediscono), testata la perdita di
+idoneita (owner disattivato o non piu PG). Routing CLI e collegamento della
+riconciliazione GET-only (W3d) restano successivi; nessun daemon o deploy.
