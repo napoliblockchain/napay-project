@@ -113,6 +113,8 @@ services:
         condition: service_completed_successfully
     networks:
       - napay_net
+      # sola lettura dal backoffice napay per i pagamenti TTS del POS (rete interna, creata da start-localhost.sh)
+      - napay_local_chain
 
   chain-deploy:
     build: ./docker/chain/tools

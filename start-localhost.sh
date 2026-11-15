@@ -36,6 +36,8 @@ export NAPAY_LOCAL_STATE="$NAPAY_STATE"
 LOCAL_NETWORK=napay_local_browser
 # rete interna del server POS: subnet fissa, l'API /api/pos/* è accettata dal gateway solo da qui (SIP-021)
 POS_NETWORK=pos_local_browser
+# rete interna backoffice <-> chain di sviluppo: Napay legge i pagamenti TTS del POS (SIP-021 fase 3)
+CHAIN_NETWORK=napay_local_chain
 POS_SUBNET=10.251.0.0/24
 BTCPAY_EDGE_NETWORK=btcpay_regtest_edge
 BTCPAY_EDGE_SUBNET=10.252.0.0/24
@@ -83,6 +85,8 @@ $CHECK && { printf 'Solo verifica: nessun servizio avviato.\n'; exit 0; }
 # rete interna gateway <-> backoffice: nessuna uscita Internet
 docker network inspect "$LOCAL_NETWORK" >/dev/null 2>&1 \
   || docker network create --internal --label napay.service=browser-local "$LOCAL_NETWORK" >/dev/null
+docker network inspect "$CHAIN_NETWORK" >/dev/null 2>&1 \
+  || docker network create --internal --label napay.service=chain-local "$CHAIN_NETWORK" >/dev/null
 docker network inspect "$POS_NETWORK" >/dev/null 2>&1 \
   || docker network create --internal --subnet "$POS_SUBNET" --label napay.service=pos-local "$POS_NETWORK" >/dev/null
 [[ "$(docker network inspect "$POS_NETWORK" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')" == "$POS_SUBNET" ]] \
@@ -126,6 +130,10 @@ if ! docker exec wallet-web php yii migrate/new --interactive=0 2>/dev/null | gr
 fi
 
 step '4/5 Backoffice napay'
+# SIP-021 fase 3: Napay legge chain e token di sviluppo (rete napay_local_chain); mai scritti in local.env
+TTS_TOKEN="$(docker exec wallet-besu cat /data/tts.json | sed -n 's/.*"address": *"\(0x[0-9a-fA-F]\{40\}\)".*/\1/p')"
+[[ "$TTS_TOKEN" =~ ^0x[0-9a-fA-F]{40}$ ]] || fail 'indirizzo del token TTS non leggibile dalla chain di sviluppo.'
+export NAPAY_LOCAL_TTS_RPC_URL=http://wallet-besu:8545 NAPAY_LOCAL_TTS_CHAIN_ID=2118 NAPAY_LOCAL_TTS_TOKEN_ADDRESS="$TTS_TOKEN"
 # launcher del progetto napay: build con cache, bootstrap DB, utente locale
 bash "$ROOT/napay/docker/local.sh" up
 
