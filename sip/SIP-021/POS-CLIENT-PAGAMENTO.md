@@ -79,5 +79,8 @@ Storico incassi (2026-11-15): POS `2f9344a` sul branch `feature/v2-pos-tts-clien
 senza nome operatore. Verdi: client/controller 69, e2e pagamenti 20 + log,
 e2e aperture 25 + log, altre suite invariate.
 
-Restano: merge nei branch serviti dalla sandbox e configurazione sandbox
-(variabili TTS e rete verso la chain in Napay, ricostruzione immagini).
+Sandbox locale attivata (2026-11-15, ok utente): Napay main `f8156c71` (merge
+`c51b798e` dell'integrazione, test runtime 693 e pagamenti verdi sul merge),
+POS main `2f9344a`, poawallet v2 `0b650b4`; ruoli DB preparati dopo backup;
+Napay legge la chain di sviluppo sulla rete interna `napay_local_chain`
+(orchestratore `6c628b4`); immagini wallet e POS ricostruite.
