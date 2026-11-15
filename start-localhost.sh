@@ -47,6 +47,14 @@ step 'Prerequisiti'
 docker info >/dev/null 2>&1 || fail 'Docker non attivo o non accessibile al tuo utente.'
 [[ -f .env ]] || fail "manca $ROOT/.env (copia da .env.example)."
 [[ -f poawallet/.env ]] || fail "manca $ROOT/poawallet/.env (copia da poawallet/.env.example)."
+# SIP-029: password dell'utente DB dell'indicizzatore, generata una volta in una cartella privata fuori dai repository
+WALLET_INDEXER_SECRET_FILE="$(env_value WALLET_INDEXER_SECRET_FILE)"
+WALLET_INDEXER_SECRET_FILE="${WALLET_INDEXER_SECRET_FILE:-$ROOT/../napay-local-data/wallet-indexer/db-password}"
+export WALLET_INDEXER_SECRET_FILE
+if [[ ! -f "$WALLET_INDEXER_SECRET_FILE" ]]; then
+  (umask 077; mkdir -p "$(dirname "$WALLET_INDEXER_SECRET_FILE")" && openssl rand -hex 24 > "$WALLET_INDEXER_SECRET_FILE") \
+    || fail 'impossibile creare la password dell indicizzatore wallet.'
+fi
 for host in wallet.local napay.local; do
   grep -qE "^[^#]*[[:space:]]${host//./\\.}([[:space:]]|\$)" /etc/hosts \
     || fail "manca in /etc/hosts la riga: 127.0.0.1 wallet.local napay.local"
@@ -110,7 +118,7 @@ compose config --quiet || fail 'configurazione docker compose non valida.'
 
 if $BUILD; then
   step 'Build immagini (cache Docker)'
-  compose build wallet-web chain-deploy
+  compose build wallet-web chain-deploy wallet-realtime
 fi
 
 step '1/5 MySQL e Redis'
@@ -127,6 +135,24 @@ compose up -d --wait --no-deps wallet-web
 # migration mai automatiche (SIP-014): solo avviso
 if ! docker exec wallet-web php yii migrate/new --interactive=0 2>/dev/null | grep -q 'No new migrations'; then
   printf 'ATTENZIONE: migration da applicare. Esegui:\n  docker exec -it wallet-web php yii migrate\n'
+  printf 'Indicizzatore wallet non avviato finché le migration non sono applicate.\n'
+else
+  # SIP-029: utente DB a permessi minimi (SQL da stdin: la password non finisce negli argomenti dei processi)
+  db_name="$(env_value MYSQL_DATABASE)"
+  [[ "$db_name" =~ ^[A-Za-z0-9_]+$ ]] || fail 'MYSQL_DATABASE non valido.'
+  indexer_password="$(tr -d '\n' < "$WALLET_INDEXER_SECRET_FILE")"
+  [[ "$indexer_password" =~ ^[0-9a-f]{48}$ ]] || fail "password dell'indicizzatore non valida in $WALLET_INDEXER_SECRET_FILE."
+  {
+    printf "CREATE USER IF NOT EXISTS 'wallet_indexer'@'%%' IDENTIFIED BY '%s';\n" "$indexer_password"
+    printf "ALTER USER 'wallet_indexer'@'%%' IDENTIFIED BY '%s';\n" "$indexer_password"
+    for table in mp_wallets nodes smart_contract blockchains; do printf "GRANT SELECT ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
+    for table in transactions chain_index_cursors; do printf "GRANT SELECT, INSERT, UPDATE ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
+    for table in mp_notifications mp_notifications_readers; do printf "GRANT SELECT, INSERT ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
+  } | docker exec -i mysql-main sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot' \
+    || fail "utente DB dell'indicizzatore non creato."
+  unset indexer_password
+  compose up -d --wait --no-deps wallet-realtime
+  printf 'Indicizzatore wallet attivo.\n'
 fi
 
 step '4/5 Backoffice napay'

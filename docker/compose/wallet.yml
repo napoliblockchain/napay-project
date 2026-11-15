@@ -132,5 +132,38 @@ services:
     networks:
       - napay_net
 
+  # SIP-029: indicizzatore della chain per il wallet (Go). Nessuna porta; utente DB dedicato con password da file.
+  wallet-realtime:
+    build: ./poawallet/realtime
+    image: napay/wallet-realtime:dev
+    container_name: wallet-realtime
+    profiles: ["chain"]
+    # stesso uid del proprietario del file segreto (0600), come besu
+    user: "1000:1000"
+    environment:
+      CHAIN_RPC_URL: http://besu:8545
+      CHAIN_ID: "2118"
+      DB_HOST: mysql-main
+      DB_NAME: "${MYSQL_DATABASE}"
+      DB_USER: wallet_indexer
+      DB_PASSWORD_FILE: /run/secrets/wallet_indexer_db_password
+    secrets: [wallet_indexer_db_password]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    depends_on:
+      mysql-main:
+        condition: service_healthy
+      besu:
+        condition: service_healthy
+    networks:
+      - napay_net
+
 volumes:
   chain_data:
+secrets:
+  # creato da start-localhost.sh (0600, cartella privata fuori dai repository)
+  wallet_indexer_db_password:
+    file: "${WALLET_INDEXER_SECRET_FILE:-../napay-local-data/wallet-indexer/db-password}"
