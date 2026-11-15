@@ -49,6 +49,7 @@ Piano condiviso Napay/POS, ownership file e obiettivo 23/11/2026:
 | [SIP-026](SIP-026-napay-dashboard-grafici.md) | Dashboard con grafici per ruolo | Backoffice / Reportistica | OPEN |
 | [SIP-027](SIP-027-tts-listener-daemon.md) | Listener continuo dei pagamenti TTS (evoluzione futura) | Pagamenti / Blockchain | OPEN |
 | [SIP-028](SIP-028-nuovo-token-tts-sconto-temporaneo.md) | Nuovo token TTS: Token Temporaneo di Sconto a circuito chiuso | Blockchain / Fidelity | OPEN |
+| [SIP-029](SIP-029-wallet-realtime-indicizzatore-push.md) | Wallet realtime: indicizzatore della chain e push (Go) | Wallet / Blockchain | APPROVATO |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 

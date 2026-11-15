@@ -33,3 +33,14 @@ riceverebbe l'esito via notifica (vedi SIP-024) invece del solo polling.
 ## Note implementative
 - Da riprendere solo dopo il collaudo della fase 3 e con nuova approvazione.
 - Valutare carico e alternative (sottoscrizione websocket o polling dei blocchi).
+
+## Aggiornamento 2026-11-15: ascoltatore condiviso con il wallet
+Il servizio `wallet-realtime` di [SIP-029](SIP-029-wallet-realtime-indicizzatore-push.md)
+(Go, `go-ethereum`) legge gia gli eventi `Transfer` dei token. Quando questo SIP
+verra ripreso, l'ascoltatore di Napay sara quel servizio, non un secondo processo:
+- avvisa Napay di un trasferimento verso l'indirizzo di un merchant (blocco,
+  transazione) con un endpoint interno autenticato;
+- Napay non si fida dell'avviso: verifica subito quel pagamento sulla chain con
+  le regole della fase 3 e solo cosi cambia stato;
+- il controllo periodico del POS e il comando one-shot restano come ripiego.
+
