@@ -50,9 +50,6 @@ sono più recuperabili e ogni nuovo pagamento verso quell'indirizzo andrebbe per
 3. La segnalazione **non si annulla**; prima di inviarla serve una doppia
    conferma: scrivere `CONFERMA` (italiano) o `CONFIRM` (inglese), secondo la
    lingua dell'utente, in un campo di testo.
-
-## Ancora da chiarire
-
-- Se un indirizzo perso viene salvato di nuovo (seed ritrovato), i suoi incassi
-  passati tornano nei totali normali e nel saldo? Proposta: sì, con una voce nel
-  registro "indirizzo ritrovato".
+4. Indirizzo perso salvato di nuovo (seed ritrovato): i suoi incassi passati
+   **tornano nei totali normali e nel saldo**, con la voce "indirizzo
+   ritrovato" nel registro attività.
