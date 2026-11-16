@@ -145,27 +145,16 @@ printf 'Chain pronta.\n'
 
 step '3/5 Wallet'
 compose up -d --wait --no-deps wallet-web
-# migration mai automatiche (SIP-014): solo avviso
+# sandbox condivisa: migration a mano, solo avviso (in produzione le applica deploy-wallet.sh)
 if ! docker exec wallet-web php yii migrate/new --interactive=0 2>/dev/null | grep -q 'No new migrations'; then
   printf 'ATTENZIONE: migration da applicare. Esegui:\n  docker exec -it wallet-web php yii migrate\n'
   printf 'Indicizzatore wallet non avviato finché le migration non sono applicate.\n'
 else
   # SIP-029: utente DB a permessi minimi (SQL da stdin: la password non finisce negli argomenti dei processi)
   db_name="$(env_value MYSQL_DATABASE)"
-  [[ "$db_name" =~ ^[A-Za-z0-9_]+$ ]] || fail 'MYSQL_DATABASE non valido.'
-  indexer_password="$(tr -d '\n' < "$WALLET_INDEXER_SECRET_FILE")"
-  [[ "$indexer_password" =~ ^[0-9a-f]{48}$ ]] || fail "password dell'indicizzatore non valida in $WALLET_INDEXER_SECRET_FILE."
-  {
-    printf "CREATE USER IF NOT EXISTS 'wallet_indexer'@'%%' IDENTIFIED BY '%s';\n" "$indexer_password"
-    printf "ALTER USER 'wallet_indexer'@'%%' IDENTIFIED BY '%s';\n" "$indexer_password"
-    # SIP-032: token dalle variabili d'ambiente, l'indicizzatore legge solo i wallet degli utenti
-    printf "REVOKE IF EXISTS SELECT ON \`%s\`.\`%s\` FROM 'wallet_indexer'@'%%' IGNORE UNKNOWN USER;\n" "$db_name" nodes "$db_name" smart_contract "$db_name" blockchains
-    printf "GRANT SELECT ON \`%s\`.\`mp_wallets\` TO 'wallet_indexer'@'%%';\n" "$db_name"
-    for table in transactions chain_index_cursors; do printf "GRANT SELECT, INSERT, UPDATE ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
-    for table in mp_notifications mp_notifications_readers; do printf "GRANT SELECT, INSERT ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
-  } | docker exec -i mysql-main sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot' \
+  bash "$ROOT/docker/wallet/indexer-grants.sh" "$db_name" "$WALLET_INDEXER_SECRET_FILE" \
+    | docker exec -i mysql-main sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot' \
     || fail "utente DB dell'indicizzatore non creato."
-  unset indexer_password
   compose up -d --wait --no-deps wallet-realtime
   printf 'Indicizzatore wallet attivo.\n'
 fi

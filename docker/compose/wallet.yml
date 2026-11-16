@@ -2,11 +2,11 @@
 # Instradamento HTTP/WebSocket: docker/gateway/conf.d/wallet.caddy
 services:
   wallet-web:
-    image: napay/poawallet:dev
-    # immagine costruita da poawallet/Dockerfile; target prod per i rilasci (docker build --target prod)
+    image: napay/poawallet:${WALLET_IMAGE_TAG:-dev}
+    # immagine costruita da poawallet/Dockerfile; deploy-wallet.sh usa il target prod
     build:
       context: ./poawallet
-      target: dev
+      target: ${WALLET_BUILD_TARGET:-dev}
     container_name: wallet-web
     expose:
       - "80"
@@ -29,17 +29,18 @@ services:
       NOTIFY_CHANNEL: poawallet:notify
       # SIP-029 passo 2: chiave dei ticket del flusso /events (condivisa con wallet-realtime)
       REALTIME_KEY_FILE: /run/secrets/wallet_realtime_key
-      # SIP-032: unica rete e unico token del wallet, mai scelti dagli utenti; indirizzo del token dal launcher
-      CHAIN_RPC_URL: http://besu:8545
-      CHAIN_ID: "2118"
-      CHAIN_NAME: "Besu QBFT (sviluppo)"
-      CHAIN_SYMBOL: ETH
-      CHAIN_ZERO_GAS: "1"
-      CHAIN_EXPLORER_URL: ""
+      # SIP-032: unica rete e unico token del wallet, mai scelti dagli utenti. Default = chain di sviluppo
+      # (indirizzo del token dal launcher); in produzione tutto dal file env passato a deploy-wallet.sh
+      CHAIN_RPC_URL: "${WALLET_CHAIN_RPC_URL:-http://besu:8545}"
+      CHAIN_ID: "${WALLET_CHAIN_ID:-2118}"
+      CHAIN_NAME: "${WALLET_CHAIN_NAME:-Besu QBFT (sviluppo)}"
+      CHAIN_SYMBOL: "${WALLET_CHAIN_SYMBOL:-ETH}"
+      CHAIN_ZERO_GAS: "${WALLET_CHAIN_ZERO_GAS:-1}"
+      CHAIN_EXPLORER_URL: "${WALLET_CHAIN_EXPLORER_URL:-}"
       TTS_TOKEN_ADDRESS: "${WALLET_TTS_TOKEN_ADDRESS:-}"
-      TTS_TOKEN_NAME: TTS
-      TTS_TOKEN_SYMBOL: TTS
-      TTS_TOKEN_DECIMALS: "2"
+      TTS_TOKEN_NAME: "${WALLET_TTS_TOKEN_NAME:-TTS}"
+      TTS_TOKEN_SYMBOL: "${WALLET_TTS_TOKEN_SYMBOL:-TTS}"
+      TTS_TOKEN_DECIMALS: "${WALLET_TTS_TOKEN_DECIMALS:-2}"
     secrets: [wallet_realtime_key]
     depends_on:
       mysql-main:
@@ -53,6 +54,27 @@ services:
       timeout: 5s
       retries: 6
       start_period: 20s
+    networks:
+      - napay_net
+
+  # Migration del wallet al deploy (deploy-wallet.sh): job una tantum prima di avviare wallet-web.
+  # Nella sandbox condivisa restano a mano (start-localhost.sh avvisa soltanto).
+  wallet-migrate:
+    image: napay/poawallet:${WALLET_IMAGE_TAG:-dev}
+    profiles: ["deploy"]
+    command: ["php", "yii", "migrate", "--interactive=0"]
+    restart: "no"
+    env_file:
+      - path: ./poawallet/.env
+        required: false
+    environment:
+      APP_ENV: "${APP_ENV}"
+      DB_DSN: "mysql:host=mysql-main;dbname=${MYSQL_DATABASE}"
+      DB_USERNAME: "${MYSQL_USER}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+    depends_on:
+      mysql-main:
+        condition: service_healthy
     networks:
       - napay_net
 
@@ -155,16 +177,16 @@ services:
     # stesso uid del proprietario del file segreto (0600), come besu
     user: "1000:1000"
     environment:
-      CHAIN_RPC_URL: http://besu:8545
-      CHAIN_ID: "2118"
+      CHAIN_RPC_URL: "${WALLET_CHAIN_RPC_URL:-http://besu:8545}"
+      CHAIN_ID: "${WALLET_CHAIN_ID:-2118}"
       DB_HOST: mysql-main
       DB_NAME: "${MYSQL_DATABASE}"
       DB_USER: wallet_indexer
       DB_PASSWORD_FILE: /run/secrets/wallet_indexer_db_password
       # SIP-032: token indicizzato, lo stesso del wallet (indirizzo dal launcher)
       TTS_TOKEN_ADDRESS: "${WALLET_TTS_TOKEN_ADDRESS:-}"
-      TTS_TOKEN_DECIMALS: "2"
-      TTS_TOKEN_SYMBOL: TTS
+      TTS_TOKEN_DECIMALS: "${WALLET_TTS_TOKEN_DECIMALS:-2}"
+      TTS_TOKEN_SYMBOL: "${WALLET_TTS_TOKEN_SYMBOL:-TTS}"
       # push SSE su /events (porta solo sulla rete interna, instradata dal gateway)
       PUSH_KEY_FILE: /run/secrets/wallet_realtime_key
       PUSH_ADDR: ":8080"

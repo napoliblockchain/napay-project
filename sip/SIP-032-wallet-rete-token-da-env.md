@@ -44,12 +44,15 @@ Configurazione nelle variabili d'ambiente, non nell'app; nel wallet resta solo
 ## Migration in sandbox e in produzione
 
 - Sandbox condivisa: a mano (`docker exec -it wallet-web php yii migrate`),
-  dopo il rebuild del wallet (il codice vecchio scrive ancora la colonna).
-- VPS: automatiche al deploy, come Napay (job one-shot prima del web). Da
-  definire nel deploy del wallet v2, che oggi non esiste ancora.
-
-## Criteri di accettazione
-
-- Nessun URL RPC o indirizzo di token preso dal database o dagli utenti.
-- Le vecchie pagine (`/nodes`, `/smartcontracts`, `/blockchains`) rispondono 404.
-- Test chain, interfaccia, sicurezza e indicizzatore verdi a ogni passo.
+  `start-localhost.sh` avvisa soltanto.
+- Produzione: `deploy-wallet.sh <file env privato> [--check]` (orchestratore).
+  Controlla file env (0600, fuori dai repository) e segreti, costruisce
+  l'immagine prod, applica le migration con il job una tantum `wallet-migrate`
+  (profilo `deploy`), poi avvia wallet-web e l'indicizzatore. Se la migration
+  fallisce il deploy si ferma e wallet-web resta alla versione precedente.
+  Rete e token dalle variabili `WALLET_CHAIN_*` e `WALLET_TTS_TOKEN_*`
+  (elenco in `.env.example`); SQL dei permessi dell'indicizzatore in
+  `docker/wallet/indexer-grants.sh`, comune a launcher e deploy.
+- Provato sulla sandbox (2026-11-16): `--check` rifiuta permessi larghi, file
+  nel repository, token o RPC non validi; deploy completo con immagine prod
+  (login 200, `/debug` e `/gii` 404), poi sandbox riportata in dev.
