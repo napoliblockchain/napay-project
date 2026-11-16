@@ -55,6 +55,15 @@ if [[ ! -f "$WALLET_INDEXER_SECRET_FILE" ]]; then
   (umask 077; mkdir -p "$(dirname "$WALLET_INDEXER_SECRET_FILE")" && openssl rand -hex 24 > "$WALLET_INDEXER_SECRET_FILE") \
     || fail 'impossibile creare la password dell indicizzatore wallet.'
 fi
+# SIP-029 passo 2: chiave dei ticket /events, letta da Apache (www-data) e dal servizio Go: file 0644 in cartella 0700
+WALLET_REALTIME_KEY_FILE="$(env_value WALLET_REALTIME_KEY_FILE)"
+WALLET_REALTIME_KEY_FILE="${WALLET_REALTIME_KEY_FILE:-$ROOT/../napay-local-data/wallet-realtime/push-key}"
+export WALLET_REALTIME_KEY_FILE
+if [[ ! -f "$WALLET_REALTIME_KEY_FILE" ]]; then
+  (umask 077; mkdir -p "$(dirname "$WALLET_REALTIME_KEY_FILE")" && openssl rand -hex 32 > "$WALLET_REALTIME_KEY_FILE" && chmod 644 "$WALLET_REALTIME_KEY_FILE") \
+    || fail 'impossibile creare la chiave del tempo reale wallet.'
+fi
+[[ "$(stat -c %a "$(dirname "$WALLET_REALTIME_KEY_FILE")")" == 700 ]] || fail "la cartella di $WALLET_REALTIME_KEY_FILE deve essere 700."
 for host in wallet.local napay.local; do
   grep -qE "^[^#]*[[:space:]]${host//./\\.}([[:space:]]|\$)" /etc/hosts \
     || fail "manca in /etc/hosts la riga: 127.0.0.1 wallet.local napay.local"

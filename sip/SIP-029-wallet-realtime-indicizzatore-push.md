@@ -79,3 +79,15 @@ sincronizzazione resta sconosciuto (pallino grigio). Esiste in parallelo
 
 ## Stato
 - 2026-11-15: decisioni prese; passo 1 in sviluppo.
+- 2026-11-15: passo 1 attivo in sandbox (indicizzatore, notifiche nel DB, unico
+  scrittore dei dati dalla chain).
+- 2026-11-16: passo 2a (SSE) sviluppato:
+  - `/events` nel servizio Go, cookie `wallet_rt` emesso da `POST /realtime/ticket`
+    (10 minuti, massimo accettato 15), cancellato al logout;
+  - eventi `status`, `tx` (solo id: riga e saldo riletti da `transactions/row`,
+    con controllo di proprietà), `notify`, `expired`;
+  - limiti: 5 connessioni per utente, 2000 in tutto; browser lento chiuso;
+  - pallino verde/giallo/rosso; senza flusso notifiche ogni 30 secondi;
+  - chiave condivisa in `napay-local-data/wallet-realtime/push-key` (secret
+    Docker per wallet-web e wallet-realtime), gateway `/events` senza buffer.
+- Passo 2b (da fare): notifiche web push inviate dal servizio Go.

@@ -27,6 +27,9 @@ services:
       # realtime: NotificationService pubblica su Redis, ws-notify inoltra ai browser
       REDIS_HOST: redis-main
       NOTIFY_CHANNEL: poawallet:notify
+      # SIP-029 passo 2: chiave dei ticket del flusso /events (condivisa con wallet-realtime)
+      REALTIME_KEY_FILE: /run/secrets/wallet_realtime_key
+    secrets: [wallet_realtime_key]
     depends_on:
       mysql-main:
         condition: service_healthy
@@ -147,7 +150,10 @@ services:
       DB_NAME: "${MYSQL_DATABASE}"
       DB_USER: wallet_indexer
       DB_PASSWORD_FILE: /run/secrets/wallet_indexer_db_password
-    secrets: [wallet_indexer_db_password]
+      # push SSE su /events (porta solo sulla rete interna, instradata dal gateway)
+      PUSH_KEY_FILE: /run/secrets/wallet_realtime_key
+      PUSH_ADDR: ":8080"
+    secrets: [wallet_indexer_db_password, wallet_realtime_key]
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
@@ -167,3 +173,6 @@ secrets:
   # creato da start-localhost.sh (0600, cartella privata fuori dai repository)
   wallet_indexer_db_password:
     file: "${WALLET_INDEXER_SECRET_FILE:-../napay-local-data/wallet-indexer/db-password}"
+  # chiave HMAC dei ticket /events: 0644 perché la legge anche Apache (www-data), cartella privata 0700
+  wallet_realtime_key:
+    file: "${WALLET_REALTIME_KEY_FILE:-../napay-local-data/wallet-realtime/push-key}"

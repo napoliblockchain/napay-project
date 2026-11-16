@@ -1,4 +1,4 @@
-# Wallet poawallet: HTTP app + WebSocket notifiche.
+# Wallet poawallet: HTTP app, flusso SSE /events (wallet-realtime, SIP-029) e WebSocket notifiche.
 http://wallet.local, http://poawallet.local, http://wallet.test {
     import no_btcpay_backend
     handle {
@@ -10,6 +10,12 @@ https://wallet.local, https://poawallet.local, https://wallet.test {
     import no_btcpay_backend
     handle /ws-notify {
         reverse_proxy ws-notify:14800
+    }
+    # SSE: nessun buffer, flusso lungo; accesso con il cookie ticket verificato dal servizio
+    handle /events {
+        reverse_proxy wallet-realtime:8080 {
+            flush_interval -1
+        }
     }
     handle {
         reverse_proxy wallet-web:80
