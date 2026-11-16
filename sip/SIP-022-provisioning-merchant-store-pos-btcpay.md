@@ -279,12 +279,35 @@ transazioni (Napay non detiene chiavi private).
 - Test: ciclo del worker con CLI finto (5), coda con web ristretto (47),
   collaudo reale con stato "collegato" (8), isolamento sandbox (43).
 
-### Riprova dell'admin: da progettare
+### Riprova dell'admin, R1 store e POS (2026-11-16, napay `1ac283a4`)
 
-Il disegno B1 prevede il riprova come nuovo `INSERT` (generazione successiva),
-ma oggi il worker non rimette in gioco un mapping `failed`/`suspended`: lo
-riporta in `deferred`. Serve una regola nel worker, da approvare: con una
-generazione richiesta dall'admin, mapping senza ID remoto e senza tentativo
-incerto torna `pending` (nuova creazione ammessa); con un tentativo incerto
-solo riconciliazione GET; account con chiave rifiutata (401/403) richiede una
-nuova chiave. Più il pulsante (POST, CSRF, solo admin) e i test sul regtest.
+Decisione utente: riprova sicuro, senza doppioni. Il web (solo admin, POST con
+CSRF) accoda un nuovo lavoro con la generazione successiva, solo se l'ultimo
+è `failed`, `deferred` o `reconcile_required`; mai modifiche ai lavori. Nel
+worker, per una generazione > 1:
+
+1. mapping `failed`/`suspended` senza ID remoto: torna in riconciliazione;
+2. GET della lista (store del merchant o app dello store): marker unico
+   trovato = adottato, nessuna nuova risorsa;
+3. marker assente in una lista completa (200): se un POST della risorsa era
+   in volo da meno di 15 minuti (`ADMIN_RETRY_QUIET`) si attende; dopo, i
+   lavori precedenti sono chiusi (`superseded`) e il mapping torna `pending`,
+   così il passo successivo fa un solo POST con checkpoint;
+4. marker multiplo, 401/403, lettura non disponibile: come prima (admin).
+
+Cambia la regola B1 "nuova generazione dopo POST incerto: solo GET per
+sempre": ora, trascorsa la quiete, una lista completa a vuoto consente di
+ricreare. Test: link worker (62, casi nuovi), collaudo reale (12: adozione,
+ricreazione, attesa di quiete, riprova rifiutato se il collegamento è a posto),
+accesso solo admin (negozi 32).
+
+Resta R2: riprova degli account merchant, che richiede la riconciliazione
+A-r (utente esistente adottato solo se la password salvata funziona).
+
+### Webhook per store (passo 4, da fare)
+
+In BTCPay i webhook sono per store: li crea il worker per ogni store
+collegato, con un segreto diverso per store (cifrato come le chiavi), verso
+l'endpoint Napay; serve anche il permesso
+`btcpay.store.webhooks.canmodifywebhooks` (da verificare se incluso in
+`canmodifystoresettings` sul regtest).
