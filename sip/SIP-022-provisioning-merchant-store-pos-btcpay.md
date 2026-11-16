@@ -319,6 +319,32 @@ Pulsante sul dettaglio merchant (solo admin). Test: worker account (44, 5
 nuovi), collaudo reale (13: stesso utente ritrovato per email, chiave di
 generazione 2).
 
+### Passo 3 - Impostazioni dei negozi tramite il worker (2026-11-17, napay `a8ad1da2`)
+
+- Nuovo lavoro `store_update` (migration `m261117`): nome, valuta e impostazioni
+  fisse dello store BTCPay, applicati dal worker con la chiave del merchant
+  (`PUT /api/v1/stores/{id}`, idempotente: un esito ignoto si ripete). Valori
+  letti da Napay all'esecuzione; stesso lock dello `store_link`; dipendenze
+  account e store collegati. Accodato alla creazione del negozio e a ogni
+  modifica di nome o valuta, nella stessa transazione. Il web non chiama
+  BTCPay per i negozi del provisioning; la chiave ponte resta per i v1.
+- Il worker legge nome del negozio e colonne del payload (permessi di
+  colonna), non recapiti, ID store v1 o dati di derivazione.
+- Scoperte sul BTCPay reale: il nome di uno store ha al massimo **50
+  caratteri** (422 su `name`), quindi il nome di creazione con marker resta
+  entro 50; a collegamento fatto `store_update` mette il nome pulito del
+  negozio (visibile al cliente nel checkout), perché l'ID remoto è già
+  salvato e il marker serve solo finché la creazione è incerta. Le colonne
+  JSON salvate da ActiveRecord sono codificate due volte: il payload le legge
+  in entrambe le forme. Un 422 riporta ora il campo rifiutato nel codice
+  (es. `store_update_rejected_name`).
+- Test: link worker 69 (6 nuovi), collaudo reale 15 (impostazioni applicate,
+  modifica di nome e valuta, adozione su uno store appena creato), permessi
+  DB 65, schema 148, runtime.
+- Resta (3b): archiviazione su BTCPay dei negozi del provisioning eliminati e
+  rimozione delle app POS dei terminali disattivati, tramite worker. Il cambio
+  BTC nella pagina negozio resta solo per i negozi v1.
+
 ### Webhook per store (passo 4, da fare)
 
 In BTCPay i webhook sono per store: li crea il worker per ogni store
