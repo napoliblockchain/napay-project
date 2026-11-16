@@ -162,7 +162,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
    filtrabili per negozio.
 6. Il pulsante Modifica del wallet BTC va collegato o tolto (vedi punto 4).
 
-## 4. Impostazioni del negozio da nascondere (fatto in parte, napay `93fa389b`, `97f1f9ed`)
+## 4. Impostazioni del negozio da nascondere (fatto, napay `93fa389b`, `97f1f9ed`, `e7284b35`)
 
 Decisioni utente 2026-11-16: schede tolte per tutti (anche admin), valori fissi.
 
@@ -176,11 +176,16 @@ Decisioni utente 2026-11-16: schede tolte per tutti (anche admin), valori fissi.
 | Tassi, Checkout, Criteri, Webhook | tutti | schede e azioni rimosse, valori fissi |
 | ID store BTCPay | `bps_storeid` | mai mostrato (pagina, modifica, briciole) |
 
-Resta aperto: server e chiave BTCPay dei negozi oggi nelle impostazioni DB
-(`btcpayHost`, `btcpayApiKey`, `webhookSecret`). Server unico per quote e
-negozi; chiavi separate secondo il modello P3 di SIP-022 (chiave per merchant,
-provisioner limitato), xpub per negozio distinta da quella delle quote.
-Webhook dei negozi e impostazione della xpub passano al provisioning SIP-022.
+Server e chiave dei negozi (napay `e7284b35`, decisione utente 2026-11-16,
+ponte verso SIP-022): server unico `BTCPAY_URL` (lo stesso delle quote),
+chiave dei negozi `BTCPAY_STORES_API_KEY` nel file env privato, distinta da
+quella delle quote. Le righe DB `btcpayHost`, `btcpayApiKey`, `webhookSecret`
+restano inerti (il bootstrap vieta alle migration di cambiare i dati
+importati): mai lette, nascoste nell'admin Impostazioni e non ricreabili.
+Senza variabili le pagine dei negozi funzionano senza dati BTCPay.
+
+Resta a SIP-022 (modello P3): chiave per merchant al posto di quella dei
+negozi, xpub per negozio distinta da quella delle quote, webhook dei negozi.
 
 ## Import dalla v1 in produzione
 
