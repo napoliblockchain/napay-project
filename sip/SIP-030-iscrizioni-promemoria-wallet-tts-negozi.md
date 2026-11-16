@@ -7,6 +7,7 @@
 - Segnalato: 2026-11-16
 
 ## Contesto
+
 Analisi del Napay v1 in produzione (`napay-1`, Yii 1.1, ultimo commit 2023-03-28)
 su tre funzioni che la v2 non ha ancora o ha in forma diversa: la lista delle
 richieste di iscrizione approvate dall'admin, i promemoria di scadenza della
@@ -15,6 +16,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
 ## 1. Richieste di iscrizione
 
 ### Come funziona nella v1
+
 - La registrazione pubblica crea l'utente non attivo (`status_activation_code = 0`).
   La mail all'iscritto non contiene un link di attivazione: annuncia che
   l'iscrizione sarà approvata e che poi arriveranno le istruzioni per la quota.
@@ -33,6 +35,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
     incrementa "Mail inviate". L'utente **resta non attivo e resta nella lista**.
 
 ### Problemi rilevati
+
 - La lista di produzione (schermata del 2026-11-16) contiene account con nomi
   casuali e email di provider pubblici: registrazioni automatiche (bot). Non
   avendo un passo di verifica dell'email, la v1 li mette tutti in lista; il
@@ -41,16 +44,19 @@ quota e il wallet TTS che riceve gli incassi del POS.
 - Approvazione iscrizione e creazione del merchant sono un'unica azione.
 
 ### Stato nella v2
+
 - Registrazione con link di attivazione via email: l'utente si attiva da solo,
   **senza approvazione admin**. La mail agli admin parte alla registrazione,
   prima della verifica dell'email.
-- Nel dataset importato dalla v1 tutti i 64 utenti sono attivi: le richieste
-  in sospeso non sono state importate.
+- `LegacyImporter` importa anche gli utenti v1 non attivi, come non attivi.
+  Il dataset della sandbox (copia di test del 22/10) non ne contiene: in
+  produzione la lista v1 ne ha almeno 7 (schermata).
 - SIP-022/SIP-023: la PG attiva da sola il proprio merchant, senza approvazione
   admin. Questa regola resta: l'approvazione proposta qui riguarda solo
   l'**iscrizione all'associazione**, non il merchant.
 
 ### Proposta
+
 1. Registrazione in due passi: verifica dell'email (link già esistente), poi
    **in attesa di approvazione**. Stato di approvazione nel profilo del socio,
    distinto da `is_active`: in attesa, approvato, rifiutato.
@@ -75,6 +81,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
 ## 2. Promemoria di scadenza della quota
 
 ### Come funziona nella v1
+
 - La quota vale per anno solare (scadenza 31/12 dell'ultimo anno pagato).
 - "Promemoria" elenca i soci attivi la cui quota scade entro 45 giorni o è
   scaduta da meno di 365 giorni. Esclusi i soci che non hanno mai pagato.
@@ -84,6 +91,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
 - Ai merchant compare in dashboard un avviso di scadenza.
 
 ### Problemi rilevati
+
 - Il contatore dei solleciti non si azzera mai: dopo il rinnovo conta anche
   quelli degli anni precedenti.
 - Testi incoerenti: la mail chiede il pagamento "entro il 31 gennaio",
@@ -91,6 +99,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
 - Nessun limite: lo stesso socio può ricevere più solleciti nello stesso giorno.
 
 ### Stato nella v2
+
 - Stati del socio già calcolati come nella v1 (`Members`: in regola, in
   scadenza entro 45 giorni, scaduto, decaduto oltre 365 giorni, mai pagato,
   esente). Mancano la lista promemoria e l'invio.
@@ -98,6 +107,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
   sweep, provisioning BTCPay) si eseguono una volta (`--once`).
 
 ### Proposta
+
 1. Registro degli invii per socio e **per scadenza** (data di scadenza della
    quota, tipo automatico/manuale, data, autore). Il contatore è per periodo,
    quindi riparte da zero dopo il rinnovo.
@@ -119,12 +129,14 @@ quota e il wallet TTS che riceve gli incassi del POS.
 ## 3. Wallet TTS per negozio
 
 ### Come funziona nella v1
+
 - Il wallet BTC è **per negozio**: una chiave pubblica master (MPK) per
   ogni negozio e asset, inviata allo store BTCPay di quel negozio.
 - Il wallet TTS è invece per utente (tabella `wallets`), creato nell'app
   wallet esterna e segnalato in dashboard.
 
 ### Stato nella v2
+
 - `merchant_tts_wallets`: un indirizzo per merchant, gestito dalla pagina
   "Wallet TTS" nel menu profilo. Ogni incasso TTS del POS va all'indirizzo del
   merchant, qualunque sia il negozio del terminale; `pos_tts_payments` registra
@@ -134,6 +146,7 @@ quota e il wallet TTS che riceve gli incassi del POS.
   (collegamento morto).
 
 ### Proposta
+
 1. Indirizzo TTS **per negozio**, come il wallet BTC: nuova tabella con un
    indirizzo per negozio (stesse regole: EIP-55, niente indirizzo zero,
    autore e data, log delle modifiche). Lo stesso indirizzo può servire più
@@ -149,7 +162,8 @@ quota e il wallet TTS che riceve gli incassi del POS.
    filtrabili per negozio.
 6. Il pulsante Modifica del wallet BTC va collegato o tolto (vedi punto 4).
 
-### 4. Impostazioni del negozio da nascondere (da approfondire)
+## 4. Impostazioni del negozio da nascondere (da approfondire)
+
 Il negozio v2 mostra le impostazioni dello store BTCPay su sei tab. Proposta
 iniziale, da discutere prima del codice:
 
@@ -167,7 +181,26 @@ iniziale, da discutere prima del codice:
 I valori fissi stanno in un solo punto della configurazione e vengono applicati
 dal provisioning (SIP-022) alla creazione dello store.
 
+## Import dalla v1 in produzione
+
+Sulla VPS gira la v1: all'aggiornamento i dati arrivano dal suo MySQL tramite
+`LegacyImporter` (TIP-020), non da un dump. Oggi l'importatore legge utenti,
+cariche, quote, pagamenti, verbali e impostazioni non segrete. Per questo SIP
+servono in più:
+
+| Dato v1 | Dove | Proposta v2 |
+| --- | --- | --- |
+| Richieste in sospeso | `np_users.status_activation_code = 0` | importate come "in attesa di approvazione", ma con verifica email da fare: chi non conferma entro 7 giorni viene eliminato (filtra i bot) |
+| Mail di rifiuto inviate | `numero_mail_approvazione` nelle impostazioni utente | non importato (nessun uso nella v2) |
+| Solleciti quota | `SollecitiPagamenti` nelle impostazioni utente | non importato: contatore senza periodo, non attribuibile a una scadenza |
+| Wallet TTS del merchant | tabella `wallets` (per utente) | copiato su tutti i negozi del merchant importato |
+| Wallet BTC del negozio | tabella `mpk` (per negozio e asset) | da definire con l'import di merchant e negozi (non ancora in `LegacyImporter`) |
+
+Merchant, negozi e POS v1 non sono ancora importati: va deciso con SIP-022
+(provisioning BTCPay) prima di attivare il punto 3 in produzione.
+
 ## Decisioni da prendere
+
 1. Approvazione: fino all'approvazione il socio **non entra** (come nella v1,
    consigliato) oppure entra con funzioni limitate (profilo e quota)?
 2. Rifiuto: account **eliminato** dopo l'invio della mail, con traccia nel log
@@ -179,6 +212,7 @@ dal provisioning (SIP-022) alla creazione dello store.
    per negozio), poi 1, poi 2, poi 4.
 
 ## Criteri di accettazione
+
 - Nessuna registrazione senza email verificata in lista o nelle mail agli admin.
 - Approvazione e rifiuto solo da admin, POST con CSRF, registrati nel log;
   il merchant della PG resta ad autoattivazione (SIP-023).
@@ -190,6 +224,7 @@ dal provisioning (SIP-022) alla creazione dello store.
   condivisa senza autorizzazione.
 
 ## Impatto
+
 - `napay`: registrazione, amministrazione soci, comando worker, negozi,
   `TtsPayments`, dashboard, migration nuove.
 - `napay-project`: servizio worker per i comandi periodici.
