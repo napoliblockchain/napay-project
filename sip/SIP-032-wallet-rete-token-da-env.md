@@ -1,6 +1,6 @@
 # SIP-032 - Wallet: una rete e un token dalle variabili d'ambiente
 
-- Stato: IN SVILUPPO (passi 1 e 2 fatti 2026-11-16)
+- Stato: FATTO (2026-11-16)
 - Area: Wallet / Blockchain / Sicurezza
 - Repo: `poawallet`, `napay-project` (compose, launcher)
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -33,9 +33,20 @@ Configurazione nelle variabili d'ambiente, non nell'app; nel wallet resta solo
    ripristino non creano più righe; menu con solo "Network info" (senza URL
    RPC interno); indicizzatore Go con il token dalle variabili (anticipato dal
    passo 3) e permessi DB ridotti a `mp_wallets`.
-3. **Database e indicizzatore**: migration (manuale) che elimina `nodes`,
-   `blockchains`, `smart_contract`, `contract_type`, valori standard, `ethtxs`
-   e la colonna `transactions.id_smart_contract`; fixture dei test aggiornate.
+3. **Database** (fatto, poawallet `d16e9c8`): migration
+   `m261116_100000_drop_per_user_network_tables` che toglie prima il vincolo
+   `transactions` -> `smart_contract` (con CASCADE eliminerebbe le transazioni),
+   poi la colonna `transactions.id_smart_contract` e le tabelle `nodes`,
+   `smart_contract`, `blockchains`, `contract_type`, valori standard, `ethtxs`,
+   `ethtxs_status`. Fixture dei test aggiornate; il test UI verifica che tabelle
+   e colonna non esistano più.
+
+## Migration in sandbox e in produzione
+
+- Sandbox condivisa: a mano (`docker exec -it wallet-web php yii migrate`),
+  dopo il rebuild del wallet (il codice vecchio scrive ancora la colonna).
+- VPS: automatiche al deploy, come Napay (job one-shot prima del web). Da
+  definire nel deploy del wallet v2, che oggi non esiste ancora.
 
 ## Criteri di accettazione
 
