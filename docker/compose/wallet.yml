@@ -161,6 +161,10 @@ services:
       DB_NAME: "${MYSQL_DATABASE}"
       DB_USER: wallet_indexer
       DB_PASSWORD_FILE: /run/secrets/wallet_indexer_db_password
+      # SIP-032: token indicizzato, lo stesso del wallet (indirizzo dal launcher)
+      TTS_TOKEN_ADDRESS: "${WALLET_TTS_TOKEN_ADDRESS:-}"
+      TTS_TOKEN_DECIMALS: "2"
+      TTS_TOKEN_SYMBOL: TTS
       # push SSE su /events (porta solo sulla rete interna, instradata dal gateway)
       PUSH_KEY_FILE: /run/secrets/wallet_realtime_key
       PUSH_ADDR: ":8080"

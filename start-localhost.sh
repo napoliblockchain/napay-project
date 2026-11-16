@@ -158,7 +158,9 @@ else
   {
     printf "CREATE USER IF NOT EXISTS 'wallet_indexer'@'%%' IDENTIFIED BY '%s';\n" "$indexer_password"
     printf "ALTER USER 'wallet_indexer'@'%%' IDENTIFIED BY '%s';\n" "$indexer_password"
-    for table in mp_wallets nodes smart_contract blockchains; do printf "GRANT SELECT ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
+    # SIP-032: token dalle variabili d'ambiente, l'indicizzatore legge solo i wallet degli utenti
+    printf "REVOKE IF EXISTS SELECT ON \`%s\`.\`%s\` FROM 'wallet_indexer'@'%%' IGNORE UNKNOWN USER;\n" "$db_name" nodes "$db_name" smart_contract "$db_name" blockchains
+    printf "GRANT SELECT ON \`%s\`.\`mp_wallets\` TO 'wallet_indexer'@'%%';\n" "$db_name"
     for table in transactions chain_index_cursors; do printf "GRANT SELECT, INSERT, UPDATE ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
     for table in mp_notifications mp_notifications_readers; do printf "GRANT SELECT, INSERT ON \`%s\`.\`%s\` TO 'wallet_indexer'@'%%';\n" "$db_name" "$table"; done
   } | docker exec -i mysql-main sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot' \
