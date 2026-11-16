@@ -1,6 +1,6 @@
 # SIP-030 - Approvazione iscrizioni, promemoria quote, wallet TTS per negozio
 
-- Stato: OPEN (analisi del vecchio Napay v1 completata, decisioni utente da raccogliere)
+- Stato: APPROVATO (decisioni utente 2026-11-16), in sviluppo per punti
 - Area: Associazione / Merchant / POS TTS
 - Repo: `napay` (backoffice), `napay-project` (orchestratore, worker)
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -199,17 +199,15 @@ servono in più:
 Merchant, negozi e POS v1 non sono ancora importati: va deciso con SIP-022
 (provisioning BTCPay) prima di attivare il punto 3 in produzione.
 
-## Decisioni da prendere
+## Decisioni utente (2026-11-16)
 
-1. Approvazione: fino all'approvazione il socio **non entra** (come nella v1,
-   consigliato) oppure entra con funzioni limitate (profilo e quota)?
-2. Rifiuto: account **eliminato** dopo l'invio della mail, con traccia nel log
-   senza dati personali (consigliato), oppure conservato come "rifiutato"?
-3. Promemoria automatico: quanti giorni prima della scadenza (proposta 30;
-   la lista resta a 45 come nella v1)? Anche ai soci che non hanno mai pagato?
-4. Possibilità per il socio di disattivare i promemoria: sì o no?
-5. Ordine dei lavori proposto: 3 (wallet TTS per negozio, blocca gli incassi
-   per negozio), poi 1, poi 2, poi 4.
+1. Fino all'approvazione il socio **non entra**, come nella v1.
+2. Iscrizione rifiutata: account **eliminato** dopo la mail con la motivazione;
+   nel log resta solo la traccia, senza dati personali.
+3. Promemoria automatico **30 giorni** prima della scadenza; la lista manuale
+   resta a 45 giorni. **Niente** promemoria a chi non ha mai pagato.
+4. Il socio **può disattivare** i promemoria dal proprio profilo.
+5. Ordine dei lavori: 3 (wallet TTS per negozio), poi 1, poi 2, poi 4.
 
 ## Criteri di accettazione
 
