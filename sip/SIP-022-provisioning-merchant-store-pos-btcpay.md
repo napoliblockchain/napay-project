@@ -301,8 +301,23 @@ ricreare. Test: link worker (62, casi nuovi), collaudo reale (12: adozione,
 ricreazione, attesa di quiete, riprova rifiutato se il collegamento è a posto),
 accesso solo admin (negozi 32).
 
-Resta R2: riprova degli account merchant, che richiede la riconciliazione
-A-r (utente esistente adottato solo se la password salvata funziona).
+### Riprova dell'admin, R2 account merchant (2026-11-16, napay `c05ee10d`)
+
+Account `reconcile_required`/`failed`/`suspended` con generazione > 1 (merchant
+ancora idoneo, ricontrollato dal web e dal worker):
+
+- utente remoto già noto: nuova chiave (passo B, generazione successiva) e
+  verifica (C); utente invariato;
+- utente non confermato: A-r, `GET /api/v1/users/{email tecnica}` con la
+  chiave del provisioner. Assente: passo A con la stessa password salvata
+  (BTCPay rifiuta email doppie). Presente: adottato solo se la password salvata
+  crea la chiave (B), prova di proprietà; 401 = riconciliazione, nessuna
+  chiave utilizzabile. Mai reset o modifica di un utente esistente;
+- generazioni finite (3): nessuna chiamata, resta all'admin.
+
+Pulsante sul dettaglio merchant (solo admin). Test: worker account (44, 5
+nuovi), collaudo reale (13: stesso utente ritrovato per email, chiave di
+generazione 2).
 
 ### Webhook per store (passo 4, da fare)
 
