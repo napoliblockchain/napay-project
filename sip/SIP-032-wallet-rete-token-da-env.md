@@ -1,6 +1,6 @@
 # SIP-032 - Wallet: una rete e un token dalle variabili d'ambiente
 
-- Stato: IN SVILUPPO (passo 1 fatto 2026-11-16)
+- Stato: IN SVILUPPO (passi 1 e 2 fatti 2026-11-16)
 - Area: Wallet / Blockchain / Sicurezza
 - Repo: `poawallet`, `napay-project` (compose, launcher)
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -27,13 +27,15 @@ Configurazione nelle variabili d'ambiente, non nell'app; nel wallet resta solo
    `CHAIN_SYMBOL`, `CHAIN_EXPLORER_URL`, `CHAIN_ZERO_GAS`, `TTS_TOKEN_ADDRESS`,
    `TTS_TOKEN_NAME`, `TTS_TOKEN_SYMBOL`, `TTS_TOKEN_DECIMALS`; ABI ERC-20 nel
    codice; tutto il codice legge da lì. Il launcher passa l'indirizzo del token.
-2. **Rimozione di pagine e righe per utente**: controller, viste e modelli di
-   nodi, reti, token, tipi di contratto e valori standard; wizard e ripristino
-   non creano più righe; menu con solo "Network info".
+2. **Rimozione di pagine e righe per utente** (fatto, poawallet `9c10da4`,
+   orchestratore `c4553a4`): controller, viste e modelli di nodi, reti, token,
+   tipi di contratto, valori standard, Settings e `wallet/rescan`; wizard e
+   ripristino non creano più righe; menu con solo "Network info" (senza URL
+   RPC interno); indicizzatore Go con il token dalle variabili (anticipato dal
+   passo 3) e permessi DB ridotti a `mp_wallets`.
 3. **Database e indicizzatore**: migration (manuale) che elimina `nodes`,
    `blockchains`, `smart_contract`, `contract_type`, valori standard, `ethtxs`
-   e la colonna `transactions.id_smart_contract`; l'indicizzatore Go usa il
-   token configurato; fixture dei test aggiornate.
+   e la colonna `transactions.id_smart_contract`; fixture dei test aggiornate.
 
 ## Criteri di accettazione
 
