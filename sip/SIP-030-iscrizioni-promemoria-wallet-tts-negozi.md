@@ -225,6 +225,13 @@ Merchant, negozi e POS v1 non sono ancora importati: va deciso con SIP-022
   motivazione, account eliminato), soci v1 mai approvati importati in attesa,
   comando `membership/purge-unverified --once` (pianificazione con il worker
   del punto 2).
+- 2026-11-16 punto 2 fatto (napay `a06e771d`): registro dei promemoria per
+  scadenza, primo automatico 30 giorni prima, successivi da "Promemoria quote"
+  con pausa di 7 giorni, disattivazione dal socio; container cron
+  (`docker/cron-entry.sh`) con promemoria, pulizia account non verificati e
+  scadenza pagamenti TTS; in dashboard admin soci in regola/in scadenza/
+  scaduti; attiva/disattiva account solo admin; "Socio ordinario"
+  all'approvazione.
 
 ## Criteri di accettazione
 
