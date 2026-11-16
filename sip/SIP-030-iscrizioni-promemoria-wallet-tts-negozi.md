@@ -162,24 +162,25 @@ quota e il wallet TTS che riceve gli incassi del POS.
    filtrabili per negozio.
 6. Il pulsante Modifica del wallet BTC va collegato o tolto (vedi punto 4).
 
-## 4. Impostazioni del negozio da nascondere (da approfondire)
+## 4. Impostazioni del negozio da nascondere (fatto in parte, napay `93fa389b`, `97f1f9ed`)
 
-Il negozio v2 mostra le impostazioni dello store BTCPay su sei tab. Proposta
-iniziale, da discutere prima del codice:
+Decisioni utente 2026-11-16: schede tolte per tutti (anche admin), valori fissi.
 
-| Tab | Campi | Proposta |
+| Tab | Campi | Stato |
 | --- | --- | --- |
-| Generale | nome, descrizione | visibili |
-| Generale | speed policy, fee di rete, scadenza fattura, metodo e valuta predefiniti | nascosti, valori fissi di piattaforma (EUR) |
-| Wallet BTC | derivazione, etichetta, percorso | visibile in lettura; modifica da definire |
+| Generale | nome, valuta (EUR/USD) | modificabili; il salvataggio accetta solo questi due campi |
+| Generale | speed policy, fee di rete, scadenza fattura, metodo predefinito | tolti, valori fissi di `defaultSettings()` |
+| Wallet BTC | etichetta | visibile in lettura |
+| Wallet BTC | schema di derivazione, key path | mai mostrati: gestiti internamente da Napay (SIP-022) |
 | Wallet TTS | indirizzo | visibile, modificabile (punto 3) |
-| Tassi | fonte del prezzo, spread | nascosti, valori fissi |
-| Checkout | email rimborso, ricevuta, pagamenti e QR in ricevuta | nascosti, valori fissi |
-| Criteri | soglie BTC e Lightning | nascosti, valori fissi |
-| Webhook | id, URL | gestiti dal sistema, mai mostrati |
+| Tassi, Checkout, Criteri, Webhook | tutti | schede e azioni rimosse, valori fissi |
+| ID store BTCPay | `bps_storeid` | mai mostrato (pagina, modifica, briciole) |
 
-I valori fissi stanno in un solo punto della configurazione e vengono applicati
-dal provisioning (SIP-022) alla creazione dello store.
+Resta aperto: server e chiave BTCPay dei negozi oggi nelle impostazioni DB
+(`btcpayHost`, `btcpayApiKey`, `webhookSecret`). Server unico per quote e
+negozi; chiavi separate secondo il modello P3 di SIP-022 (chiave per merchant,
+provisioner limitato), xpub per negozio distinta da quella delle quote.
+Webhook dei negozi e impostazione della xpub passano al provisioning SIP-022.
 
 ## Import dalla v1 in produzione
 
