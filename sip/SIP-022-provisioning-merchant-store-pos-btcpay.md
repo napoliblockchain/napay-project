@@ -259,3 +259,32 @@ Mai: `unrestricted`, `btcpay.server.canmodifyserversettings`,
 `btcpay.impersonation.canimpersonate`, `btcpay.server.canmanageusers`
 (solo nel test, per le chiavi di verifica), permessi di firma o invio
 transazioni (Napay non detiene chiavi private).
+
+## B5 - Worker e stato nel backoffice (2026-11-16, napay `6bf5b0a8`, `fca79e2d`)
+
+- Servizio `btcpay-worker` (overlay `docker-compose.btcpay-worker.yml`, dopo
+  quello dei ruoli): nessun daemon PHP, `docker/btcpay-worker-loop.sh` esegue a
+  intervalli (`BTCPAY_WORKER_INTERVAL`, default 30 s) i tre comandi one-shot
+  `run`, `links`, `reconcile`, massimo 25 lavori per comando a passata. Utente
+  DB `worker`, segreti provisioner e portachiavi solo a lui, uscita solo dal
+  proxy. Il web riceve solo `BTCPAY_PROVISION_INSTANCE` (digest pubblico).
+- Sandbox: `docker/local.sh` include il worker solo se esiste
+  `btcpay-provisioner-key` nella cartella privata; crea una volta il
+  portachiavi `btcpay-kek-keyring`; origine `https://btcpay.local` con la CA
+  del gateway. Controllo di isolamento esteso (reti, segreti, ruolo, origine).
+- Stato nel backoffice, letto con i permessi del web: dettaglio merchant
+  (account BTCPay), dettaglio negozio (pagamenti BTC), elenco terminali.
+  Quattro stati: collegato, in corso, verifica in corso, errore (contatta
+  l'amministrazione). Nessun codice tecnico mostrato.
+- Test: ciclo del worker con CLI finto (5), coda con web ristretto (47),
+  collaudo reale con stato "collegato" (8), isolamento sandbox (43).
+
+### Riprova dell'admin: da progettare
+
+Il disegno B1 prevede il riprova come nuovo `INSERT` (generazione successiva),
+ma oggi il worker non rimette in gioco un mapping `failed`/`suspended`: lo
+riporta in `deferred`. Serve una regola nel worker, da approvare: con una
+generazione richiesta dall'admin, mapping senza ID remoto e senza tentativo
+incerto torna `pending` (nuova creazione ammessa); con un tentativo incerto
+solo riconciliazione GET; account con chiave rifiutata (401/403) richiede una
+nuova chiave. Più il pulsante (POST, CSRF, solo admin) e i test sul regtest.
