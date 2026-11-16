@@ -195,6 +195,8 @@ servono in più:
 | Solleciti quota | `SollecitiPagamenti` nelle impostazioni utente | non importato: contatore senza periodo, non attribuibile a una scadenza |
 | Wallet TTS del merchant | tabella `wallets` (per utente) | copiato su tutti i negozi del merchant importato |
 | Wallet BTC del negozio | tabella `mpk` (per negozio e asset) | da definire con l'import di merchant e negozi (non ancora in `LegacyImporter`) |
+| ID store BTCPay del negozio | `bps_storeid` dei negozi v1 (11 in produzione, lista utente 2026-11-16) | importato in `storesettings.bps_storeid` e nel collegamento di SIP-022: mai mostrato all'utente, evita store BTCPay doppi |
+| Store "Iscrizioni Napoli Blockchain" | negozio v1 senza commerciante | è lo store delle quote associative: il suo ID va in `BTCPAY_STORE_ID` (env), non diventa un negozio di merchant |
 
 Merchant, negozi e POS v1 non sono ancora importati: va deciso con SIP-022
 (provisioning BTCPay) prima di attivare il punto 3 in produzione.
