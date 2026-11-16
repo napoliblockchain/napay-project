@@ -1,6 +1,6 @@
 # SIP-031 - Seed perso del wallet di un negozio (TTS e BTC)
 
-- Stato: APPROVATO nei requisiti (decisioni utente 2026-11-16), da sviluppare dopo le icone
+- Stato: IN SVILUPPO (TTS fatto 2026-11-16; BTC in attesa degli incassi BTC dei negozi)
 - Area: Merchant / Negozi / POS / Incassi
 - Repo: `napay`, `pos`
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -53,3 +53,14 @@ sono più recuperabili e ogni nuovo pagamento verso quell'indirizzo andrebbe per
 4. Indirizzo perso salvato di nuovo (seed ritrovato): i suoi incassi passati
    **tornano nei totali normali e nel saldo**, con la voce "indirizzo
    ritrovato" nel registro attività.
+
+## Avanzamento
+
+- 2026-11-16 parte TTS fatta (napay `2fa66e43`, pos `88c597f`): segnalazione con
+  motivazione e parola di conferma, indirizzo tolto dai negozi del merchant,
+  richieste in attesa annullate, fondi persi separati in Incassi/CSV/dashboard,
+  ritrovamento con il nuovo salvataggio dello stesso indirizzo. Test incassi
+  TTS 119.
+- BTC: nella v2 i negozi non incassano ancora in BTC (BTCPay serve solo le
+  quote associative). Il blocco BTC si aggancia quando arrivano gli incassi
+  BTC dei negozi (SIP-022): stesso flusso sul wallet BTCPay del negozio.
