@@ -137,6 +137,10 @@ step '2/5 Chain di sviluppo Besu + token TTS'
 compose up -d --wait besu
 # one-shot rieseguibile: se il token esiste gia' non fa nulla
 compose run --rm chain-deploy >/dev/null
+# indirizzo del token TTS di sviluppo: al wallet (SIP-032) e al backoffice napay (passo 4)
+TTS_TOKEN="$(docker exec wallet-besu cat /data/tts.json | sed -n 's/.*"address": *"\(0x[0-9a-fA-F]\{40\}\)".*/\1/p')"
+[[ "$TTS_TOKEN" =~ ^0x[0-9a-fA-F]{40}$ ]] || fail 'indirizzo del token TTS non leggibile dalla chain di sviluppo.'
+export WALLET_TTS_TOKEN_ADDRESS="$TTS_TOKEN"
 printf 'Chain pronta.\n'
 
 step '3/5 Wallet'
@@ -166,8 +170,6 @@ fi
 
 step '4/5 Backoffice napay'
 # SIP-021 fase 3: Napay legge chain e token di sviluppo (rete napay_local_chain); mai scritti in local.env
-TTS_TOKEN="$(docker exec wallet-besu cat /data/tts.json | sed -n 's/.*"address": *"\(0x[0-9a-fA-F]\{40\}\)".*/\1/p')"
-[[ "$TTS_TOKEN" =~ ^0x[0-9a-fA-F]{40}$ ]] || fail 'indirizzo del token TTS non leggibile dalla chain di sviluppo.'
 export NAPAY_LOCAL_TTS_RPC_URL=http://wallet-besu:8545 NAPAY_LOCAL_TTS_CHAIN_ID=2118 NAPAY_LOCAL_TTS_TOKEN_ADDRESS="$TTS_TOKEN"
 # launcher del progetto napay: build con cache, bootstrap DB, utente locale
 bash "$ROOT/napay/docker/local.sh" up

@@ -29,6 +29,17 @@ services:
       NOTIFY_CHANNEL: poawallet:notify
       # SIP-029 passo 2: chiave dei ticket del flusso /events (condivisa con wallet-realtime)
       REALTIME_KEY_FILE: /run/secrets/wallet_realtime_key
+      # SIP-032: unica rete e unico token del wallet, mai scelti dagli utenti; indirizzo del token dal launcher
+      CHAIN_RPC_URL: http://besu:8545
+      CHAIN_ID: "2118"
+      CHAIN_NAME: "Besu QBFT (sviluppo)"
+      CHAIN_SYMBOL: ETH
+      CHAIN_ZERO_GAS: "1"
+      CHAIN_EXPLORER_URL: ""
+      TTS_TOKEN_ADDRESS: "${WALLET_TTS_TOKEN_ADDRESS:-}"
+      TTS_TOKEN_NAME: TTS
+      TTS_TOKEN_SYMBOL: TTS
+      TTS_TOKEN_DECIMALS: "2"
     secrets: [wallet_realtime_key]
     depends_on:
       mysql-main:
