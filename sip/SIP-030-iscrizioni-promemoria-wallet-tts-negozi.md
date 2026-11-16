@@ -219,6 +219,12 @@ Merchant, negozi e POS v1 non sono ancora importati: va deciso con SIP-022
   "Wallet TTS" nel negozio; incasso POS sul wallet del negozio del terminale;
   saldo in dashboard come somma dei wallet dei negozi; tolto il pulsante
   morto del wallet BTC.
+- 2026-11-16 punto 1 fatto (napay `e1e7c2c8`): stato di approvazione nel profilo
+  socio, login bloccato fino all'approvazione, mail agli admin dopo la verifica
+  dell'email, lista "Richieste di iscrizione" con approva/rifiuta (rifiuto con
+  motivazione, account eliminato), soci v1 mai approvati importati in attesa,
+  comando `membership/purge-unverified --once` (pianificazione con il worker
+  del punto 2).
 
 ## Criteri di accettazione
 
