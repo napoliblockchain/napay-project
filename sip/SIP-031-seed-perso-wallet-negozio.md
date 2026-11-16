@@ -1,6 +1,6 @@
 # SIP-031 - Seed perso del wallet di un negozio (TTS e BTC)
 
-- Stato: OPEN (requisiti dell'utente, da progettare dopo le icone)
+- Stato: APPROVATO nei requisiti (decisioni utente 2026-11-16), da sviluppare dopo le icone
 - Area: Merchant / Negozi / POS / Incassi
 - Repo: `napay`, `pos`
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -42,10 +42,17 @@ sono più recuperabili e ogni nuovo pagamento verso quell'indirizzo andrebbe per
   segnate come fondi persi.
 - Registro attività per ogni segnalazione, senza dati personali.
 
-## Da decidere
+## Decisioni utente (2026-11-16)
 
-- Il blocco dei POS vale solo per gli incassi (TTS e BTC) o anche per l'apertura
-  della cassa?
-- Un indirizzo segnalato perso può essere salvato di nuovo per errore: va
-  rifiutato per sempre?
-- Chi può annullare una segnalazione fatta per errore (solo admin)?
+1. Il blocco dei POS riguarda **solo gli incassi** (TTS e BTC): la cassa si può
+   ancora aprire, ma non può incassare finché il negozio non ha un nuovo wallet.
+2. Un indirizzo segnalato perso **si può salvare di nuovo** (seed ritrovato).
+3. La segnalazione **non si annulla**; prima di inviarla serve una doppia
+   conferma: scrivere `CONFERMA` (italiano) o `CONFIRM` (inglese), secondo la
+   lingua dell'utente, in un campo di testo.
+
+## Ancora da chiarire
+
+- Se un indirizzo perso viene salvato di nuovo (seed ritrovato), i suoi incassi
+  passati tornano nei totali normali e nel saldo? Proposta: sì, con una voce nel
+  registro "indirizzo ritrovato".
