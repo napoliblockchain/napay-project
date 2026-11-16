@@ -209,6 +209,15 @@ Merchant, negozi e POS v1 non sono ancora importati: va deciso con SIP-022
 4. Il socio **può disattivare** i promemoria dal proprio profilo.
 5. Ordine dei lavori: 3 (wallet TTS per negozio), poi 1, poi 2, poi 4.
 
+## Avanzamento
+
+- 2026-11-16 punto 3 fatto (napay `7153bdd6`, pos `1735f95`): tabella
+  `store_tts_wallets` con copia degli indirizzi per merchant su tutti i negozi
+  e rimozione della tabella per merchant; pagina `store-wallet` e scheda
+  "Wallet TTS" nel negozio; incasso POS sul wallet del negozio del terminale;
+  saldo in dashboard come somma dei wallet dei negozi; tolto il pulsante
+  morto del wallet BTC.
+
 ## Criteri di accettazione
 
 - Nessuna registrazione senza email verificata in lista o nelle mail agli admin.
