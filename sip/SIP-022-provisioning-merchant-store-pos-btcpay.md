@@ -221,3 +221,41 @@ Importati solo esiti/handoff documentali (`2306fe9`), non stack o patch condivis
 fase 2 per protezioni filesystem, validazione reti e isolamento dal proxy egress.
 Due reti distinte backend/client sostituiscono la proposta edge condivisa con
 Squid. Correzioni all'agente nel branch B0; nessun provisioning B1 autorizzato.
+
+## Decisione xpub (utente, 2026-11-16)
+
+Soluzione A: ogni merchant fornisce la xpub del proprio wallet BTC; Napay la
+valida e la imposta sullo store del negozio, senza mostrarla (schema di
+derivazione e key path nascosti, SIP-030 punto 4). Napay non custodisce seed o
+chiavi private e non genera wallet per i merchant.
+
+## Collaudo reale B2-B4 (2026-11-16)
+
+`napay/tests/docker/btcpay-provisioning-e2e.sh`: worker Napay vero contro
+BTCPay 2.4.7 regtest usa-e-getta, attraverso gateway TLS `btcpay.local` (CA
+locale) e proxy di uscita Napay; DB con i ruoli reali (worker ristretto).
+**8 PASS**: due merchant con utente BTCPay tecnico e chiave verificata
+ciascuno, store e app POS creati, ogni store ha come membro solo il suo
+merchant, chiave del merchant B rifiutata (403) sullo store di A, seconda
+esecuzione di run/links/reconcile senza lavoro né nuove risorse. Log senza
+segreti, pulizia completa a fine test (anche in caso di errore).
+
+Scoperta: un utente admin di BTCPay **non** legge le app degli store di cui
+non è membro (403, manca `canmodifystoresettings`). Quindi la chiave ponte
+`BTCPAY_STORES_API_KEY` (SIP-030) funziona solo sugli store di cui il suo
+utente è membro (negozi v1); per i negozi creati dal provisioning le modifiche
+devono passare dal worker con la chiave del merchant (passo 3).
+
+## Permessi delle chiavi
+
+| Chiave | Dove | Permessi |
+| --- | --- | --- |
+| Provisioner | solo worker (file segreto) | `btcpay.server.cancreateuser`, `btcpay.server.canviewusers` (verificati) |
+| Merchant | creata da Napay per ogni merchant, cifrata | `btcpay.store.canmodifystoresettings` (verificato: store e app POS); xpub e webhook da verificare nei passi successivi |
+| Quote associative (`BTCPAY_API_KEY`) | env web | `btcpay.store.cancreateinvoice`, `btcpay.store.canviewinvoices`, solo sullo store dell'associazione |
+| Ponte negozi (`BTCPAY_STORES_API_KEY`) | env web | `btcpay.store.canmodifystoresettings`, utente membro degli store v1 |
+
+Mai: `unrestricted`, `btcpay.server.canmodifyserversettings`,
+`btcpay.impersonation.canimpersonate`, `btcpay.server.canmanageusers`
+(solo nel test, per le chiavi di verifica), permessi di firma o invio
+transazioni (Napay non detiene chiavi private).
