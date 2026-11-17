@@ -366,6 +366,28 @@ generazione 2).
   disabilitati e non riabilitabili, negozio nascosto), collaudo reale 16 (app
   rimossa, store rinominato), POS aperture 25 e pagamenti 10+10, runtime.
 
+### Xpub del merchant (2026-11-17, napay `a9e3ecaf`)
+
+- Scheda "Wallet BTC" del negozio: il merchant incolla la chiave pubblica
+  estesa (xpub/ypub/zpub, tpub/upub/vpub), vede i **primi 5 indirizzi di
+  ricezione** e solo dopo la conferma la chiave è salvata
+  (`storesettings.derivationScheme`) e accodata come `store_wallet` (migration
+  `m261117_13`). Cambia e Rimuovi solo per il merchant (dove arrivano i BTC lo
+  decide lui); l'admin vede la chiave abbreviata. Negozi v1: wallet su BTCPay.
+- Anteprima calcolata in Napay (`XpubAddresses`, GMP, derivazione BIP32
+  pubblica, bech32/base58, regole BTCPay per prefissi e suffissi `-[legacy]`,
+  `-[p2sh]`): il web non può usare le chiavi dei merchant. Rifiutate chiavi
+  private, checksum errato (refusi) e rete diversa da `BTCPAY_BTC_NETWORK`
+  (mainnet predefinita, regtest nella sandbox). Vettori BIP84/49/44 verificati.
+- Worker: `PUT /api/v1/stores/{id}/payment-methods/BTC-CHAIN` con
+  `{enabled, config}` (percorsi letti dall'OpenAPI di BTCPay 2.4.7), DELETE
+  per la rimozione (404 = già tolto); xpub rifiutata = `wallet_rejected`,
+  mostrata al merchant. Il worker legge `derivationScheme` (chiave pubblica),
+  non key path né etichetta.
+- Collaudo reale (18): la vpub di test dell'utente sul regtest, i 5 indirizzi
+  di Napay coincidono con l'anteprima di BTCPay (`bcrt1qnynpu9…` è `0/1`);
+  rimozione = metodo di pagamento assente. Test xpub 11, link 78, negozi 44.
+
 ### Webhook per store (passo 4, da fare)
 
 In BTCPay i webhook sono per store: li crea il worker per ogni store
