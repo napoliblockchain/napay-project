@@ -71,14 +71,24 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
 
 ## Passi
 
-1. App POS configurata dal provisioning (importo libero, vista tastierino,
-   valuta del negozio) anche per le app già create.
+1. FATTO (napay `a823a4b0`): app POS configurata dal provisioning (importo
+   libero, vista tastierino, valuta del negozio). Verificato su BTCPay: il PUT
+   dell'app sostituisce tutta la configurazione e la valuta dell'app non segue
+   lo store, quindi `store_update` rimanda la configurazione completa a ogni app
+   collegata del negozio. Le app create prima di questo passo si allineano al
+   primo salvataggio del negozio. Collaudo e2e: fattura anonima dall'app,
+   stato pubblico con indirizzo della xpub del merchant.
 2. Schema: tabella dei pagamenti BTC del POS (permessi per ruolo DB).
 3. Backend Napay: creazione fattura via proxy, lettura dello stato pubblico,
    aggiornamento dai webhook firmati dello store.
 4. POS: tasto "Paga in BTC", QR, scadenza, stati "ricevuto"/"confermato".
 5. Storico e totali (POS e backoffice).
 6. Collaudo e2e sul regtest con pagamento reale.
+
+## Fuori perimetro
+
+- Negozi importati da v1 (store BTCPay già esistenti): dipendono dalla
+  mappatura delle app POS di SIP-030; fino ad allora niente tasto BTC.
 
 ## Sicurezza
 
