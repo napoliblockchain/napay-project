@@ -341,9 +341,30 @@ generazione 2).
 - Test: link worker 69 (6 nuovi), collaudo reale 15 (impostazioni applicate,
   modifica di nome e valuta, adozione su uno store appena creato), permessi
   DB 65, schema 148, runtime.
-- Resta (3b): archiviazione su BTCPay dei negozi del provisioning eliminati e
-  rimozione delle app POS dei terminali disattivati, tramite worker. Il cambio
-  BTC nella pagina negozio resta solo per i negozi v1.
+- Il cambio BTC nella pagina negozio resta solo per i negozi v1.
+
+### Passo 3b - Negozio eliminato (2026-11-17, napay `f1a8a010`)
+
+- Trovato: "Elimina negozio" in v2 era rotto (scriveva colonne `historical` e
+  `close_date` inesistenti in `stores` e usava il modello v1 `Pos`, rimosso).
+- Ora eliminare = archiviare (`stores.archived_at`, migration `m261117_12`):
+  la riga resta (terminali, impostazioni, pagamenti e collegamenti la
+  referenziano). Nella stessa transazione: terminali del negozio disabilitati
+  (chiude anche l'apertura attiva) e, per i negozi del provisioning, lavoro
+  `store_archive` (migration `m261117_11`). Negozio archiviato nascosto da
+  elenco, dettaglio e selettori (terminali, permessi operatori, catalogo POS);
+  i suoi terminali non si riabilitano; storico dei pagamenti visibile.
+- Worker `store_archive` (chiave del merchant): DELETE delle app POS (404 =
+  già rimossa), store rinominato "… - archiviato" entro 50 caratteri, mai
+  cancellato (resta lo storico delle fatture), mapping `suspended` con codice
+  `store_archived` (ID remoti conservati, badge nascosto). Store mai collegato:
+  niente da fare; creazione incerta: decide l'admin. Il worker dei link non
+  crea né adotta store o app per un negozio archiviato; `store_update` dopo
+  l'archiviazione fallisce senza chiamate. Negozi v1: rinomina `-DELETED` con
+  la chiave ponte (le app POS v1 non sono più elencabili).
+- Test: link worker 75, negozi 37 (POST obbligatorio, archivio, terminali
+  disabilitati e non riabilitabili, negozio nascosto), collaudo reale 16 (app
+  rimossa, store rinominato), POS aperture 25 e pagamenti 10+10, runtime.
 
 ### Webhook per store (passo 4, da fare)
 
