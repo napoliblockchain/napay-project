@@ -1,6 +1,6 @@
 # SIP-033 - Pagamenti BTC dal POS
 
-- Stato: PROPOSTA (da approvare)
+- Stato: APPROVATO (2026-11-17), in corso
 - Area: POS / Napay / BTCPay / Pagamenti
 - Repo: `pos`, `napay`, `napay-project` (collaudo)
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -29,6 +29,11 @@ modello P3); il worker gira a intervalli, troppo lento per un cliente in cassa.
 - Senza Internet (regtest) servono cambi fissi nello store; in produzione i
   cambi arrivano dalle borse configurate su BTCPay.
 
+- La pagina di stato pubblica della fattura (per metodo di pagamento BTC
+  on-chain) restituisce in JSON, senza chiave: indirizzo, importo dovuto in BTC,
+  URI di pagamento BIP21, secondi alla scadenza, stato e conferme. Basta per
+  disegnare il QR nel POS (D2 verificata).
+
 L'app POS è pubblica per natura (chiunque con il suo indirizzo può creare
 fatture): Napay considera solo le fatture che ha creato e registrato lui.
 
@@ -53,18 +58,27 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
 7. **Collaudo reale**: regtest con pagamento vero (bitcoind del regtest invia
    a un indirizzo della fattura), dall'apertura del terminale all'esito.
 
-## Decisioni da prendere
+## Decisioni (2026-11-17)
 
-- **D1 Quando il POS mostra "pagato"**: alla ricezione del pagamento
-  (`InvoiceProcessing`, 0 conferme, pochi secondi) oppure solo dopo la conferma
-  (`InvoiceSettled`, 1 conferma con la policy attuale, circa 10 minuti).
-  Proposta: "ricevuto, in conferma" subito e "confermato" dopo; il cassiere può
-  chiudere la vendita al primo stato; l'esito finale resta nello storico.
-- **D2 Come mostrare il QR**: generato dal POS con indirizzo e importo della
-  fattura (il POS resta sulle sue pagine, CSP invariata; dati da leggere dalla
-  fattura, da verificare al passo 3) oppure aprendo la pagina di pagamento di
-  BTCPay. Proposta: QR nel POS.
-- **D3 Lightning**: escluso per ora, solo on-chain (la xpub del merchant).
+- **D1 Stato "pagato"**: "ricevuto, in conferma" all'arrivo della transazione
+  (`InvoiceProcessing`, 0 conferme), "confermato" a `InvoiceSettled`. Il
+  cassiere può chiudere la vendita al primo stato; l'esito finale resta nello
+  storico.
+- **D2 QR nel POS**: generato dal POS con l'URI BIP21 letto dal backend Napay
+  dalla pagina di stato pubblica della fattura. Ripiego, se in collaudo non
+  funziona: apertura della pagina di pagamento di BTCPay.
+- **D3 Lightning**: escluso, solo on-chain sulla xpub del merchant.
+
+## Passi
+
+1. App POS configurata dal provisioning (importo libero, vista tastierino,
+   valuta del negozio) anche per le app già create.
+2. Schema: tabella dei pagamenti BTC del POS (permessi per ruolo DB).
+3. Backend Napay: creazione fattura via proxy, lettura dello stato pubblico,
+   aggiornamento dai webhook firmati dello store.
+4. POS: tasto "Paga in BTC", QR, scadenza, stati "ricevuto"/"confermato".
+5. Storico e totali (POS e backoffice).
+6. Collaudo e2e sul regtest con pagamento reale.
 
 ## Sicurezza
 
