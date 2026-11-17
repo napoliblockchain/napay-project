@@ -388,10 +388,26 @@ generazione 2).
   di Napay coincidono con l'anteprima di BTCPay (`bcrt1qnynpu9…` è `0/1`);
   rimozione = metodo di pagamento assente. Test xpub 11, link 78, negozi 44.
 
-### Webhook per store (passo 4, da fare)
+### Passo 4 - Webhook per store (2026-11-17, napay `29530c78`)
 
-In BTCPay i webhook sono per store: li crea il worker per ogni store
-collegato, con un segreto diverso per store (cifrato come le chiavi), verso
-l'endpoint Napay; serve anche il permesso
-`btcpay.store.webhooks.canmodifywebhooks` (da verificare se incluso in
-`canmodifystoresettings` sul regtest).
+- Il worker crea o aggiorna il webhook dello store dopo le impostazioni
+  (`store_update`, alla creazione e a ogni modifica), con la chiave del
+  merchant: GET per URL, poi PUT sul webhook trovato o POST se manca (mai
+  doppioni; due webhook Napay = `webhook_ambiguous` per l'admin). Eventi:
+  ricevuto pagamento, in elaborazione, saldata, scaduta, non valida.
+  Verificato sul BTCPay reale: basta `canmodifystoresettings`.
+- Segreto per store derivato (HMAC-SHA256) dalla chiave madre
+  `BTCPAY_STORE_WEBHOOK_KEY` (web) / file segreto (worker): nessun segreto di
+  webhook nel DB, la firma di uno store non vale per un altro.
+- Endpoint `POST /api/btcpay/v1/store-webhook`: store riconosciuto dal suo ID
+  remoto (il web legge `remote_store_id`, non segreto), firma `BTCPay-Sig`
+  verificata con il segreto del negozio, consegna registrata una sola volta in
+  `btcpay_webhook_events` con `store_id` (migration `m261117_14`). L'uso degli
+  eventi (storico pagamenti, POS BTC) è un passo successivo.
+- Config: `BTCPAY_STORE_WEBHOOK_URL` (HTTPS, raggiungibile da BTCPay) e
+  `BTCPAY_STORE_WEBHOOK_KEY_SECRET_FILE` nel worker; sandbox: chiave generata
+  da `local.sh`, URL `https://napay.local/...` (nella topologia locale il
+  regtest non raggiunge Napay: consegne provate con firme generate dal test).
+- Test: link worker 83 (creazione, aggiornamento, ambiguità, HTTPS), collaudo
+  reale 20 (webhook registrato con URL ed eventi; consegna firmata registrata,
+  doppione, firma errata e segreto di un altro store rifiutati).
