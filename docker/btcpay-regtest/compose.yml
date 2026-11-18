@@ -90,9 +90,14 @@ services:
       # .NET usa il proxy per le richieste HTTP in uscita (cambi); servizi interni esclusi
       HTTPS_PROXY: http://rates-egress:3128
       HTTP_PROXY: http://rates-egress:3128
-      NO_PROXY: nbxplorer,bitcoind,postgres,localhost,127.0.0.1
+      NO_PROXY: nbxplorer,bitcoind,postgres,localhost,127.0.0.1,napay.local
+      # SIP-033: CA locale del gateway (webhook verso https://napay.local) in aggiunta, mai al posto, delle CA di sistema
+      SSL_CERT_DIR: /etc/ssl/certs:/napay-ca
+      # SIP-033: la protezione SSRF di BTCPay blocca i webhook verso reti private; unica eccezione, host e porta esatti
+      BTCPAY_SSRFEXCEPTIONS: "napay.local:443"
     volumes:
       - btcpay:/datadir
+      - ${BTCPAY_LOCAL_STATE:?}/trusted-ca:/napay-ca:ro
     # pronto solo quando NBXplorer e il nodo sono sincronizzati
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/49392 && printf 'GET /api/v1/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '\"synchronized\":true' <&3"]

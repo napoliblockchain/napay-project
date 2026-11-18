@@ -22,7 +22,9 @@ services:
       pos_local_browser:
         aliases: [napay.local]
       # B0 backend and egress never share a network.
-      btcpay_regtest_edge: {}
+      # SIP-033: BTCPay chiama napay.local solo per il webhook dello store (eccezione in conf.d/napay.caddy)
+      btcpay_regtest_edge:
+        aliases: [napay.local]
       btcpay_regtest_client:
         aliases: [btcpay.local]
 

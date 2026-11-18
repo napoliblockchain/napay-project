@@ -7,6 +7,16 @@ http://napay.local, http://napay.test, http://localhost, https://napay.test, htt
 }
 
 https://napay.local {
+    # SIP-033: unica eccezione per il backend BTCPay (rete edge): il webhook firmato dello store verso Napay.
+    # Ogni altra richiesta dalla edge resta interrotta da no_btcpay_backend.
+    @btcpay_store_webhook {
+        remote_ip 10.252.0.0/24
+        method POST
+        path /api/btcpay/v1/store-webhook
+    }
+    handle @btcpay_store_webhook {
+        reverse_proxy napay-local-web:80
+    }
     import no_btcpay_backend
     header X-Content-Type-Options nosniff
     header Referrer-Policy no-referrer

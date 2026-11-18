@@ -101,6 +101,18 @@ ENV
     private_file "$state/regtest.env" || fail 'regtest.env not created.'
 fi
 
+# SIP-033: CA del gateway Napay (webhook dello store verso https://napay.local), copiata nella cartella privata se presente
+mkdir -p -m 700 "$state/trusted-ca"
+if [[ $action == up ]]; then
+    napay_ca=${BTCPAY_NAPAY_CA:-}
+    if [[ -z $napay_ca && -f $dir/../../.env ]]; then
+        napay_state=$(sed -n 's/^NAPAY_LOCAL_STATE=//p' "$dir/../../.env" | tail -1)
+        [[ -z $napay_state ]] || napay_ca=$napay_state/caddy-root.crt
+    fi
+    if [[ -n $napay_ca && -f $napay_ca && ! -L $napay_ca ]]; then
+        install -m 0644 "$napay_ca" "$state/trusted-ca/napay-gateway.crt"
+    fi
+fi
 export BTCPAY_LOCAL_STATE=$state BTCPAY_EDGE_NETWORK=$edge
 compose=(docker compose -p "$project" -f "$dir/compose.yml")
 cli=("${compose[@]}" exec -T bitcoind bitcoin-cli -datadir=/data -rpcport=43782)

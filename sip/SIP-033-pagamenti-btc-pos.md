@@ -100,10 +100,18 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
    l'orderId di Napay; storico, totali di oggi (2 incassi, 2,50 EUR,
    0.00024363 BTC) e ricevuta corretti; risposte reali accettate dal client
    del POS. Esito: gli stati arrivano dal polling (pagina POS) e dal sweep;
-   i webhook dello store NON arrivano nella sandbox (0 eventi): `napay.local`
-   non risolve nel container BTCPay e il gateway respinge per progetto le
-   richieste dalla rete edge. In produzione vanno verificati alla prima
-   messa in esercizio (BTCPay -> Napay via Internet).
+   i webhook dello store non arrivavano nella sandbox (`napay.local` non
+   risolveva nel container BTCPay, gateway chiuso alla rete edge, protezione
+   SSRF di BTCPay sulle reti private). Abilitati con eccezioni strette
+   (orchestratore, sotto): con il solo webhook "ricevuto" in 1 s e
+   "confermato" in 1 s dal blocco.
+   Webhook = solo avviso (napay): dal webhook si prende l'ID della fattura,
+   stato, BTC ricevuti e conferme si rileggono dallo stato pubblico di BTCPay.
+   Sandbox: alias `napay.local` del gateway sulla rete edge; gateway aperto
+   alla edge solo per `POST /api/btcpay/v1/store-webhook`; BTCPay con
+   `BTCPAY_SSRFEXCEPTIONS=napay.local:443`, `NO_PROXY` e CA del gateway in
+   `SSL_CERT_DIR` (in aggiunta alle CA di sistema). Produzione: se BTCPay
+   raggiunge Napay su un indirizzo privato serve la stessa eccezione SSRF.
 
 ## Contratto passo 2 - schema e ruoli (2026-11-18)
 
