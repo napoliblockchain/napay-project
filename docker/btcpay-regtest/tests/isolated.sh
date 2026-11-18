@@ -112,6 +112,18 @@ height=$("${compose[@]}" exec -T bitcoind bitcoin-cli -datadir=/data -rpcport=43
 [[ $("${compose[@]}" exec -T bitcoind bitcoin-cli -datadir=/data -rpcport=43782 getblockcount) == "$height" ]]
 pass 'Stop/up keeps chain data, no extra mining'
 
+# SIP-033: cliente di prova (wallet b0): solo richieste BIP21 regtest, conferma solo con mine
+"${local_sh[@]}" pay 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=0.001' >/dev/null 2>&1 && exit 1
+"${local_sh[@]}" pay 'bitcoin:bcrt1qexample?amount=1;rm' >/dev/null 2>&1 && exit 1
+"${local_sh[@]}" mine 11 >/dev/null 2>&1 && exit 1
+pass 'pay refuses non-regtest or malformed requests, mine at most 10 blocks'
+to=$("${compose[@]}" exec -T bitcoind bitcoin-cli -datadir=/data -rpcport=43782 -rpcwallet=b0 getnewaddress)
+txid=$("${local_sh[@]}" pay "bitcoin:${to^^}?amount=0.00011741" | tr -d '\r')
+[[ $txid =~ ^[0-9a-f]{64}$ ]] && "${compose[@]}" exec -T bitcoind bitcoin-cli -datadir=/data -rpcport=43782 getmempoolentry "$txid" >/dev/null
+[[ $("${local_sh[@]}" mine 1) == "height $((height + 1))" ]]
+[[ $("${compose[@]}" exec -T bitcoind bitcoin-cli -datadir=/data -rpcport=43782 -rpcwallet=b0 gettransaction "$txid" | grep -c '"confirmations": 1,') == 1 ]]
+pass 'pay sends the BIP21 amount from wallet b0 (uppercase QR address accepted), mine confirms it'
+
 "${local_sh[@]}" reset >/dev/null 2>&1 && exit 1
 pass 'Reset refused without --yes'
 "${local_sh[@]}" reset --yes >/dev/null

@@ -19,8 +19,13 @@ action=${1:-status}
 case "$action" in
     up|status|stop) [[ $# -le 1 ]] ;;
     reset) [[ $# -eq 2 && $2 == --yes ]] || fail 'reset deletes all regtest data: use "reset --yes".' ;;
+    # SIP-033: il "cliente" di prova paga un QR del POS o di BTCPay dal wallet b0 del nodo (solo indirizzi regtest)
+    pay) [[ $# -eq 2 && ${2,,} =~ ^bitcoin:(bcrt1[a-z0-9]{8,87})\?amount=([0-9]{1,8}(\.[0-9]{1,8})?)$ ]] \
+        || fail 'pay needs a regtest BIP21 request: bitcoin:bcrt1...?amount=0.0001' ;;
+    mine) [[ $# -le 2 && ${2:-1} =~ ^([1-9]|10)$ ]] || fail 'mine takes 1..10 blocks.' ;;
     *) false ;;
-esac || fail 'Usage: bash docker/btcpay-regtest/local.sh {up|status|stop|reset --yes}'
+esac || fail 'Usage: bash docker/btcpay-regtest/local.sh {up|status|stop|reset --yes|pay <bitcoin:bcrt1...?amount=...>|mine [1..10]}'
+pay_address=${BASH_REMATCH[1]:-}; pay_amount=${BASH_REMATCH[2]:-}
 edge=${BTCPAY_EDGE_NETWORK:-btcpay_regtest_edge}
 [[ $edge =~ ^[a-z0-9][a-z0-9_.-]{0,62}$ ]] || fail 'Invalid BTCPAY_EDGE_NETWORK.'
 # subnet fissa: il gateway rifiuta le richieste che arrivano dal backend BTCPay verso gli altri siti
@@ -127,6 +132,14 @@ case "$action" in
         ;;
     stop)
         "${compose[@]}" stop
+        ;;
+    pay)
+        # bitcoin finti del regtest: nessun valore reale; la conferma arriva solo con "mine"
+        "${cli[@]}" -rpcwallet=b0 -named sendtoaddress address="$pay_address" amount="$pay_amount"
+        ;;
+    mine)
+        "${cli[@]}" -rpcwallet=b0 generatetoaddress "${2:-1}" "$("${cli[@]}" -rpcwallet=b0 getnewaddress)" >/dev/null
+        printf 'height %s\n' "$("${cli[@]}" getblockcount)"
         ;;
     reset)
         # unico comando distruttivo: container e volumi di questo progetto; segreti e rete restano

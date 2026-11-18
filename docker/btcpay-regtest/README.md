@@ -42,6 +42,9 @@ bash docker/btcpay-regtest/local.sh up       # avvia; al primo avvio crea segret
 bash docker/btcpay-regtest/local.sh status
 bash docker/btcpay-regtest/local.sh stop     # ferma, dati conservati
 bash docker/btcpay-regtest/local.sh reset --yes   # cancella i dati di test (unico comando distruttivo)
+# SIP-033, cliente di prova: paga un QR del POS o di BTCPay col wallet b0 del nodo (bitcoin finti), poi conferma
+bash docker/btcpay-regtest/local.sh pay 'bitcoin:bcrt1...?amount=0.00011741'   # stampa il txid (ricevuto, 0 conferme)
+bash docker/btcpay-regtest/local.sh mine 1                                    # 1 blocco: pagamento confermato
 ```
 
 In alternativa le variabili in `docker/btcpay-regtest/.env` (vedi `.env.example`).
