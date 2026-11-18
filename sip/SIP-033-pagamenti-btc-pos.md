@@ -195,6 +195,20 @@ connessioni web/worker/migrator, regressioni ruoli e provisioning passo1.
   raggruppati nei quattro filtri esistenti, totali BTC per valuta, dettaglio
   ed export CSV con cambio e BTC pagati. Mai ID remoti BTCPay o fattura.
 
+## Estensioni dopo il collaudo (2026-11-18)
+
+- Txid BTC (napay `da650b95`, pos `3584e0d`): dalla ricevuta pubblica della
+  fattura BTCPay (solo i link `/tx/<txid>`, elencati a fattura confermata),
+  al massimo 10, salvati una volta e di nuovo solo se arrivano altri BTC;
+  in pagina POS, storico, ricevuta, backoffice e CSV. E2e su fattura reale.
+- Cambio TTS/EUR (napay `e4371933`, pos `50b9b6d`): `TTS_EUR_RATE` (EUR per
+  1 TTS, due decimali, assente = 1.00; non valido = incasso TTS non
+  disponibile), più avanti da un endpoint di quotazione. Il cassiere digita
+  il prezzo in EUR, i TTS sono convertiti per eccesso al centesimo; ogni
+  richiesta conserva prezzo, cambio e TTS (migration con 1:1 sui pagamenti
+  esistenti). Totali TTS in TTS ed EUR; cambio mostrato in POS, storico,
+  ricevuta e backoffice. Nuova variabile opzionale per il deploy.
+
 ## Fuori perimetro
 
 - Negozi importati da v1 (store BTCPay già esistenti): dipendono dalla
