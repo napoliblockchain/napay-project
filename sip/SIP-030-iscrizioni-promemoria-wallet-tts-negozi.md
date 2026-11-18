@@ -225,13 +225,17 @@ Decisioni utente:
    nel DB); file letti da `custom/<storeid>/CustomLogo.*` della cartella file
    v1 (`NAPAY_LEGACY_FILES_DIR`); file assente = logo Napay, segnalato.
 3. POS v1 = casse del loro negozio, senza operatori (il merchant li invita).
-4. Storico POS v1 = archivio in sola lettura nel backoffice Incassi, fuori dai
-   totali dei POS v2.
+4. Storico POS v1 negli incassi v2, senza distinzione tra dati vecchi e nuovi
+   (aggiornata il 2026-11-18: niente tabella separata; vincoli di apertura e
+   sessione resi compatibili con pagamenti senza sessione v2).
+5. Import una tantum al passaggio (v1 ferma 1-2 ore, la v2 prende gli stessi
+   indirizzi): dopo sono dati v2 come gli altri. `legacy_id` è solo la chiave
+   tecnica dell'import (collega casse e storico ai negozi, import ripetibile
+   senza doppioni); l'import crea ciò che manca e non riscrive mai.
 
 Regole:
-- Ripetibile (upsert per ID legacy), dentro la transazione dell'import con
-  riconciliazione dei conteggi; mai segreti v1 (chiavi exchange,
-  `securityToken`, `nonce`, `wallet_key`).
+- Dentro la transazione dell'import con riconciliazione dei conteggi; mai
+  segreti v1 (chiavi exchange, `securityToken`, `nonce`, `wallet_key`).
 - Merchant: titolare = utente v1 importato; ragione sociale, P.IVA, indirizzo;
   email del titolare.
 - Negozi: attivi e eliminati (eliminati = archiviati); impostazioni standard
@@ -239,8 +243,13 @@ Regole:
   chiave estesa valida; lo store senza merchant non diventa un negozio: il suo
   ID va in `BTCPAY_STORE_ID` (riportato nel report).
 - Wallet TTS del titolare copiato su tutti i suoi negozi.
-- Passi: 5a merchant, negozi, impostazioni, wallet, logo; 5b casse; 5c archivio
-  storico.
+- Passi: 5a merchant, negozi, impostazioni, wallet, logo; 5b casse; 5c storico
+  negli incassi v2.
+- 5a FATTO (napay `593b2382`): import test 45; prova sulla copia v1: 12
+  merchant, 13 negozi (3 archiviati), 10 store BTCPay sul ponte, 7 siti, 7 xpub
+  (1 non valida scartata), 5 wallet TTS, 0 segreti, secondo giro identico;
+  logo: 8 file attesi da `custom/` della v1 (da copiare al passaggio). Store
+  delle quote riportato nel report per `BTCPAY_STORE_ID`.
 
 ## Decisioni utente (2026-11-16)
 
