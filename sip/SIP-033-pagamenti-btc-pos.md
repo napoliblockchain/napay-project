@@ -80,8 +80,8 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
    stato pubblico con indirizzo della xpub del merchant.
 2. FATTO (napay `00fe8a00`): schema `pos_btc_payments` e permessi per ruolo
    DB (contratto sotto). Test: schema 55, ruoli 73.
-3. Backend Napay: creazione fattura via proxy, lettura dello stato pubblico,
-   aggiornamento dai webhook firmati dello store.
+3. FATTO (napay `3b791827`): backend Napay. Contratto sotto. Test: servizio
+   e API 41, ruoli 75, e2e regtest 23 (gateway reale via proxy e TLS).
 4. POS: tasto "Paga in BTC", QR, scadenza, stati "ricevuto"/"confermato".
 5. Storico e totali (POS e backoffice).
 6. Collaudo e2e sul regtest con pagamento reale.
@@ -119,6 +119,31 @@ Test: replay e schema alterato, CHECK/UNIQUE/FK e scope inter-merchant,
 stati processing/settled, importi/timestamp invalidi, permessi effettivi con
 connessioni web/worker/migrator, regressioni ruoli e provisioning passo1.
 
+## Contratto passo 3 - backend (2026-11-18)
+
+- Configurazione: il web e il cron ricevono l'origine BTCPay del provisioning
+  e la CA locale; l'origine deve dare lo stesso digest dell'istanza, altrimenti
+  pagamenti BTC spenti. Uscita dal proxy se configurato, come per le quote.
+- Disponibilità: negozio con wallet BTC (xpub, non v1), store e app POS del
+  terminale collegati sulla stessa istanza, valuta EUR o USD. L'API "metodi"
+  dice al POS se mostrare i tasti TTS e BTC.
+- Creazione: stesse regole e lock dei pagamenti TTS; riga salvata prima della
+  rete, poi un solo POST anonimo all'app POS con riferimento = ID pubblico
+  Napay. Fattura accettata solo se lo stato pubblico conferma ID, riferimento,
+  store, valuta e importo; altrimenti `invalid` e mai mostrata.
+- Esito ignoto del POST: `reconcile_required`, la stessa richiesta non invia un
+  secondo POST; lo sweep la chiude come fallita dopo la scadenza (nessun QR è
+  stato mostrato, la fattura scade su BTCPay).
+- Esiti: webhook firmati dello store (Processing = ricevuto, Settled =
+  confermato, Expired, Invalid) e stato pubblico letto da Napay sul server
+  BTCPay via TLS (la sandbox non riceve webhook). Mai valori dal browser del
+  POS. Solo transizioni in avanti con controllo di versione.
+- Risposta al POS: importo e valuta, indirizzo, importo BTC, QR BIP21 costruito
+  da Napay, link alla pagina di pagamento BTCPay (ripiego D2), conferme,
+  errore codificato. Mai ID remoti di store o app, sessione o ID fattura.
+- Sweep ogni 5 minuti dal cron; il web può leggere l'ID dell'app POS del
+  terminale (non segreto), mai i marker.
+
 ## Fuori perimetro
 
 - Negozi importati da v1 (store BTCPay già esistenti): dipendono dalla
@@ -130,8 +155,9 @@ connessioni web/worker/migrator, regressioni ruoli e provisioning passo1.
 - Importo e terminale decisi dal backend (apertura valida), mai dal browser
   del POS; `orderId` solo come riferimento, il collegamento è l'ID fattura
   registrato da Napay alla creazione.
-- Esito solo da webhook con firma valida per quello store, consegne
-  deduplicate; nessun evento cambia un pagamento di un altro negozio.
+- Esito da webhook con firma valida per quello store (consegne deduplicate,
+  nessun evento cambia un pagamento di un altro negozio) o dallo stato
+  pubblico letto da Napay sul server BTCPay configurato.
 - Limiti di frequenza per terminale sulla creazione di fatture.
 
 ## Criteri di accettazione
