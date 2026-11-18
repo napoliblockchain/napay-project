@@ -18,6 +18,9 @@ aggiornare: verificare i tag reali, fissare i nuovi digest, rieseguire i test.
 ## Rete e sicurezza
 
 - Nessuna porta sull'host. Rete `regtest` interna: nessun container esce su internet.
+- Unica eccezione (SIP-033): `btcpayserver` scarica i cambi tramite `rates-egress`
+  (Squid, rete `rates` interna), solo tunnel HTTPS 443 verso `api.kraken.com`
+  (`rates-egress/squid.conf`), la fonte che il worker Napay imposta su ogni store.
 - Rete `btcpay_regtest_edge` (interna, subnet fissa `10.252.0.0/24`, creata da
   `local.sh` se manca): solo `btcpayserver` e il gateway. Una rete omonima
   diversa (non interna, altra etichetta o subnet) non viene riusata né toccata.

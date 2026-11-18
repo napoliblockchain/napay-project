@@ -1,6 +1,7 @@
 # SIP-022 B0: BTCPay Server in regtest (bitcoin finti) solo per verificare il provisioning.
 # Avvio esclusivamente con local.sh: segreti in BTCPAY_LOCAL_STATE, fuori dal repository.
-# Nessuna porta sull'host e nessuna uscita internet; il gateway lo raggiunge sulla rete edge.
+# Nessuna porta sull'host; il gateway lo raggiunge sulla rete edge. Unica uscita (SIP-033): i cambi, solo HTTPS verso
+# l'host della fonte, tramite il proxy rates-egress con allowlist (rates-egress/squid.conf).
 # Versioni fissate per digest; tag uguali all'inventario dichiarato della produzione (da riverificare a ogni aggiornamento).
 name: btcpay-regtest
 
@@ -86,6 +87,10 @@ services:
       BTCPAY_BTCEXPLORERURL: http://nbxplorer:32838/
       BTCPAY_DOCKERDEPLOYMENT: "true"
       BTCPAY_UPDATEURL: ""
+      # .NET usa il proxy per le richieste HTTP in uscita (cambi); servizi interni esclusi
+      HTTPS_PROXY: http://rates-egress:3128
+      HTTP_PROXY: http://rates-egress:3128
+      NO_PROXY: nbxplorer,bitcoind,postgres,localhost,127.0.0.1
     volumes:
       - btcpay:/datadir
     # pronto solo quando NBXplorer e il nodo sono sincronizzati
@@ -98,15 +103,37 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
       nbxplorer: {condition: service_healthy}
+      rates-egress: {condition: service_healthy}
     networks:
       regtest: {}
+      rates: {}
       edge:
         aliases: [btcpay-regtest]
+
+  # SIP-033: proxy di uscita per i soli cambi (allowlist), unico servizio con Internet
+  rates-egress:
+    <<: *service
+    build: ./rates-egress
+    image: btcpay-regtest/rates-egress:local
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "3128"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [rates, internet]
 
 networks:
   # tutti i servizi: interna, nessuna uscita
   regtest:
     internal: true
+  # solo btcpayserver e rates-egress: interna, nessuna uscita diretta
+  rates:
+    internal: true
+  # solo rates-egress
+  internet: {}
   # solo btcpayserver e, dopo l'integrazione del master, il gateway (creata da local.sh)
   edge:
     name: ${BTCPAY_EDGE_NETWORK:-btcpay_regtest_edge}

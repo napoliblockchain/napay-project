@@ -44,13 +44,14 @@ expect_networks() { printf '%s\n' "$@" | LC_ALL=C sort | tr '\n' ' '; }
 docker run --rm --network none --entrypoint curl "$client" --version >/dev/null
 
 "${local_sh[@]}" up >/dev/null
-pass 'Stack up: postgres, bitcoind, nbxplorer, btcpayserver healthy'
+pass 'Stack up: postgres, bitcoind, nbxplorer, rates-egress, btcpayserver healthy'
 
 config=$("${compose[@]}" config --format json)
 grep -q '"published"' <<<"$config" && exit 1
 pass 'No host ports published'
-[[ $(grep -c '"image": ' <<<"$config") -eq 4 && $(grep -c '"image": "[^"]*@sha256:[0-9a-f]\{64\}"' <<<"$config") -eq 4 ]]
-pass 'All images pinned by digest'
+[[ $(grep -c '"image": ' <<<"$config") -eq 5 && $(grep -c '"image": "[^"]*@sha256:[0-9a-f]\{64\}"' <<<"$config") -eq 4 ]]
+grep -q '^FROM [^ ]*@sha256:[0-9a-f]\{64\}$' "$dir/rates-egress/Dockerfile"
+pass 'All images pinned by digest (rates-egress built from a pinned base)'
 [[ $(stat -c '%a' "$BTCPAY_LOCAL_STATE") == 700 && $(stat -c '%a' "$BTCPAY_LOCAL_STATE/regtest.env") == 600 && -f $BTCPAY_LOCAL_STATE/.gitignore ]]
 pass 'Private state 0700, secrets 0600, local .gitignore'
 
@@ -64,9 +65,11 @@ regtest="${BTCPAY_PROJECT}_regtest"
 for service in postgres bitcoind nbxplorer; do
     [[ $(networks_of "$("${compose[@]}" ps -q "$service")") == "$(expect_networks "$regtest")" ]]
 done
-[[ $(networks_of "$("${compose[@]}" ps -q btcpayserver)") == "$(expect_networks "$BTCPAY_EDGE_NETWORK" "$regtest")" ]]
-[[ $(docker network inspect -f '{{.Internal}}' "$regtest") == true && $(docker network inspect -f '{{.Internal}}' "$BTCPAY_EDGE_NETWORK") == true ]]
-pass 'Services only on internal networks (btcpayserver also on edge)'
+rates="${BTCPAY_PROJECT}_rates"
+[[ $(networks_of "$("${compose[@]}" ps -q btcpayserver)") == "$(expect_networks "$BTCPAY_EDGE_NETWORK" "$regtest" "$rates")" ]]
+[[ $(networks_of "$("${compose[@]}" ps -q rates-egress)") == "$(expect_networks "$rates" "${BTCPAY_PROJECT}_internet")" ]]
+for net in "$regtest" "$BTCPAY_EDGE_NETWORK" "$rates"; do [[ $(docker network inspect -f '{{.Internal}}' "$net") == true ]]; done
+pass 'Services only on internal networks (btcpayserver also on edge and rates; only rates-egress has Internet)'
 
 # Internet simulata: sentinella su una bridge normale; controllo positivo prima dei negativi
 docker network create "$sim" >/dev/null
@@ -75,11 +78,21 @@ sentinel_ip=$(ip_on "btcpay-regtest-test-$run-sentinel" "$sim")
 for _ in $(seq 1 20); do probe "$sim" "http://$sentinel_ip/"; [[ $out == sentinel ]] && break; sleep 1; done
 [[ $code == 0 && $out == sentinel ]]
 pass 'Positive control: sentinel reachable from an ordinary bridge network'
-for net in "$regtest" "$BTCPAY_EDGE_NETWORK"; do
+for net in "$regtest" "$BTCPAY_EDGE_NETWORK" "$rates"; do
     probe "$net" -o /dev/null -w '%{http_code}' "http://$sentinel_ip/"
     [[ ($code == 7 || $code == 28) && $out != *200* ]]
 done
-pass 'No route out of regtest and edge networks (sentinel IP unreachable)'
+pass 'No route out of regtest, edge and rates networks (sentinel IP unreachable)'
+# proxy dei cambi: solo CONNECT 443 verso l'host in allowlist; tutto il resto 403 da Squid (nessuna prova verso Internet)
+probe "$rates" -o /dev/null -w '%{http_code}' -x http://rates-egress:3128 "http://$sentinel_ip/"
+[[ $out == 403 ]] || { echo "FAIL: proxy plain HTTP (http ${out:0:3})" >&2; exit 1; }
+probe "$rates" -o /dev/null -w '%{http_connect}' -x http://rates-egress:3128 "https://$sentinel_ip/"
+[[ $out == 403 ]] || { echo "FAIL: proxy CONNECT to a host outside the allowlist (http ${out:0:3})" >&2; exit 1; }
+probe "$rates" -o /dev/null -w '%{http_connect}' -x http://rates-egress:3128 "https://api.kraken.com:8443/"
+[[ $out == 403 ]] || { echo "FAIL: proxy CONNECT to a non-443 port (http ${out:0:3})" >&2; exit 1; }
+probe "$regtest" -o /dev/null -w '%{http_code}' -x http://rates-egress:3128 "http://$sentinel_ip/"
+[[ $code == 5 || $code == 6 || $code == 7 || $code == 28 ]] || { echo "FAIL: proxy reachable from regtest (curl $code)" >&2; exit 1; }
+pass 'Rates proxy: plain HTTP, other hosts and other ports refused (403); not reachable from the regtest network'
 
 # RPC del nodo: raggiungibile (401) dalla rete regtest, connessione impossibile dalla edge sullo stesso IP
 rpc_ip=$(ip_on "$("${compose[@]}" ps -q bitcoind)" "$regtest")
