@@ -207,6 +207,41 @@ servono in più:
 Merchant, negozi e POS v1 non sono ancora importati: va deciso con SIP-022
 (provisioning BTCPay) prima di attivare il punto 3 in produzione.
 
+## Passo 5 - import di merchant, negozi, casse e storico dalla v1 (2026-11-18)
+
+Prova su copia locale del DB v1 (backup del 2026-10-22, dump privato fuori dai
+repository); l'import vero gira sulla VPS contro il MySQL v1 di produzione.
+Dati v1: 12 merchant (uno per utente, titolari tipo Commerciante), 14 negozi
+(3 eliminati, 11 con store BTCPay, 1 senza merchant = store delle iscrizioni),
+13 POS (2 eliminati), 9 xpub in `np_mpk`, 4 wallet TTS (tutti di titolari),
+impostazioni dei negozi chiave/valore in `np_settings_stores`, nessuna app POS
+BTCPay (`np_shops` vuota), 131 fatture BTC e 5 richieste TTS nello storico.
+
+Decisioni utente:
+1. Store BTCPay v1 sul ponte (chiave `BTCPAY_STORES_API_KEY`), stessi
+   indirizzi; migrazione al modello per merchant (SIP-022) dopo, negozio per
+   negozio.
+2. Logo del primo negozio v1 con logo = logo del merchant (ricodificato PNG,
+   nel DB); file letti da `custom/<storeid>/CustomLogo.*` della cartella file
+   v1 (`NAPAY_LEGACY_FILES_DIR`); file assente = logo Napay, segnalato.
+3. POS v1 = casse del loro negozio, senza operatori (il merchant li invita).
+4. Storico POS v1 = archivio in sola lettura nel backoffice Incassi, fuori dai
+   totali dei POS v2.
+
+Regole:
+- Ripetibile (upsert per ID legacy), dentro la transazione dell'import con
+  riconciliazione dei conteggi; mai segreti v1 (chiavi exchange,
+  `securityToken`, `nonce`, `wallet_key`).
+- Merchant: titolare = utente v1 importato; ragione sociale, P.IVA, indirizzo;
+  email del titolare.
+- Negozi: attivi e eliminati (eliminati = archiviati); impostazioni standard
+  v2 (SIP-033), sito v1 normalizzato, `bps_storeid`, xpub da `np_mpk` solo se
+  chiave estesa valida; lo store senza merchant non diventa un negozio: il suo
+  ID va in `BTCPAY_STORE_ID` (riportato nel report).
+- Wallet TTS del titolare copiato su tutti i suoi negozi.
+- Passi: 5a merchant, negozi, impostazioni, wallet, logo; 5b casse; 5c archivio
+  storico.
+
 ## Decisioni utente (2026-11-16)
 
 1. Fino all'approvazione il socio **non entra**, come nella v1.
