@@ -89,8 +89,12 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
    chiudere la vendita, "confermato" arriva col polling. Risposte di Napay
    validate campo per campo. Test: client/controller POS 114, e2e POS-Napay
    pagamenti verde. Ricevuta PDF dei pagamenti BTC rimandata al passo 5.
-5. Storico e totali (POS e backoffice).
-6. Collaudo e2e sul regtest con pagamento reale.
+5. FATTO (napay `9739dccf`, `cc443fb4`, `22e25053`; pos `a9f18c5`, `8f06919`,
+   `edd21f1`): cambio e dettaglio BTC, storico e totali, backoffice, ricevuta.
+   Contratto sotto. Test: pagamenti BTC 53, TTS 62+30+20, e2e regtest 26,
+   schema 55, client/controller POS 142, e2e POS-Napay pagamenti verde.
+6. Collaudo e2e sul regtest con pagamento reale (cliente di prova:
+   `docker/btcpay-regtest/local.sh pay|mine`, orchestratore `5218799`).
 
 ## Contratto passo 2 - schema e ruoli (2026-11-18)
 
@@ -149,6 +153,30 @@ connessioni web/worker/migrator, regressioni ruoli e provisioning passo1.
   errore codificato. Mai ID remoti di store o app, sessione o ID fattura.
 - Sweep ogni 5 minuti dal cron; il web può leggere l'ID dell'app POS del
   terminale (non segreto), mai i marker.
+
+## Contratto passo 5 - storico, totali, ricevuta (2026-11-18)
+
+- Dallo stato pubblico della fattura (solo interi): `order_satoshis` (ordine
+  senza fee di rete), `paid_satoshis` (ricevuti, sempre aggiornati),
+  `rate_cents` (valuta per 1 BTC). Il cambio arriva come testo formattato
+  nella lingua dello store: accettato solo se coerente con importo e satoshi
+  dell'ordine (scarto massimo 0,2% oltre il satoshi), altrimenti mai salvato
+  né mostrato. Fee di rete = totale richiesto meno ordine ("Network fee:
+  Always" degli standard dello store).
+- Colonne opzionali additive in `pos_btc_payments` (m261118_150000) con un
+  vincolo; la verifica della migration del passo 2 riconosce solo questa
+  estensione esatta.
+- API POS: il pagamento BTC espone `rate`, `order_btc`, `network_fee_btc`,
+  `paid_btc`; lo storico `GET openings/{id}/payments` unisce TTS e BTC
+  (ultimi 50 in 30 giorni, campo `method`, mai indirizzo, QR o fattura) e
+  aggiunge i totali di oggi del terminale dalla mezzanotte (Roma): TTS pagati,
+  BTC ricevuti o confermati per valuta con i BTC incassati.
+- POS: dettaglio BTC (cambio, ordine + fee, pagati), richiesta scaduta con
+  "Torna alla cassa", storico con simboli e totali, ricevuta A7 per pagamenti
+  ricevuti (D1) o confermati; risposte di Napay fino a 32 KB.
+- Backoffice "Incassi POS": TTS e BTC in un elenco (filtro Metodo), stati BTC
+  raggruppati nei quattro filtri esistenti, totali BTC per valuta, dettaglio
+  ed export CSV con cambio e BTC pagati. Mai ID remoti BTCPay o fattura.
 
 ## Fuori perimetro
 
