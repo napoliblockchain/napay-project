@@ -82,7 +82,13 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
    DB (contratto sotto). Test: schema 55, ruoli 73.
 3. FATTO (napay `3b791827`): backend Napay. Contratto sotto. Test: servizio
    e API 41, ruoli 75, e2e regtest 23 (gateway reale via proxy e TLS).
-4. POS: tasto "Paga in BTC", QR, scadenza, stati "ricevuto"/"confermato".
+4. FATTO (pos `e46c208`, napay `18b07b53`): tasto "Incassa in BTC" sul
+   tastierino solo se Napay lo dichiara disponibile (valuta del negozio
+   accanto all'importo); pagina BTC con QR BIP21, importo BTC, indirizzo, conto
+   alla rovescia, link alla pagina BTCPay come ripiego; "ricevuto" permette di
+   chiudere la vendita, "confermato" arriva col polling. Risposte di Napay
+   validate campo per campo. Test: client/controller POS 114, e2e POS-Napay
+   pagamenti verde. Ricevuta PDF dei pagamenti BTC rimandata al passo 5.
 5. Storico e totali (POS e backoffice).
 6. Collaudo e2e sul regtest con pagamento reale.
 
