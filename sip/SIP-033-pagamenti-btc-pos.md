@@ -78,12 +78,46 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
    collegata del negozio. Le app create prima di questo passo si allineano al
    primo salvataggio del negozio. Collaudo e2e: fattura anonima dall'app,
    stato pubblico con indirizzo della xpub del merchant.
-2. Schema: tabella dei pagamenti BTC del POS (permessi per ruolo DB).
+2. FATTO (napay `00fe8a00`): schema `pos_btc_payments` e permessi per ruolo
+   DB (contratto sotto). Test: schema 55, ruoli 73.
 3. Backend Napay: creazione fattura via proxy, lettura dello stato pubblico,
    aggiornamento dai webhook firmati dello store.
 4. POS: tasto "Paga in BTC", QR, scadenza, stati "ricevuto"/"confermato".
 5. Storico e totali (POS e backoffice).
 6. Collaudo e2e sul regtest con pagamento reale.
+
+## Contratto passo 2 - schema e ruoli (2026-11-18)
+
+- Tabella additiva e vuota `pos_btc_payments`, distinta dai pagamenti TTS e
+  dalle quote associative. Nessuna chiamata BTCPay o import legacy.
+- UUID pubblico casuale; merchant/negozio/terminale/apertura/sessione/operatore
+  congelati alla creazione. FK composite negozio-merchant e terminale-negozio-
+  merchant; apertura/sessione/utente con FK RESTRICT, coerenza reciproca da
+  ricontrollare sotto lock dal servizio del passo3 (come TTS).
+- Snapshot istanza BTCPay (digest origine), ID store/app remoti pubblici,
+  importo intero `amount_cents` (1..100000, stesso limite POS TTS), valuta
+  fiat uppercase3 del negozio. Nessun float, token, password, xpub o payload
+  webhook nella tabella. Validazione valuta/importo supportati nel passo3.
+- Unicita UUID, chiave idempotenza hash per sessione, fattura per istanza.
+  Hash richiesta impedisce replay con parametri diversi; orderId = UUID
+  pubblico. L'ID fattura nullable viene salvato solo dopo risposta verificata.
+- Stati: creating -> pending -> processing -> settled; expired/invalid e
+  failed (creazione rifiutata). Esito POST ignoto = reconcile_required:
+  checkpoint creation_started_at persistito PRIMA della rete, stesso replay
+  non invia un altro POST. Recupero incerto escluso dal solo passo schema.
+- Campi opzionali indirizzo BTC e satoshi dovuti (coppia coerente), conferme,
+  timestamp ricezione/conferma/chiusura, errore codificato e versione CAS.
+  Ricezione e conferma distinguibili; settled puo arrivare senza processing.
+  Vincoli SQL su formati, importi, stato/fattura/timestamp; nessun cascade.
+- Web SELECT/INSERT/UPDATE, mai DELETE; worker provisioning nessun accesso;
+  migrator DDL/verifica completa. Nessun grant a chiavi BTCPay per POS/web.
+- Migrazione ripetibile solo su definizione identica (modello migrazione
+  TTS esistente), schema differente rifiutato, rollback distruttivo vietato.
+  Bootstrap importato non rilanciato; nessuna migration sandbox in questo step.
+
+Test: replay e schema alterato, CHECK/UNIQUE/FK e scope inter-merchant,
+stati processing/settled, importi/timestamp invalidi, permessi effettivi con
+connessioni web/worker/migrator, regressioni ruoli e provisioning passo1.
 
 ## Fuori perimetro
 
