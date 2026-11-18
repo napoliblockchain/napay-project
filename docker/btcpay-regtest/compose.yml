@@ -130,10 +130,15 @@ networks:
   regtest:
     internal: true
   # solo btcpayserver e rates-egress: interna, nessuna uscita diretta
+  # subnet piccole fuori dai pool predefiniti di Docker, derivate dalla edge da local.sh (default = stack persistente)
   rates:
     internal: true
+    ipam:
+      config: [{subnet: "${BTCPAY_RATES_SUBNET:-10.253.0.0/28}"}]
   # solo rates-egress
-  internet: {}
+  internet:
+    ipam:
+      config: [{subnet: "${BTCPAY_INTERNET_SUBNET:-10.253.0.16/28}"}]
   # solo btcpayserver e, dopo l'integrazione del master, il gateway (creata da local.sh)
   edge:
     name: ${BTCPAY_EDGE_NETWORK:-btcpay_regtest_edge}

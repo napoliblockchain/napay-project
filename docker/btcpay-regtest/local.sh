@@ -26,6 +26,11 @@ edge=${BTCPAY_EDGE_NETWORK:-btcpay_regtest_edge}
 # subnet fissa: il gateway rifiuta le richieste che arrivano dal backend BTCPay verso gli altri siti
 subnet=${BTCPAY_EDGE_SUBNET:-10.252.0.0/24}
 [[ $subnet =~ ^10\.[0-9]{1,3}\.[0-9]{1,3}\.0/24$ ]] || fail 'Invalid BTCPAY_EDGE_SUBNET (10.x.y.0/24).'
+# SIP-033: reti dei cambi (rates, internet) derivate dalla edge 10.x.y.0/24 -> 10.(x+1).y.0/28 e .16/28: piccole, fuori dai
+# pool predefiniti di Docker e diverse per ogni stack (persistente, prove usa e getta)
+octets=${subnet#10.}; second=${octets%%.*}; third=${octets#*.}; third=${third%%.*}
+(( second < 255 && third < 256 )) || fail 'Invalid BTCPAY_EDGE_SUBNET (10.x.y.0/24).'
+export BTCPAY_RATES_SUBNET="10.$((second + 1)).$third.0/28" BTCPAY_INTERNET_SUBNET="10.$((second + 1)).$third.16/28"
 project=${BTCPAY_PROJECT:-btcpay-regtest}
 [[ $project =~ ^[a-z0-9][a-z0-9_-]{0,62}$ ]] || fail 'Invalid BTCPAY_PROJECT.'
 
