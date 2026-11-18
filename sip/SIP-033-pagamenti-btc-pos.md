@@ -93,8 +93,17 @@ fatture): Napay considera solo le fatture che ha creato e registrato lui.
    `edd21f1`): cambio e dettaglio BTC, storico e totali, backoffice, ricevuta.
    Contratto sotto. Test: pagamenti BTC 53, TTS 62+30+20, e2e regtest 26,
    schema 55, client/controller POS 142, e2e POS-Napay pagamenti verde.
-6. Collaudo e2e sul regtest con pagamento reale (cliente di prova:
-   `docker/btcpay-regtest/local.sh pay|mine`, orchestratore `5218799`).
+6. FATTO (2026-11-18, sandbox, cassa latitude-pos-03-btc): 1,50 EUR = 2623 sat
+   al cambio Kraken 57.199,00 + 10000 sat di fee di rete (stima regtest);
+   pagato il QR con `local.sh pay` (orchestratore `5218799`): "ricevuto" in
+   3 s, `mine 1` -> "confermato" in 3 s; fattura Settled su BTCPay con
+   l'orderId di Napay; storico, totali di oggi (2 incassi, 2,50 EUR,
+   0.00024363 BTC) e ricevuta corretti; risposte reali accettate dal client
+   del POS. Esito: gli stati arrivano dal polling (pagina POS) e dal sweep;
+   i webhook dello store NON arrivano nella sandbox (0 eventi): `napay.local`
+   non risolve nel container BTCPay e il gateway respinge per progetto le
+   richieste dalla rete edge. In produzione vanno verificati alla prima
+   messa in esercizio (BTCPay -> Napay via Internet).
 
 ## Contratto passo 2 - schema e ruoli (2026-11-18)
 
