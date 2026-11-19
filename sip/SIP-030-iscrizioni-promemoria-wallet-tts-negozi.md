@@ -250,6 +250,25 @@ Regole:
   (1 non valida scartata), 5 wallet TTS, 0 segreti, secondo giro identico;
   logo: 8 file attesi da `custom/` della v1 (da copiare al passaggio). Store
   delle quote riportato nel report per `BTCPAY_STORE_ID`.
+- Incassi BTC dei negozi v1 dal POS v2 (decisione utente 2026-11-19: app POS
+  con la chiave ponte), napay `e872d85b`: comando del cron
+  `btcpay-bridge/sync` (ogni 5 minuti, spento senza `BTCPAY_STORES_API_KEY`;
+  richiede `BTCPAY_URL` = `BTCPAY_PROVISION_ORIGIN`). Registra i negozi con
+  `bps_storeid`, il webhook Napay sullo store (segreto derivato per negozio)
+  e un'app POS per ogni cassa abilitata: un solo POST con marker, poi solo
+  GET; valuta allineata al negozio; app rimossa da BTCPay = ricreata. Tabelle
+  `btcpay_bridge_stores` e `btcpay_bridge_pos_links` (nessun segreto). Il
+  pagamento BTC delle casse v1 usa store e app del ponte; il webhook riconosce
+  gli store del ponte. Store di cui l'utente ponte non è membro: 403,
+  collegamento fallito, nulla creato. Test: 41 + CLI 3, collaudo reale
+  regtest 8 (fattura pagata e confermata, consegna firmata accettata),
+  regressioni BTC, ruoli, provisioning ed e2e verdi.
+- 5b FATTO (napay `f63a2a82`): POS v1 = casse del negozio, nuovo ID pubblico,
+  nessun operatore; POS eliminati o di negozi archiviati = casse
+  disabilitate; codice di abbinamento v1 non importato. Chiave tecnica in
+  `legacy_pos_terminals` (lo schema verificato di `pos_terminals` resta
+  invariato). Prova sulla copia v1: 13 casse, 11 abilitate, 9 su store del
+  ponte con xpub (pronte per BTC dopo il primo `btcpay-bridge/sync`).
 
 ## Decisioni utente (2026-11-16)
 

@@ -18,6 +18,7 @@ integrazione, mai push: integra il master.
 ## Cosa fare
 
 Implementare SIP-035 punti 1-5 (non il punto 6, due fattori):
+
 1. Napay: "Cambia password" per l'utente collegato (password attuale, nuova,
    conferma), stesse regole della registrazione/reset (`SignupForm`,
    `ResetPasswordForm`), hash con l'algoritmo corrente.
