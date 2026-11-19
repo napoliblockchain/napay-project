@@ -269,6 +269,20 @@ Regole:
   `legacy_pos_terminals` (lo schema verificato di `pos_terminals` resta
   invariato). Prova sulla copia v1: 13 casse, 11 abilitate, 9 su store del
   ponte con xpub (pronte per BTC dopo il primo `btcpay-bridge/sync`).
+- 5c FATTO (napay `41dc9d5a`): storico POS v1 negli incassi v2, stesse
+  tabelle del POS v2 (fatture BTC in `pos_btc_payments`, richieste TTS in
+  `pos_tts_payments`) sulle casse del 5b. Apertura, sessione, utente e app
+  POS facoltativi solo tutti insieme e solo per pagamenti chiusi (vincoli
+  `*-origin`, migration `m261119_120000`). Importi interi dai float v1,
+  cambio, BTC pagati, ora di ricezione = ultimo controllo v1; mai token o
+  descrizioni v1. Riga non pagata non valida per la v2 = saltata e contata;
+  riga pagata non importabile = import interrotto; la riconciliazione
+  verifica ogni pagamento v1 pagato. Backoffice: incassi senza operatore
+  inclusi. Prova sulla copia v1: 129 fatture BTC (tutte le 32 pagate, 40,16
+  EUR come nella v1; saltate 2 non pagate malformate: 8.000 EUR oltre il
+  limite e una con importo 0), 5 richieste TTS; secondo giro identico.
+  Al passaggio: `BTCPAY_PROVISION_INSTANCE` nel `.env` prima dell'import
+  (altrimenti le fatture v1 restano con istanza "v1", segnalata nel report).
 
 ## Decisioni utente (2026-11-16)
 
