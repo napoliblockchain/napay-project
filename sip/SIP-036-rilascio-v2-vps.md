@@ -87,5 +87,10 @@ server di posta (regola firewall dell'host) oppure un relay dedicato.
   redirect HTTP.
 - Ordine di rilascio: `deploy-gateway.sh`, napay `docker/deploy.sh`, POS,
   `deploy-wallet.sh`.
-- Aperti: decisione SMTP; backup automatici fuori macchina (C); parte D
-  (procedura del passaggio); parte E (prova generale).
+- 2026-11-23 D in bozza: parte 4 di `guida-vps-app.md` (documents) scritta
+  con gli script di rilascio: codice per commit, cartella privata, MySQL
+  temporaneo con i soli schemi `napay` e `napay_v2`, file v1 riuniti (verbali in
+  radice, logo in `custom/`), gateway, napay senza import, import con
+  `LEGACY_*` (backup automatico prima), POS, wallet, collaudo, chiusura.
+- Aperti: decisione SMTP; backup automatici fuori macchina (C); parte E
+  (prova generale della procedura su copia fresca dei dati).
