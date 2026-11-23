@@ -36,3 +36,31 @@ del passaggio scritta e provata.
 - Rilascio ripetibile da una cartella pulita con il solo file env privato.
 - Prova generale: import completo e riconciliazione verdi sulla copia fresca.
 - Procedura del passaggio scritta, con tempi e passi di ritorno alla v1.
+
+## Parte A - Napay in produzione (piano, 2026-11-23)
+
+Base esistente: `napay/docker/up.sh` (controllo preliminare, utenti DB
+separati, ripristino di `napay_v2`, import v1 da `LEGACY_DB_DSN`, verbali in
+sola lettura). Topologia e passaggio: `architettura-produzione.md` e
+`guida-vps-app.md` (cartella documents, parte 4 in attesa di questa parte).
+
+- A1. Uscita verso la chain TTS (VPS C, `poa.jamprojects.it`): oggi
+  `TtsChain` chiama l'RPC direttamente (in sandbox la chain è sulla stessa
+  rete). In produzione passa dal proxy di uscita come PayPal e BTCPay: RPC
+  HTTPS = tramite proxy se configurato, RPC HTTP interno = diretto;
+  `poa.jamprojects.it` aggiunto all'allowlist.
+- A2. Overlay di produzione: codice in sola lettura, runtime e asset in
+  volumi, nessuna porta sull'host, web sulla rete del gateway (nome da env),
+  proxy di uscita, worker BTCPay e cron col ponte quando i segreti ci sono.
+- A3. `docker/deploy.sh env-file [--check]`: controllo completo senza avvio;
+  backup del database prima di ogni rilascio (le migration non si annullano:
+  il ritorno indietro è il ripristino del backup), rilascio, attesa dello
+  stato sano, riepilogo dell'import.
+- A4. Gateway con i domini reali (`napay.napoliblockchain.it`,
+  `pos.napoliblockchain.it`) e Let's Encrypt; webhook BTCPay dal
+  server della VPS B accettati solo su `/api/btcpay/v1/store-webhook` e
+  `/api/btcpay/v1/webhook`.
+
+Decisione da prendere: posta SMTP. Il proxy di uscita accetta solo HTTPS;
+l'invio SMTP richiede un'uscita diretta del web e del cron verso il solo
+server di posta (regola firewall dell'host) oppure un relay dedicato.
