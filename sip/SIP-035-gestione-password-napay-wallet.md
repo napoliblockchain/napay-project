@@ -1,6 +1,6 @@
 # SIP-035 - Gestione password di Napay e del wallet
 
-- Stato: OPEN
+- Stato: COMPLETED (punti 1-5; due fattori e rehash al login esclusi)
 - Area: Account e sicurezza
 - Repo: `napay`, `poawallet`
 - Branch target: `feature/v2-yii2-php83-docker`
@@ -45,3 +45,11 @@ fattori (Google Authenticator, `ga_secret_key`), che la v2 non importa.
 ## Note implementative
 - Riutilizzare le regole di validazione e il mailer già usati da registrazione
   e recupero password.
+
+## Esito (2026-11-23)
+Implementato da COD ([handoff](SIP-035/HANDOFF-COD.md)), review e integrazione
+del master. Napay `30506567`, `71063fc2`, `950e224b` (+ accenti `0e5c3191`);
+wallet `bc7059b`, `0828e6e` (+ accenti `0074e6e`, test eseguibile da checkout
+pulito `1c96d3c`). Test: Napay cambio password 50 e runtime completa verde,
+wallet 38. Aperti: rehash degli hash v1 al login, due fattori, reinvio della
+mail di avviso se l'SMTP fallisce.
