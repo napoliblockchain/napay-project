@@ -27,9 +27,10 @@ dell'orchestratore, collegato al Napay v2 reale.
    - `/health` riporta la modalità reale, senza dati interni;
    - proxy fidato (oggi `10.251.0.0/24` fisso) da variabile d'ambiente
      validata, con default invariato per la sandbox;
-   - CA aggiuntiva facoltativa: in produzione il certificato del Napay è
-     pubblico, quindi `NAPAY_CA_FILE` può mancare (verifica TLS con le CA di
-     sistema, mai disattivata); URL API solo HTTPS.
+   - CA: in produzione il POS chiama Napay sulla rete Docker interna con la CA
+     locale del gateway (`/var/www/documents/progetti/napoliblockchain/napay/architettura-produzione.md`),
+     quindi `NAPAY_CA_FILE` resta supportata; se assente, verifica TLS con le
+     CA di sistema (mai disattivata). URL API solo HTTPS.
 2. **Composizione di produzione**: overlay o file dedicato in `v2/` con
    immagine versionata (tag dal commit, mai `:dev`), file env privato,
    chiave client come secret, runtime persistente in cartella privata,
