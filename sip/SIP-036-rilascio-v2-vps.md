@@ -78,4 +78,14 @@ server di posta (regola firewall dell'host) oppure un relay dedicato.
   backup gzip 0600 al secondo rilascio, nessun segreto nell'output).
   Non ancora provati nel collaudo: overlay del worker BTCPay in produzione,
   import v1 da `LEGACY_DB_DSN` dentro `deploy.sh` (provato da `bootstrap.sh`).
-- Aperti: A4 gateway con i domini reali; decisione SMTP; parti C, D, E.
+- 2026-11-23 A4/C gateway FATTO (orchestratore `7703278`):
+  `docker/gateway/prod/Caddyfile`, `docker-compose.prod.yml`,
+  `deploy-gateway.sh env-file [--check]`; reti interne napay e POS con subnet
+  fisse (`NAPAY_GATEWAY_SUBNET` = `NAPAY_TRUSTED_PROXIES` di napay). Test 14:
+  rifiuti del controllo, instradamento per dominio, `/api/pos` solo dalla rete
+  dei POS, webhook BTCPay solo dall'IP di BTCPay, HSTS e intestazioni,
+  redirect HTTP.
+- Ordine di rilascio: `deploy-gateway.sh`, napay `docker/deploy.sh`, POS,
+  `deploy-wallet.sh`.
+- Aperti: decisione SMTP; backup automatici fuori macchina (C); parte D
+  (procedura del passaggio); parte E (prova generale).
