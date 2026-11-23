@@ -64,3 +64,18 @@ sola lettura). Topologia e passaggio: `architettura-produzione.md` e
 Decisione da prendere: posta SMTP. Il proxy di uscita accetta solo HTTPS;
 l'invio SMTP richiede un'uscita diretta del web e del cron verso il solo
 server di posta (regola firewall dell'host) oppure un relay dedicato.
+
+## Avanzamento
+
+- 2026-11-23 A1 FATTO (napay `73d26e2c`): RPC HTTPS della chain TTS dal proxy
+  di uscita, `poa.jamprojects.it` in allowlist; test TTS 67 + 30 + 20.
+- 2026-11-23 A2/A3 FATTI (napay `4a66a7eb`, `9e7fd59f`, `b2aa825e`):
+  `docker-compose.prod.yml` e `docker/deploy.sh env-file [--check]`; nuove
+  variabili `NAPAY_GATEWAY_NETWORK`, `NAPAY_TRUSTED_PROXIES`,
+  `NAPAY_BACKUP_DIR`. Test: preflight 19 (modello compose: niente porte, codice
+  in sola lettura, internet solo al proxy, immagini del commit), `up.sh` 26,
+  collaudo reale 6 (prima installazione, web solo dalla rete del gateway,
+  backup gzip 0600 al secondo rilascio, nessun segreto nell'output).
+  Non ancora provati nel collaudo: overlay del worker BTCPay in produzione,
+  import v1 da `LEGACY_DB_DSN` dentro `deploy.sh` (provato da `bootstrap.sh`).
+- Aperti: A4 gateway con i domini reali; decisione SMTP; parti C, D, E.
