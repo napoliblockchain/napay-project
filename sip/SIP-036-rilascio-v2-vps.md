@@ -135,5 +135,15 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   primo avvio dal dataset base, import, chiusura. v1 = v2: 73 utenti, 73 quote
   pagate, 3 verbali con PDF, 14 merchant, 14 negozi (4 archiviati), 14 casse,
   8 logo, 32 fatture BTC pagate (40,16 EUR), 5 richieste TTS. Napay ~3 minuti.
-- Aperti: copia fuori macchina (in attesa del costo); VPS C (chain e contratto
-  TTS); IP di Fidelity per la chain; finestra del passaggio (parti 1-2 sulla VPS A).
+- 2026-11-24 VPS C installata dall'utente (registro in documents
+  `backup/vps-5.189.144.215/2026-11-24-pulizia-e-besu.md`): pulizia BoxedAI,
+  OpenClaw, tradarb e MySQL; ufw 22/80/443. Chain 2118 (blocco 5 s), validatore
+  unico, servita con due nomi: `poa.jamprojects.it` (napay) e
+  `poa.fidelity.txlab.it` (Fidelity) - Caddy riscrive l'Host, Besu accetta solo
+  `besu` (commit 9638043, provato in locale). RPC ammessa solo dalla VPS A
+  (verificato). Contratto TTS `0x97d347575883cC4412919b0121800B01881f98Cb`,
+  1.000.000,00 TTS sull'indirizzo dell'utente. Primo backup cifrato copiato fuori
+  macchina e decifrato con successo.
+- Aperti: copia fuori macchina dei backup di A (in attesa del costo); IP di
+  Fidelity per la chain (probabile 164.68.126.56, da confermare); backup
+  settimanale della chain; finestra del passaggio (parti 1-2 sulla VPS A).
