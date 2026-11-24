@@ -12,7 +12,8 @@ services:
       - "80"
     # configurazione e segreti app (vedi poawallet/.env.example); environment sotto ha la precedenza
     env_file:
-      - path: ./poawallet/.env
+      # in produzione file privato fuori dal repository (WALLET_APP_ENV_FILE, imposto da deploy-wallet.sh)
+      - path: ${WALLET_APP_ENV_FILE:-./poawallet/.env}
         required: false
     environment:
       APP_ENV: "${APP_ENV}"
@@ -65,7 +66,8 @@ services:
     command: ["php", "yii", "migrate", "--interactive=0"]
     restart: "no"
     env_file:
-      - path: ./poawallet/.env
+      # in produzione file privato fuori dal repository (WALLET_APP_ENV_FILE, imposto da deploy-wallet.sh)
+      - path: ${WALLET_APP_ENV_FILE:-./poawallet/.env}
         required: false
     environment:
       APP_ENV: "${APP_ENV}"

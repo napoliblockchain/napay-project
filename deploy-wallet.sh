@@ -5,7 +5,8 @@
 # Il file env (0600, fuori dai repository) contiene i valori della piattaforma (MYSQL_*, APP_ENV, ...) e del wallet:
 #   WALLET_CHAIN_RPC_URL, WALLET_CHAIN_ID, WALLET_CHAIN_NAME, WALLET_CHAIN_SYMBOL, WALLET_CHAIN_ZERO_GAS,
 #   WALLET_CHAIN_EXPLORER_URL, WALLET_TTS_TOKEN_ADDRESS, WALLET_TTS_TOKEN_NAME/SYMBOL/DECIMALS,
-#   WALLET_INDEXER_SECRET_FILE, WALLET_REALTIME_KEY_FILE.
+#   WALLET_INDEXER_SECRET_FILE, WALLET_REALTIME_KEY_FILE, WALLET_APP_ENV_FILE (configurazione dell'app, vedi
+#   poawallet/.env.example: file privato 0600 fuori dai repository, al posto di poawallet/.env).
 # Se la migration fallisce il deploy si ferma e wallet-web resta alla versione precedente.
 set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "$0")" && pwd -P)"
@@ -39,6 +40,13 @@ indexer_secret="$(env_value WALLET_INDEXER_SECRET_FILE)"
 realtime_key="$(env_value WALLET_REALTIME_KEY_FILE)"
 private_file "$indexer_secret" "WALLET_INDEXER_SECRET_FILE"
 private_file "$realtime_key" "WALLET_REALTIME_KEY_FILE"
+# configurazione e segreti dell'app (chiavi di cifratura, cookie, posta, faucet): mai il .env dentro poawallet/
+app_env="$(env_value WALLET_APP_ENV_FILE)"
+private_file "$app_env" "WALLET_APP_ENV_FILE"
+(( (8#$(stat -c '%a' "$app_env") & 077) == 0 )) || fail 'WALLET_APP_ENV_FILE deve essere leggibile solo dal proprietario (chmod 600).'
+for name in COOKIE_VALIDATION_KEY ENCRYPT_SECRET_KEY ENCRYPT_SECRET_IV; do
+  [[ -n "$(sed -n "s/^$name=//p" "$app_env" | tail -n 1)" ]] || fail "$name mancante in WALLET_APP_ENV_FILE."
+done
 
 # immagini di rilascio: la shell ha la precedenza sul file env nell'interpolazione di compose
 export WALLET_BUILD_TARGET=prod WALLET_IMAGE_TAG="${WALLET_IMAGE_TAG:-prod}"
