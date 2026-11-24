@@ -125,6 +125,10 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   identico; bootstrap 44. Procedura aggiornata.
 - 2026-11-24 DNS di wallet.napoliblockchain.it già sulla VPS A (verificato
   dall'utente); backup pre-patch copiato fuori macchina dall'utente.
+- 2026-11-24 VPS A parte 0 FATTA dall'utente (guida-vps-app.md): Netdata chiuso,
+  patch 18.04 e riavvio, v1 attiva. MySQL 5.7.42 (import tramite MySQL 8.0
+  temporaneo), PHP 7.2.24. Snapshot non disponibili nel piano: per la parte 2
+  (aggiornamento a 24.04) valutare l'Auto Backup di Contabo.
 - Aperti: copia fuori macchina (in attesa
   del costo); parte E
   (prova generale della procedura su copia fresca dei dati).
