@@ -123,6 +123,8 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   storico migration e livelli di privilegio, nessun dato. Prova sulla copia v1:
   56 utenti, 12 merchant, 13 negozi, 13 casse, storico completo, secondo giro
   identico; bootstrap 44. Procedura aggiornata.
-- Aperti: DNS del wallet; copia fuori macchina (in attesa
+- 2026-11-24 DNS di wallet.napoliblockchain.it già sulla VPS A (verificato
+  dall'utente); backup pre-patch copiato fuori macchina dall'utente.
+- Aperti: copia fuori macchina (in attesa
   del costo); parte E
   (prova generale della procedura su copia fresca dei dati).
