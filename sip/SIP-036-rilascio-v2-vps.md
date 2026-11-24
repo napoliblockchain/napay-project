@@ -114,6 +114,10 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   (schema dalle migration, dati solo dall'import v1) invece che dal dataset
   `napay_v2` (A5, da fare); WordPress e phpMyAdmin sulla stessa Apache: da
   censire (domini serviti) prima di sostituire Apache con il gateway.
-- Aperti: A5 primo avvio da vuoto; WordPress/phpMyAdmin sulla VPS A; copia fuori
-  macchina (in attesa del costo); parte E
+- 2026-11-24 Apache della VPS A serve solo napay e pos.napoliblockchain.it (più il
+  sito predefinito); phpMyAdmin non attivo (404), WordPress senza sito: database
+  residuo, resta nel backup, non migrato. Nessun conflitto col gateway v2. Da
+  verificare: record DNS di wallet.napoliblockchain.it (gestito da terzi).
+- Aperti: A5 primo avvio da vuoto; DNS del wallet; copia fuori macchina (in attesa
+  del costo); parte E
   (prova generale della procedura su copia fresca dei dati).
