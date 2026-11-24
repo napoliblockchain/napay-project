@@ -144,6 +144,7 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   (verificato). Contratto TTS `0x97d347575883cC4412919b0121800B01881f98Cb`,
   1.000.000,00 TTS sull'indirizzo dell'utente. Primo backup cifrato copiato fuori
   macchina e decifrato con successo.
-- Aperti: copia fuori macchina dei backup di A (in attesa del costo); IP di
-  Fidelity per la chain (probabile 164.68.126.56, da confermare); backup
+- 2026-11-24 IP di Fidelity 164.68.126.56 ammesso sulla chain: eth_chainId 0x846
+  dal server Fidelity.
+- Aperti: copia fuori macchina dei backup di A (in attesa del costo); backup
   settimanale della chain; finestra del passaggio (parti 1-2 sulla VPS A).
