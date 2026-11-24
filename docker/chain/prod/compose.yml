@@ -32,7 +32,8 @@ services:
       - --rpc-http-enabled
       - --rpc-http-host=0.0.0.0
       - --rpc-http-api=ETH,NET,WEB3
-      - --host-allowlist=besu,${POA_DOMAIN:?}
+      # solo il nome interno: Caddy riscrive l'Host, i nomi pubblici possono essere piu' di uno
+      - --host-allowlist=besu
       - --min-gas-price=0
       # validatore unico: niente discovery, nessun peer da attendere
       - --discovery-enabled=false
