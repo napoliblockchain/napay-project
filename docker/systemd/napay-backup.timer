@@ -1,0 +1,11 @@
+# SIP-036: ogni notte; Persistent recupera il backup saltato se la VPS era spenta.
+[Unit]
+Description=Napay: backup giornaliero dei database
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

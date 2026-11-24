@@ -101,5 +101,11 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   aggiunge un inoltro TCP dedicato verso il solo server di posta, alias del suo
   nome sulla rete egress; TLS e credenziali tra Napay e il server. Test 4
   (reti senza internet, CA di test) e controllo preliminare 22.
-- Aperti: backup automatici fuori macchina (C); parte E
+- 2026-11-24 backup primo livello FATTO (napay `13ce793d`, orchestratore
+  `backup-daily.sh`, `docker/systemd/napay-backup.{service,timer}`): ogni notte
+  database Napay e wallet sul filesystem della VPS, gzip 0600, file completi o
+  niente, 14 giorni (solo i giornalieri; i backup dei rilasci restano). Collaudo
+  10 con ripristino reale. Copia fuori macchina: storage Contabo se il costo
+  viene approvato (decisione utente), prelevata dalla cartella dei backup.
+- Aperti: copia fuori macchina (in attesa del costo); parte E
   (prova generale della procedura su copia fresca dei dati).
