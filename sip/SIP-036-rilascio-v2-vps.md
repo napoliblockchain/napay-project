@@ -92,5 +92,11 @@ server di posta (regola firewall dell'host) oppure un relay dedicato.
   temporaneo con i soli schemi `napay` e `napay_v2`, file v1 riuniti (verbali in
   radice, logo in `custom/`), gateway, napay senza import, import con
   `LEGACY_*` (backup automatico prima), POS, wallet, collaudo, chiusura.
+- 2026-11-23 B FATTA (COD, [handoff](SIP-036/HANDOFF-COD.md)), integrata dal
+  master (pos fast-forward a `8d4aec0`): modalità produzione, compose e
+  `pos/v2/docker/deploy.sh env-file [--check]` con ritorno all'immagine
+  precedente. Test dal checkout principale: unit 398, deploy 31; POS della
+  sandbox ricostruito, ancora in preview. Variabili nella procedura del
+  passaggio (incluso `POS_API_CLIENT_KEYS_SHA256` di napay).
 - Aperti: decisione SMTP; backup automatici fuori macchina (C); parte E
   (prova generale della procedura su copia fresca dei dati).
