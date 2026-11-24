@@ -129,6 +129,11 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   patch 18.04 e riavvio, v1 attiva. MySQL 5.7.42 (import tramite MySQL 8.0
   temporaneo), PHP 7.2.24. Snapshot non disponibili nel piano: per la parte 2
   (aggiornamento a 24.04) valutare l'Auto Backup di Contabo.
-- Aperti: copia fuori macchina (in attesa
-  del costo); parte E
-  (prova generale della procedura su copia fresca dei dati).
+- 2026-11-24 E FATTA: prova generale con i dati di produzione del 24/11
+  (registro in documents `backup/vps-167.86.84.85/2026-11-24-prova-generale-passaggio.md`).
+  Procedura eseguita su risorse usa-e-getta: MySQL 8.0 con `npay` (sorgente 5.7.42),
+  primo avvio dal dataset base, import, chiusura. v1 = v2: 73 utenti, 73 quote
+  pagate, 3 verbali con PDF, 14 merchant, 14 negozi (4 archiviati), 14 casse,
+  8 logo, 32 fatture BTC pagate (40,16 EUR), 5 richieste TTS. Napay ~3 minuti.
+- Aperti: copia fuori macchina (in attesa del costo); VPS C (chain e contratto
+  TTS); IP di Fidelity per la chain; finestra del passaggio (parti 1-2 sulla VPS A).
