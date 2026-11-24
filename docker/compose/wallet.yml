@@ -175,7 +175,8 @@ services:
     build: ./poawallet/realtime
     image: napay/wallet-realtime:dev
     container_name: wallet-realtime
-    profiles: ["chain"]
+    # chain: sandbox (con la chain di sviluppo); deploy: produzione (deploy-wallet.sh, chain esterna)
+    profiles: ["chain", "deploy"]
     # stesso uid del proprietario del file segreto (0600), come besu
     user: "1000:1000"
     environment:
@@ -201,8 +202,10 @@ services:
     depends_on:
       mysql-main:
         condition: service_healthy
+      # chain di sviluppo solo nella sandbox; in produzione la chain è esterna (WALLET_CHAIN_RPC_URL)
       besu:
         condition: service_healthy
+        required: false
     networks:
       - napay_net
 

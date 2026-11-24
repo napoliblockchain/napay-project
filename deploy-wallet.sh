@@ -51,7 +51,8 @@ done
 # immagini di rilascio: la shell ha la precedenza sul file env nell'interpolazione di compose
 export WALLET_BUILD_TARGET=prod WALLET_IMAGE_TAG="${WALLET_IMAGE_TAG:-prod}"
 [[ "$WALLET_IMAGE_TAG" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$ ]] || fail 'WALLET_IMAGE_TAG non valido.'
-compose=(docker compose --project-directory "$ROOT" --env-file "$ENV_FILE" -f "$ROOT/docker-compose.yml" --profile deploy --profile chain)
+compose=(docker compose --project-directory "$ROOT" --env-file "$ENV_FILE" -f "$ROOT/docker-compose.yml" --profile deploy)
+# solo il profilo deploy: il profilo chain porta la chain di sviluppo e le sue reti locali, assenti in produzione
 "${compose[@]}" config --quiet || fail 'configurazione docker compose non valida.'
 
 if [[ ${2:-} == --check ]]; then
