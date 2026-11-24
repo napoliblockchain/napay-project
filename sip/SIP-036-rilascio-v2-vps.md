@@ -61,9 +61,7 @@ sola lettura). Topologia e passaggio: `architettura-produzione.md` e
   server della VPS B accettati solo su `/api/btcpay/v1/store-webhook` e
   `/api/btcpay/v1/webhook`.
 
-Decisione da prendere: posta SMTP. Il proxy di uscita accetta solo HTTPS;
-l'invio SMTP richiede un'uscita diretta del web e del cron verso il solo
-server di posta (regola firewall dell'host) oppure un relay dedicato.
+Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
 
 ## Avanzamento
 
@@ -98,5 +96,10 @@ server di posta (regola firewall dell'host) oppure un relay dedicato.
   precedente. Test dal checkout principale: unit 398, deploy 31; POS della
   sandbox ricostruito, ancora in preview. Variabili nella procedura del
   passaggio (incluso `POS_API_CLIENT_KEYS_SHA256` di napay).
-- Aperti: decisione SMTP; backup automatici fuori macchina (C); parte E
+- 2026-11-24 SMTP FATTO (napay `cca4ce51`): stesso server della v1
+  (`authsmtp.securemail.pro:465`, TLS); con `MAIL_TRANSPORT=smtp` il rilascio
+  aggiunge un inoltro TCP dedicato verso il solo server di posta, alias del suo
+  nome sulla rete egress; TLS e credenziali tra Napay e il server. Test 4
+  (reti senza internet, CA di test) e controllo preliminare 22.
+- Aperti: backup automatici fuori macchina (C); parte E
   (prova generale della procedura su copia fresca dei dati).
