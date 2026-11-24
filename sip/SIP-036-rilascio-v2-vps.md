@@ -107,5 +107,13 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   niente, 14 giorni (solo i giornalieri; i backup dei rilasci restano). Collaudo
   10 con ripristino reale. Copia fuori macchina: storage Contabo se il costo
   viene approvato (decisione utente), prelevata dalla cartella dei backup.
-- Aperti: copia fuori macchina (in attesa del costo); parte E
+- 2026-11-24 dati reali della VPS A (dump di sicurezza prima delle patch): database
+  `npay` (v1; non `napay` come nella copia di ottobre), `wordpress`, `phpmyadmin`,
+  `mysql`; **nessun `napay_v2`**. Conseguenze: `LEGACY_DB_DSN` con `dbname=npay`
+  (procedura corretta); il primo avvio della v2 deve poter partire da vuoto
+  (schema dalle migration, dati solo dall'import v1) invece che dal dataset
+  `napay_v2` (A5, da fare); WordPress e phpMyAdmin sulla stessa Apache: da
+  censire (domini serviti) prima di sostituire Apache con il gateway.
+- Aperti: A5 primo avvio da vuoto; WordPress/phpMyAdmin sulla VPS A; copia fuori
+  macchina (in attesa del costo); parte E
   (prova generale della procedura su copia fresca dei dati).
