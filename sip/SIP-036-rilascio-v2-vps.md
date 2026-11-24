@@ -118,6 +118,11 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   sito predefinito); phpMyAdmin non attivo (404), WordPress senza sito: database
   residuo, resta nel backup, non migrato. Nessun conflitto col gateway v2. Da
   verificare: record DNS di wallet.napoliblockchain.it (gestito da terzi).
-- Aperti: A5 primo avvio da vuoto; DNS del wallet; copia fuori macchina (in attesa
+- 2026-11-24 A5 FATTO (napay `fbff3a08`): dataset base nel repository
+  (`docker/base-dataset/`, generato da `docker/base-dataset.sh`): schema,
+  storico migration e livelli di privilegio, nessun dato. Prova sulla copia v1:
+  56 utenti, 12 merchant, 13 negozi, 13 casse, storico completo, secondo giro
+  identico; bootstrap 44. Procedura aggiornata.
+- Aperti: DNS del wallet; copia fuori macchina (in attesa
   del costo); parte E
   (prova generale della procedura su copia fresca dei dati).
