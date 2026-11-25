@@ -43,6 +43,9 @@ services:
       TTS_TOKEN_SYMBOL: "${WALLET_TTS_TOKEN_SYMBOL:-TTS}"
       TTS_TOKEN_DECIMALS: "${WALLET_TTS_TOKEN_DECIMALS:-2}"
     secrets: [wallet_realtime_key]
+    volumes:
+      # email salvate su file (SMTP non disponibile): lette in sola lettura dalla pagina admin "Posta in uscita" di napay
+      - wallet_mail:/var/www/runtime/mail
     depends_on:
       mysql-main:
         condition: service_healthy
@@ -211,6 +214,8 @@ services:
 
 volumes:
   chain_data:
+  wallet_mail:
+    name: napay_wallet_mail
 secrets:
   # creato da start-localhost.sh (0600, cartella privata fuori dai repository)
   wallet_indexer_db_password:
