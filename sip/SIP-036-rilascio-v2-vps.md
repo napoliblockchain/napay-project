@@ -146,7 +146,7 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   macchina e decifrato con successo.
 - 2026-11-24 IP di Fidelity 164.68.126.56 ammesso sulla chain: eth_chainId 0x846
   dal server Fidelity.
-- Aperti: block explorer Blockscout sulla VPS C (`explorer.jamprojects.it`, risorse verificate 2026-11-25); copia fuori macchina dei backup di A (Object Storage EU 250 GB già presente su Contabo, segnalato 2026-11-25: da usare, cifrato); backup
+- Aperti: block explorer sulla VPS C (`explorer.jamprojects.it`, in corso: vedi [passaggio di consegne](SIP-036/HANDOFF-2026-11-25.md)); copia fuori macchina dei backup di A (Object Storage EU 250 GB già presente su Contabo, segnalato 2026-11-25: da usare, cifrato); backup
   settimanale della chain; finestra del passaggio (parti 1-2 sulla VPS A).
 - 2026-11-25 Posta in uscita FATTA (napay `0a2680ab` + test preflight, poawallet
   `279cd50`, orchestratore `f95ae73`): con SMTP bloccato da Contabo (ticket
