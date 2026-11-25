@@ -65,6 +65,8 @@ services:
       POA_DOMAIN: ${POA_DOMAIN:?}
       ACME_EMAIL: ${ACME_EMAIL:?}
       RPC_ALLOWED_IPS: ${RPC_ALLOWED_IPS:?}
+      # vuoto = nessun explorer pubblico: nome locale con certificato interno, nessuna richiesta a Let's Encrypt
+      EXPLORER_DOMAIN: ${EXPLORER_DOMAIN:-explorer.localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -74,15 +76,111 @@ services:
         condition: service_healthy
     networks: [chain, edge]
 
+  # --- Block explorer (profilo "explorer"): Blockscout in sola lettura, servito da Caddy su EXPLORER_DOMAIN.
+  # Nessuna porta pubblicata, nessuna uscita verso internet; Besu raggiunto sulla rete interna (RPC pubblico invariato).
+  explorer-db:
+    image: postgres:17.6-alpine
+    profiles: ["explorer"]
+    restart: unless-stopped
+    shm_size: 256m
+    environment:
+      POSTGRES_DB: blockscout
+      POSTGRES_USER: blockscout
+      POSTGRES_PASSWORD: ${EXPLORER_DB_PASSWORD:?}
+    mem_limit: ${EXPLORER_DB_MEM_LIMIT:-768m}
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - explorer_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blockscout -d blockscout"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [explorer]
+
+  explorer-backend:
+    image: ghcr.io/blockscout/blockscout:9.0.2
+    profiles: ["explorer"]
+    restart: unless-stopped
+    stop_grace_period: 2m
+    command: sh -c 'bin/blockscout eval "Elixir.Explorer.ReleaseTasks.create_and_migrate()" && bin/blockscout start'
+    environment:
+      ETHEREUM_JSONRPC_VARIANT: besu
+      ETHEREUM_JSONRPC_TRANSPORT: http
+      ETHEREUM_JSONRPC_HTTP_URL: http://besu:8545/
+      ETHEREUM_JSONRPC_TRACE_URL: http://besu:8545/
+      # Besu senza API trace/debug e senza storico completo: niente transazioni interne ne' saldi storici
+      ETHEREUM_JSONRPC_DISABLE_ARCHIVE_BALANCES: "true"
+      INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER: "true"
+      INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: "true"
+      DATABASE_URL: postgresql://blockscout:${EXPLORER_DB_PASSWORD:?}@explorer-db:5432/blockscout
+      ECTO_USE_SSL: "false"
+      SECRET_KEY_BASE: ${EXPLORER_SECRET_KEY_BASE:?}
+      PORT: "4000"
+      CHAIN_ID: ${CHAIN_ID:?}
+      COIN: ETH
+      COIN_NAME: ETH
+      DISABLE_MARKET: "true"
+      POOL_SIZE: "20"
+      POOL_SIZE_API: "10"
+      # sola lettura: niente account, pannello admin, scritture API v1, microservizi o media NFT
+      ACCOUNT_ENABLED: "false"
+      ADMIN_PANEL_ENABLED: "false"
+      API_V1_WRITE_METHODS_DISABLED: "true"
+      RE_CAPTCHA_DISABLED: "true"
+      MICROSERVICE_SC_VERIFIER_ENABLED: "false"
+      MICROSERVICE_VISUALIZE_SOL2UML_ENABLED: "false"
+      MICROSERVICE_SIG_PROVIDER_ENABLED: "false"
+      MICROSERVICE_ACCOUNT_ABSTRACTION_ENABLED: "false"
+      NFT_MEDIA_HANDLER_ENABLED: "false"
+    mem_limit: ${EXPLORER_BACKEND_MEM_LIMIT:-1536m}
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      explorer-db:
+        condition: service_healthy
+      besu:
+        condition: service_healthy
+    networks: [chain, explorer]
+
+  explorer-frontend:
+    image: ghcr.io/blockscout/frontend:v2.3.5
+    profiles: ["explorer"]
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_HOST: ${EXPLORER_DOMAIN:?}
+      NEXT_PUBLIC_API_PROTOCOL: https
+      NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL: wss
+      NEXT_PUBLIC_API_BASE_PATH: /
+      NEXT_PUBLIC_APP_HOST: ${EXPLORER_DOMAIN:?}
+      NEXT_PUBLIC_APP_PROTOCOL: https
+      NEXT_PUBLIC_NETWORK_NAME: ${EXPLORER_NETWORK_NAME:-TTS chain}
+      NEXT_PUBLIC_NETWORK_SHORT_NAME: ${EXPLORER_NETWORK_NAME:-TTS chain}
+      NEXT_PUBLIC_NETWORK_ID: ${CHAIN_ID:?}
+      NEXT_PUBLIC_NETWORK_CURRENCY_NAME: Ether
+      NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL: ETH
+      NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS: "18"
+      NEXT_PUBLIC_IS_TESTNET: "false"
+      NEXT_PUBLIC_HOMEPAGE_CHARTS: "[]"
+    mem_limit: ${EXPLORER_FRONTEND_MEM_LIMIT:-512m}
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [chain]
+
 networks:
   # besu e strumenti: nessuna uscita verso internet
   chain:
     internal: true
   # solo caddy (certificati e client RPC)
   edge: {}
+  # database dell'explorer: solo backend e Postgres
+  explorer:
+    internal: true
 
 volumes:
   # chiave del validatore, chiave faucet, genesis, indirizzo TTS e database: fare backup
   chain_data:
   caddy_data:
   caddy_config:
+  # database dell'explorer: ricostruibile dalla chain (non serve backup)
+  explorer_db:
