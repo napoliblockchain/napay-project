@@ -157,3 +157,9 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   Napay (`NAPAY_WALLET_MAIL_VOLUME`, `NAPAY_WALLET_URL`). Pagina senza cache,
   consultazione nel registro attività. Test: 28 della pagina, preflight 24,
   navigazione 115. Quando torna SMTP: `MAIL_TRANSPORT=smtp` e la pagina sparisce.
+- 2026-11-25 Passaggio della VPS A completato e collaudato per la demo (registro in
+  documents `backup/vps-167.86.84.85/2026-11-24-passaggio-v2.md`): chiavi BTCPay e
+  PayPal live, ponte negozi v1, wallet, posta su file con pagina admin. Correzioni del
+  giorno: client BTCPay dei negozi v1 dal proxy (napay `e9628be8`), ricevuta POS senza
+  avviso di test in produzione (pos `c512218`), scorciatoie Wallet/POS integrate
+  (napay `997d4bff`). VPS B: NBXplorer bloccato su nodo pruned, ripartito da 977000.
