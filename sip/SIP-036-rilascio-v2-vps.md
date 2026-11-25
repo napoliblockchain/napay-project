@@ -148,3 +148,12 @@ Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
   dal server Fidelity.
 - Aperti: copia fuori macchina dei backup di A (in attesa del costo); backup
   settimanale della chain; finestra del passaggio (parti 1-2 sulla VPS A).
+- 2026-11-25 Posta in uscita FATTA (napay `0a2680ab` + test preflight, poawallet
+  `279cd50`, orchestratore `f95ae73`): con SMTP bloccato da Contabo (ticket
+  16240588035) e nessun accesso alla VPS durante la demo, Napay e wallet salvano le
+  email su file; pagina admin "Posta in uscita" con i link HTTPS del dominio della
+  fonte da copiare (attivazione, inviti operatore, recupero password). Email del
+  wallet dal volume `napay_wallet_mail`, montato in sola lettura solo nel web di
+  Napay (`NAPAY_WALLET_MAIL_VOLUME`, `NAPAY_WALLET_URL`). Pagina senza cache,
+  consultazione nel registro attività. Test: 28 della pagina, preflight 24,
+  navigazione 115. Quando torna SMTP: `MAIL_TRANSPORT=smtp` e la pagina sparisce.
