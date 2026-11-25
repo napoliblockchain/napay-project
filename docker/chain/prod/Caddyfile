@@ -24,9 +24,12 @@
 
 # Block explorer (profilo "explorer"), sola lettura: API e websocket al backend Blockscout, il resto al frontend.
 {$EXPLORER_DOMAIN} {
-	@write not method GET HEAD OPTIONS
-	respond @write 405
 	encode gzip
+	# sola lettura: i blocchi handle sono esclusivi e valutati in ordine, questo per primo
+	@write not method GET HEAD OPTIONS
+	handle @write {
+		respond 405
+	}
 	@backend path /api /api/* /socket /socket/* /sitemap.xml
 	handle @backend {
 		reverse_proxy explorer-backend:4000
