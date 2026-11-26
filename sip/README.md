@@ -134,3 +134,9 @@ di porting. Lo stato OPEN non autorizza da solo l'implementazione.
 - Naming immagini Docker: `napay/<repo>:<versione>`.
 - Naming container service: `<dominio>-<ruolo>` (es. `wallet-web`, `wallet-worker`).
 - Naming docs tecniche: file markdown in questa cartella con formato `SIP-XXX-*`.
+
+## Quote e developer PF (2026-11-26)
+
+- [SIP-042 - Quote coerenti e merchant developer PF](SIP-042-quote-soci-merchant-developer-pf.md):
+  OPEN; fonte unica delle tariffe e developer PF abilitato a merchant anche in
+  produzione con pagamenti reali, senza cambio PF/PG o tariffa PG implicita.
