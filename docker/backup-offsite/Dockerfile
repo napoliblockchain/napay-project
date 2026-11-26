@@ -3,7 +3,7 @@ FROM alpine:3.23@sha256:469c9ea410b9215eaee7976ba6c0639039b444be8e5d638f7abbada1
 RUN apk add --no-cache bash gnupg coreutils ca-certificates \
     && mkdir -p /opt/napay/docker/backup-offsite
 COPY --from=rclone /usr/local/bin/rclone /usr/local/bin/rclone
-COPY encrypt.sh upload.sh private-inputs.sh tools.sh /opt/napay/docker/backup-offsite/
+COPY encrypt.sh upload.sh seal-set.sh private-inputs.sh tools.sh /opt/napay/docker/backup-offsite/
 ENV HOME=/tmp
 USER 1000:1000
 ENTRYPOINT ["/bin/bash", "/opt/napay/docker/backup-offsite/tools.sh"]

@@ -105,3 +105,28 @@ Errors preserve the local archive. SHA256 here is not a producer signature.
 - Integration with existing local backup service and failure reporting.
 - Consistent chain backup, external key custody, download and full restore tests.
 - User approval of remote retention, bucket policies and production activation.
+
+## Durable encrypted sets
+
+`seal-set` prepares 1-16 immutable source backups as one directory with a
+`manifest.sha256` over the ciphertext files. The private queue directory must
+already exist. Inputs are sorted, and the set ID includes the recipient
+fingerprint, source names and source hashes. Repeating the same inputs reuses
+validated ciphertext; input order does not create a second set.
+
+```sh
+bash docker/backup-offsite/seal-set.sh /private/public.gpg FULL_FINGERPRINT \
+  /private/queue /private/backups/napay.sql.gz /private/backups/wallet.sql.gz
+bash docker/backup-offsite/seal-set.sh --verify /private/queue/set-SET_ID
+```
+
+The container dispatcher also accepts `seal-set`. Publish is atomic and never
+replaces an existing set. A failed encryption leaves no completed set; stale
+staging from an abrupt host crash is not automatically deleted. Source files
+must be completed immutable backups, not live databases. Source hashes are
+checked again before and after encryption. The checksum manifest is local and
+is not a producer signature or an uploaded remote manifest.
+
+`bash tests/backup-offsite-set.sh` verifies exact recovery, retry identity,
+input order, corruption, path/permission checks and concurrent publication.
+This adds no timer, database access, remote upload or retention policy.

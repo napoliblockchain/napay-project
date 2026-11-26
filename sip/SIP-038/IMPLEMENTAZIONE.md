@@ -120,3 +120,22 @@ bucket Contabo, database o VPS usato. Non e un ripristino MySQL o Besu.
 Non completati: packaging manifest duraturo, integrazione timer/backup locali,
 policy e credenziali reali Contabo, retention approvata, ripristino DB/chain,
 review indipendente e attivazione produzione. Nessun commit/push/deploy.
+
+## C0 - Manifest e set cifrati persistenti (2026-11-26)
+
+Prima del timer: seal-set compone 1-16 backup completi in directory privata.
+Identificativo derivato da fingerprint destinatario, nomi e SHA256 sorgenti;
+manifest.sha256 elenca soltanto i cifrati e le loro impronte, non i contenuti.
+Pubblicazione atomica della directory dopo cifratura e verifica completa.
+Retry dello stesso set riusa byte cifrati identici (OpenPGP altrimenti e casuale).
+Un set esistente corrotto non viene rimpiazzato silenziosamente. Input cambiati
+durante la preparazione, nomi duplicati, path esterni nel manifest e symlink
+rifiutati. Nessun invio, cancellazione o timeout di retention implicito.
+Verifica checksum e guard di consistenza, non firma del produttore; il timer
+e il recupero database restano passi separati.
+
+Esito C0: 13 controlli su host e container, compresi recupero esatto, retry,
+ordine input, manifest alterato, corruzione, permessi, duplicati, symlink,
+fallimento cifratura e pubblicazione concorrente. Regressioni A/B rieseguite
+(19+20+10). Manifest locale: upload del manifest remoto e integrazione del job
+restano da fare; nessun timer attivo o dato reale modificato.
