@@ -154,3 +154,9 @@ di porting. Lo stato OPEN non autorizza da solo l'implementazione.
 - Naming immagini Docker: `napay/<repo>:<versione>`.
 - Naming container service: `<dominio>-<ruolo>` (es. `wallet-web`, `wallet-worker`).
 - Naming docs tecniche: file markdown in questa cartella con formato `SIP-XXX-*`.
+
+## Piano operativo aggiornato (2026-11-26)
+
+Vedi [residui e ordine di completamento](PIANO-COMPLETAMENTO-2026-11-26.md).
+Primo lavoro SIP-038; SIP-040 Napay assegnato in parallelo tramite
+[PROMPT-CLA.md](SIP-040/PROMPT-CLA.md). Non sostituisce i gate di accettazione.

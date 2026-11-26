@@ -46,3 +46,16 @@ Object Storage S3 compatibile, "Object Storage EU", 250 GB, regione European Uni
 
 ## Verifica repository
 - Da compilare a lavoro concluso.
+
+## Avvio 2026-11-26
+
+Piano approvato dall'utente: backup esterno prioritario, privacy in parallelo.
+Implementazione isolata su feature/backup-offsite, base 72e47f6.
+Micro-step e limiti: [IMPLEMENTAZIONE.md](SIP-038/IMPLEMENTAZIONE.md).
+Primo passo solo cifratura offline; nessun accesso S3/VPS, timer o retention
+attivati. Lo stato globale resta aperto fino al ripristino da storage provato.
+
+Passi A/B sviluppati e collaudati: cifratura, contenitore versionato, uploader
+HTTPS e prova completa file su S3 TLS locale (19+20+10 controlli). Dettagli e
+limiti nell'allegato. SIP globale non chiuso: nessun bucket reale configurato,
+nessun timer collegato, ripristino database/chain e policy ancora da completare.
