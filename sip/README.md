@@ -50,6 +50,16 @@ Piano condiviso Napay/POS, ownership file e obiettivo 23/11/2026:
 | [SIP-027](SIP-027-tts-listener-daemon.md) | Listener continuo dei pagamenti TTS (evoluzione futura) | Pagamenti / Blockchain | OPEN |
 | [SIP-028](SIP-028-nuovo-token-tts-sconto-temporaneo.md) | Nuovo token TTS: Token Temporaneo di Sconto a circuito chiuso | Blockchain / Fidelity | OPEN |
 | [SIP-029](SIP-029-wallet-realtime-indicizzatore-push.md) | Wallet realtime: indicizzatore della chain e push (Go) | Wallet / Blockchain | APPROVATO |
+| [SIP-030](SIP-030-iscrizioni-promemoria-wallet-tts-negozi.md) | Approvazione iscrizioni, promemoria quote, wallet TTS per negozio | Associazione / Merchant / POS TTS | APPROVATO |
+| [SIP-031](SIP-031-seed-perso-wallet-negozio.md) | Seed perso del wallet di un negozio (TTS e BTC) | Merchant / Negozi / POS / Incassi | IN_PROGRESS |
+| [SIP-032](SIP-032-wallet-rete-token-da-env.md) | Wallet: una rete e un token dalle variabili d'ambiente | Wallet / Blockchain / Sicurezza | COMPLETED |
+| [SIP-033](SIP-033-pagamenti-btc-pos.md) | Pagamenti BTC dal POS | POS / Napay / BTCPay / Pagamenti | IN_PROGRESS |
+| [SIP-035](SIP-035-gestione-password-napay-wallet.md) | Gestione password di Napay e del wallet | Account e sicurezza | COMPLETED |
+| [SIP-036](SIP-036-rilascio-v2-vps.md) | Rilascio della v2 sulla VPS e passaggio dalla v1 | Rilascio / DevOps | IN_PROGRESS |
+| [SIP-037](SIP-037-rilascio-automatico-vps.md) | Rilascio automatico sulla VPS al merge in main/master | Rilascio / DevOps | OPEN |
+| [SIP-038](SIP-038-backup-fuori-macchina-object-storage.md) | Backup fuori macchina su Object Storage Contabo | Rilascio / DevOps / Backup | OPEN |
+| [SIP-039](SIP-039-gdpr-conservazione-cancellazione-account.md) | GDPR: conservazione massima dei dati e cancellazione dell'account | Privacy / GDPR / Account | OPEN |
+| [SIP-040](SIP-040-informativa-privacy-termini-cookie.md) | Informativa privacy, condizioni di utilizzo e cookie | Privacy / GDPR / Legale | IN_PROGRESS |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 
@@ -87,6 +97,16 @@ Ogni repository ha branch dedicato sviluppo v2:
 | `tokenpay` | `napoliblockchain/tokenpay` | `feature/v2-yii2-php83-docker` | `feature/v2-yii2-php83-docker` |
 | `packages` | `jambtc/packages` | `feature/v2-shared-libs` | `feature/v2-shared-libs` |
 | `docs` | `napoliblockchain/napay-docs` | `feature/v2-docs-modernization` | `feature/v2-docs-modernization` |
+
+## Stato dei repository (2026-11-26)
+
+Attivi (v2 in produzione, rilascio da `main`/`master`): `napay-project` (orchestratore, SIP e
+documentazione v2), `napay`, `pos`, `poawallet`. Archiviati su GitHub: `tokenpay`, `bolt`, `napay2`,
+`ttsnodes`, `store-wallet` (SIP-005 superata: incassi dei negozi su indirizzo TTS e poawallet).
+`napay-docs` reso privato (documentazione v1 con chiavi della chain dismessa): la documentazione
+v2 vive in questo repository (`sip/`, README) e nei `docs/` dei singoli repository; le procedure
+operative con dati sensibili restano private. `ttstoken` resta pubblico (decisione utente).
+`packages` (librerie v1, submodule su `jambtc/*`): non usato dalla v2, da archiviare.
 
 ## Ordine esecuzione (macro)
 

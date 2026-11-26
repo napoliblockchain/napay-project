@@ -76,3 +76,10 @@ Decisione rimandata a dopo Step 1.4, quando poawallet e piu stabile. Aprire valu
 - `/var/www/napay-project/bolt`
 - `/var/www/napay-project/poawallet`
 - `/var/www/napay-project/tokenpay`
+
+## Esecuzione (2026-11-26)
+- Archiviati su GitHub dall'utente: `tokenpay`, `bolt`, `napay2`, `ttsnodes`, `store-wallet`.
+- `napay-docs` reso privato (conteneva chiavi della chain v1, dismessa).
+- `ttstoken` lasciato pubblico. `packages`: da archiviare (nessun uso nella v2); i submodule
+  puntano a repository personali `jambtc/*` e a `nigrosimone/CodiceFiscale` (di terzi).
+
