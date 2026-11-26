@@ -98,6 +98,16 @@ Ogni repository ha branch dedicato sviluppo v2:
 | `packages` | `jambtc/packages` | `feature/v2-shared-libs` | `feature/v2-shared-libs` |
 | `docs` | `napoliblockchain/napay-docs` | `feature/v2-docs-modernization` | `feature/v2-docs-modernization` |
 
+## Stato dei repository (2026-11-26)
+
+Attivi (v2 in produzione, rilascio da `main`/`master`): `napay-project` (orchestratore, SIP e
+documentazione v2), `napay`, `pos`, `poawallet`. Archiviati su GitHub: `tokenpay`, `bolt`, `napay2`,
+`ttsnodes`, `store-wallet` (SIP-005 superata: incassi dei negozi su indirizzo TTS e poawallet).
+`napay-docs` reso privato (documentazione v1 con chiavi della chain dismessa): la documentazione
+v2 vive in questo repository (`sip/`, README) e nei `docs/` dei singoli repository; le procedure
+operative con dati sensibili restano private. `ttstoken` resta pubblico (decisione utente).
+`packages` (librerie v1, submodule su `jambtc/*`): non usato dalla v2, da archiviare.
+
 ## Ordine esecuzione (macro)
 
 1. Step 1 - Wallet Foundation: base `poawallet`, merge selettivo moduli `tokenpay`, policy archive attiva.
