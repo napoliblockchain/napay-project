@@ -1,0 +1,165 @@
+# SIP-036 - Rilascio della v2 sulla VPS e passaggio dalla v1
+
+- Stato: IN_PROGRESS
+- Area: Rilascio / DevOps
+- Repo: orchestratore, `napay`, `pos`, `poawallet`
+- Branch target: `feature/v2-yii2-php83-docker`
+- Segnalato: 2026-11-23 (richiesta utente: arrivare a qualcosa di pubblicabile)
+
+## Contesto
+Le funzioni v2 (backoffice, POS, wallet, BTCPay, import dalla v1) sono
+testate in sandbox e su stack usa-e-getta, ma per la VPS esiste solo il
+rilascio del wallet (`deploy-wallet.sh`). La composizione dell'orchestratore
+punta ancora al POS legacy e all'immagine di sviluppo di Napay. Il POS v2
+accetta solo la modalità "preview" (chain di test). Non c'è una procedura
+del passaggio scritta e provata.
+
+## Parti
+
+| Parte | Cosa | Chi |
+| --- | --- | --- |
+| A | Napay in produzione: immagine versionata, web, cron, worker BTCPay, bootstrap/import, script di rilascio con controllo, ritorno alla versione precedente | CLA (master) |
+| B | POS v2 in produzione: modalità produzione nell'app, composizione e script di rilascio | COD ([incarico](SIP-036/PROMPT-AGENTE-COD.md)) |
+| C | Orchestratore: gateway e certificati dei domini reali, reti, backup del database v2 | CLA |
+| D | Procedura del passaggio (fermo v1 1-2 ore, variabili, logo, webhook, ritorno alla v1) | CLA |
+| E | Prova generale dell'import su copia fresca del DB di produzione | CLA + utente |
+
+## Regole
+- Segreti solo in file privati 0600 fuori dai repository; nessun valore nei
+  log o nell'output; nessuna porta pubblicata oltre al gateway.
+- Ogni script ha una modalità di solo controllo che non costruisce e non avvia.
+- Migration automatiche al rilascio; se falliscono resta in servizio la
+  versione precedente.
+- Nessun rilascio sulla VPS senza ok esplicito dell'utente.
+
+## Criteri di accettazione
+- Rilascio ripetibile da una cartella pulita con il solo file env privato.
+- Prova generale: import completo e riconciliazione verdi sulla copia fresca.
+- Procedura del passaggio scritta, con tempi e passi di ritorno alla v1.
+
+## Parte A - Napay in produzione (piano, 2026-11-23)
+
+Base esistente: `napay/docker/up.sh` (controllo preliminare, utenti DB
+separati, ripristino di `napay_v2`, import v1 da `LEGACY_DB_DSN`, verbali in
+sola lettura). Topologia e passaggio: `architettura-produzione.md` e
+`guida-vps-app.md` (cartella documents, parte 4 in attesa di questa parte).
+
+- A1. Uscita verso la chain TTS (VPS C, `poa.jamprojects.it`): oggi
+  `TtsChain` chiama l'RPC direttamente (in sandbox la chain è sulla stessa
+  rete). In produzione passa dal proxy di uscita come PayPal e BTCPay: RPC
+  HTTPS = tramite proxy se configurato, RPC HTTP interno = diretto;
+  `poa.jamprojects.it` aggiunto all'allowlist.
+- A2. Overlay di produzione: codice in sola lettura, runtime e asset in
+  volumi, nessuna porta sull'host, web sulla rete del gateway (nome da env),
+  proxy di uscita, worker BTCPay e cron col ponte quando i segreti ci sono.
+- A3. `docker/deploy.sh env-file [--check]`: controllo completo senza avvio;
+  backup del database prima di ogni rilascio (le migration non si annullano:
+  il ritorno indietro è il ripristino del backup), rilascio, attesa dello
+  stato sano, riepilogo dell'import.
+- A4. Gateway con i domini reali (`napay.napoliblockchain.it`,
+  `pos.napoliblockchain.it`) e Let's Encrypt; webhook BTCPay dal
+  server della VPS B accettati solo su `/api/btcpay/v1/store-webhook` e
+  `/api/btcpay/v1/webhook`.
+
+Posta SMTP (decisa 2026-11-24): inoltro TCP dedicato, vedi Avanzamento.
+
+## Avanzamento
+
+- 2026-11-23 A1 FATTO (napay `73d26e2c`): RPC HTTPS della chain TTS dal proxy
+  di uscita, `poa.jamprojects.it` in allowlist; test TTS 67 + 30 + 20.
+- 2026-11-23 A2/A3 FATTI (napay `4a66a7eb`, `9e7fd59f`, `b2aa825e`):
+  `docker-compose.prod.yml` e `docker/deploy.sh env-file [--check]`; nuove
+  variabili `NAPAY_GATEWAY_NETWORK`, `NAPAY_TRUSTED_PROXIES`,
+  `NAPAY_BACKUP_DIR`. Test: preflight 19 (modello compose: niente porte, codice
+  in sola lettura, internet solo al proxy, immagini del commit), `up.sh` 26,
+  collaudo reale 6 (prima installazione, web solo dalla rete del gateway,
+  backup gzip 0600 al secondo rilascio, nessun segreto nell'output).
+  Non ancora provati nel collaudo: overlay del worker BTCPay in produzione,
+  import v1 da `LEGACY_DB_DSN` dentro `deploy.sh` (provato da `bootstrap.sh`).
+- 2026-11-23 A4/C gateway FATTO (orchestratore `7703278`):
+  `docker/gateway/prod/Caddyfile`, `docker-compose.prod.yml`,
+  `deploy-gateway.sh env-file [--check]`; reti interne napay e POS con subnet
+  fisse (`NAPAY_GATEWAY_SUBNET` = `NAPAY_TRUSTED_PROXIES` di napay). Test 14:
+  rifiuti del controllo, instradamento per dominio, `/api/pos` solo dalla rete
+  dei POS, webhook BTCPay solo dall'IP di BTCPay, HSTS e intestazioni,
+  redirect HTTP.
+- Ordine di rilascio: `deploy-gateway.sh`, napay `docker/deploy.sh`, POS,
+  `deploy-wallet.sh`.
+- 2026-11-23 D in bozza: parte 4 di `guida-vps-app.md` (documents) scritta
+  con gli script di rilascio: codice per commit, cartella privata, MySQL
+  temporaneo con i soli schemi `napay` e `napay_v2`, file v1 riuniti (verbali in
+  radice, logo in `custom/`), gateway, napay senza import, import con
+  `LEGACY_*` (backup automatico prima), POS, wallet, collaudo, chiusura.
+- 2026-11-23 B FATTA (COD, [handoff](SIP-036/HANDOFF-COD.md)), integrata dal
+  master (pos fast-forward a `8d4aec0`): modalità produzione, compose e
+  `pos/v2/docker/deploy.sh env-file [--check]` con ritorno all'immagine
+  precedente. Test dal checkout principale: unit 398, deploy 31; POS della
+  sandbox ricostruito, ancora in preview. Variabili nella procedura del
+  passaggio (incluso `POS_API_CLIENT_KEYS_SHA256` di napay).
+- 2026-11-24 SMTP FATTO (napay `cca4ce51`): stesso server della v1
+  (`authsmtp.securemail.pro:465`, TLS); con `MAIL_TRANSPORT=smtp` il rilascio
+  aggiunge un inoltro TCP dedicato verso il solo server di posta, alias del suo
+  nome sulla rete egress; TLS e credenziali tra Napay e il server. Test 4
+  (reti senza internet, CA di test) e controllo preliminare 22.
+- 2026-11-24 backup primo livello FATTO (napay `13ce793d`, orchestratore
+  `backup-daily.sh`, `docker/systemd/napay-backup.{service,timer}`): ogni notte
+  database Napay e wallet sul filesystem della VPS, gzip 0600, file completi o
+  niente, 14 giorni (solo i giornalieri; i backup dei rilasci restano). Collaudo
+  10 con ripristino reale. Copia fuori macchina: storage Contabo se il costo
+  viene approvato (decisione utente), prelevata dalla cartella dei backup.
+- 2026-11-24 dati reali della VPS A (dump di sicurezza prima delle patch): database
+  `npay` (v1; non `napay` come nella copia di ottobre), `wordpress`, `phpmyadmin`,
+  `mysql`; **nessun `napay_v2`**. Conseguenze: `LEGACY_DB_DSN` con `dbname=npay`
+  (procedura corretta); il primo avvio della v2 deve poter partire da vuoto
+  (schema dalle migration, dati solo dall'import v1) invece che dal dataset
+  `napay_v2` (A5, da fare); WordPress e phpMyAdmin sulla stessa Apache: da
+  censire (domini serviti) prima di sostituire Apache con il gateway.
+- 2026-11-24 Apache della VPS A serve solo napay e pos.napoliblockchain.it (più il
+  sito predefinito); phpMyAdmin non attivo (404), WordPress senza sito: database
+  residuo, resta nel backup, non migrato. Nessun conflitto col gateway v2. Da
+  verificare: record DNS di wallet.napoliblockchain.it (gestito da terzi).
+- 2026-11-24 A5 FATTO (napay `fbff3a08`): dataset base nel repository
+  (`docker/base-dataset/`, generato da `docker/base-dataset.sh`): schema,
+  storico migration e livelli di privilegio, nessun dato. Prova sulla copia v1:
+  56 utenti, 12 merchant, 13 negozi, 13 casse, storico completo, secondo giro
+  identico; bootstrap 44. Procedura aggiornata.
+- 2026-11-24 DNS di wallet.napoliblockchain.it già sulla VPS A (verificato
+  dall'utente); backup pre-patch copiato fuori macchina dall'utente.
+- 2026-11-24 VPS A parte 0 FATTA dall'utente (guida-vps-app.md): Netdata chiuso,
+  patch 18.04 e riavvio, v1 attiva. MySQL 5.7.42 (import tramite MySQL 8.0
+  temporaneo), PHP 7.2.24. Snapshot non disponibili nel piano: per la parte 2
+  (aggiornamento a 24.04) valutare l'Auto Backup di Contabo.
+- 2026-11-24 E FATTA: prova generale con i dati di produzione del 24/11
+  (registro in documents `backup/vps-167.86.84.85/2026-11-24-prova-generale-passaggio.md`).
+  Procedura eseguita su risorse usa-e-getta: MySQL 8.0 con `npay` (sorgente 5.7.42),
+  primo avvio dal dataset base, import, chiusura. v1 = v2: 73 utenti, 73 quote
+  pagate, 3 verbali con PDF, 14 merchant, 14 negozi (4 archiviati), 14 casse,
+  8 logo, 32 fatture BTC pagate (40,16 EUR), 5 richieste TTS. Napay ~3 minuti.
+- 2026-11-24 VPS C installata dall'utente (registro in documents
+  `backup/vps-5.189.144.215/2026-11-24-pulizia-e-besu.md`): pulizia BoxedAI,
+  OpenClaw, tradarb e MySQL; ufw 22/80/443. Chain 2118 (blocco 5 s), validatore
+  unico, servita con due nomi: `poa.jamprojects.it` (napay) e
+  `poa.fidelity.txlab.it` (Fidelity) - Caddy riscrive l'Host, Besu accetta solo
+  `besu` (commit 9638043, provato in locale). RPC ammessa solo dalla VPS A
+  (verificato). Contratto TTS `0x97d347575883cC4412919b0121800B01881f98Cb`,
+  1.000.000,00 TTS sull'indirizzo dell'utente. Primo backup cifrato copiato fuori
+  macchina e decifrato con successo.
+- 2026-11-24 IP di Fidelity 164.68.126.56 ammesso sulla chain: eth_chainId 0x846
+  dal server Fidelity.
+- Aperti: block explorer sulla VPS C (`explorer.jamprojects.it`, in corso: vedi [passaggio di consegne](SIP-036/HANDOFF-2026-11-25.md)); copia fuori macchina dei backup di A (Object Storage EU 250 GB già presente su Contabo, segnalato 2026-11-25: da usare, cifrato); backup
+  settimanale della chain; finestra del passaggio (parti 1-2 sulla VPS A).
+- 2026-11-25 Posta in uscita FATTA (napay `0a2680ab` + test preflight, poawallet
+  `279cd50`, orchestratore `f95ae73`): con SMTP bloccato da Contabo (ticket
+  16240588035) e nessun accesso alla VPS durante la demo, Napay e wallet salvano le
+  email su file; pagina admin "Posta in uscita" con i link HTTPS del dominio della
+  fonte da copiare (attivazione, inviti operatore, recupero password). Email del
+  wallet dal volume `napay_wallet_mail`, montato in sola lettura solo nel web di
+  Napay (`NAPAY_WALLET_MAIL_VOLUME`, `NAPAY_WALLET_URL`). Pagina senza cache,
+  consultazione nel registro attività. Test: 28 della pagina, preflight 24,
+  navigazione 115. Quando torna SMTP: `MAIL_TRANSPORT=smtp` e la pagina sparisce.
+- 2026-11-25 Passaggio della VPS A completato e collaudato per la demo (registro in
+  documents `backup/vps-167.86.84.85/2026-11-24-passaggio-v2.md`): chiavi BTCPay e
+  PayPal live, ponte negozi v1, wallet, posta su file con pagina admin. Correzioni del
+  giorno: client BTCPay dei negozi v1 dal proxy (napay `e9628be8`), ricevuta POS senza
+  avviso di test in produzione (pos `c512218`), scorciatoie Wallet/POS integrate
+  (napay `997d4bff`). VPS B: NBXplorer bloccato su nodo pruned, ripartito da 977000.

@@ -1,0 +1,175 @@
+# Coordinamento Napay / POS - obiettivo 23 novembre 2026
+
+- Responsabile integrazione: agente master di questa sessione.
+- Agente Napay: backoffice e relativi test, solo file assegnati sotto.
+- Priorita: chiudere flussi completi e collaudati, non dichiarare production-ready
+  software che ha superato solo una demo o test simulati.
+- Regola invariata: SIP prima del codice, piccoli commit, nessuna modifica ai
+  file dell'altro senza handoff esplicito.
+
+## Canale e ownership
+
+Tra sessioni indipendenti non e disponibile qui un canale diretto identificato.
+Usare questo registro e gli handoff versionati; il prompt trasferisce all'altro
+agente l'incarico. I subagent creati dal master possono invece ricevere messaggi
+tramite gli strumenti della sessione. Non dichiarare messaggi inviati a sessioni
+esterne quando non lo sono.
+
+Questo file e SIP-021/SIP-022 sono scritti dal master. L'agente Napay scrive solo
+`sip/SIP-021/C4-BACKOFFICE.md` e `sip/SIP-021/C4-HANDOFF.md` come allegati propri.
+Il master recepisce decisioni/esiti negli indici/SIP. Prima di ogni incarico
+registrare branch, base commit, file riservati e test; se un file necessario
+appartiene all'altro agente, proporre la modifica nell'handoff, non editarlo.
+
+Per Napay usare branch e worktree separati: branch diversi nella stessa cartella
+non isolano il filesystem. Il worktree di sviluppo non e il bind mount della
+sandbox condivisa. Niente symlink di vendor/runtime/segreti verso il worktree
+principale; eventuale ambiente test del secondo agente deve essere indipendente.
+La creazione di un worktree non autorizza nuovi stack o l'uso del DB condiviso.
+
+## Ripartizione iniziale
+
+Realtime richiesto: [SIP-024](SIP-024-websocket-nodejs-notifiche.md), motore
+Node.js anziche PHP, riferimenti Aigo/IlNotturno e ws-notify wallet gia presente.
+Solo documentazione; nessuna sostituzione/avvio servizio o modifica a file wallet.
+Prima del codice W0 deve riservare ownership e contratto, senza interferire C4.
+
+Regole trasversali aggiornate: [SIP-023](SIP-023-profili-soci-merchant-operatori.md).
+Solo PG socia diventa merchant; gestore non opera POS; operatore non socio.
+Stessa persona socio/operatore: due account e due email. Il livello "base" da
+solo non distingue questi scopi. Agente C4 recepisce nelle proprie specifiche;
+master riserva disegno/integrazione di eventuali adeguamenti condivisi.
+Review C4 (documenti 11877b1/18246fe): inviti non ancora approvati per differenze
+con SIP-023. Timestamp 140000 riservato all'agente Napay, non autorizzato DDL.
+Agente aggiorna C4-BACKOFFICE/C4-HANDOFF; master definisce qualificazione PG e
+scopo account condivisi. Le concessioni non possono usare il solo livello 0/30.
+Ricognizione del master pronta: [R0 identita](SIP-023/R0-MODELLO-ATTUALE.md).
+Include le query soci/quote e l'assenza del legame diretto merchant-PG;
+cardinalita confermata: un gestore dedicato per merchant, nessun account gestore
+multi-PG/merchant. Ogni merchant crea solo i propri operatori POS. Vecchi casi
+multi-merchant per account richiedono riconciliazione, non uso di merchants[0].
+PG: prima iscrizione come socio PG, poi autoattivazione merchant senza admin;
+stesso account come unico gestore. Il master mantiene registrazione, policy
+identita e autoattivazione; l'agente Napay mantiene backoffice C4 e inviti.
+Primo contratto tecnico master: [R1 policy condivisa](SIP-023/R1-POLICY-CONDIVISA.md),
+helper read-only da riusare in C4. Non autorizza ancora inviti/DDL o nuove iscrizioni.
+R1 implementato e testato: Napay `5c1fd920`, `00afe16a`, 24 controlli isolati.
+[Incarico aggiornato agente Napay](SIP-023/HANDOFF-AGENTE-NAPAY.md): puo ricevere
+i due commit sul proprio branch C4 e avanzare sulle parti gia autorizzate.
+
+C1 chiuso: Napay `c357ec41`, `a3fd15f3`; [handoff](SIP-021/C1-HANDOFF.md).
+Agente Napay assegnato a `feature/v2-napay-backoffice-c4`, worktree
+`/var/www/blockchain-napoli/napay-worktrees/napay-backoffice-c4`, base `a3fd15f3`.
+Incarico immediato: [prompt C4](SIP-021/PROMPT-AGENTE-NAPAY.md).
+C2/C3 chiusi: [handoff catalogo](SIP-021/C2-HANDOFF.md). Napay `7ee57669`,
+`0275704f`; POS `74e0287`, `90fd41e`. Il master passa al contratto aperture;
+backoffice resta all'altro agente, nessuna apertura abilitata dal catalogo.
+Contratto C4 revisionato: [approvazione parziale](SIP-021/C4-APPROVAZIONE.md).
+Terminali, profili/grant e revoca D3 possono procedere. D1-D3 confermate:
+invito merchant con consenso e completamento profilo, solo account base attivi,
+revoca sessioni al disable. Prima del codice inviti serve allegato tecnico e
+risoluzione delle collisioni email/registrazione, come nell'approvazione C4.
+
+| Area | Responsabile | Confine |
+| --- | --- | --- |
+| C1 schema/modelli | Master | Migration 130000, tre AR e test dedicati; integrazione centralizzata. |
+| C2 catalogo API e C3 vista POS | Master | `modules/posapi`, `components/pos/TerminalCatalog.php`, repo POS e test API. |
+| Apertura esclusiva, heartbeat/revoca, API pagamento TTS | Master | Prima contratto SIP, poi servizi/API/migration riservati. Nessun lock lato solo browser. |
+| C4 backoffice terminali/operatori/grant | Agente Napay | Prima allegato C4 e handoff; poi controller/form/view/service nuovi, senza cambiare AR C1 o API. |
+| Provisioning BTCPay SIP-022 | Agente Napay dopo C4 | Prima B0 versione/permessi/identita tecnica; nessuna implementazione finche aperti quei punti. |
+| Rotte condivise, layout/menu, runner, stack, ordine migration | Master integra | Secondo agente consegna patch richiesta nell'handoff; niente edit o riavvii concorrenti. |
+
+Non recuperare il modello legacy Pos mancante per aggirare i nuovi modelli.
+`PosApi.php`, `Throttle.php`, Users/Stores/Merchants restano dipendenze condivise:
+qualsiasi modifica richiede nuova assegnazione esplicita del master.
+
+## Piano di lavoro e gate
+
+Date = obiettivi operativi, non garanzia di rilascio senza accettazione.
+
+| Data | Master | Agente Napay / gate |
+| --- | --- | --- |
+| 12/11 | Chiudere C1, verifica schema gia applicato, commit e worktree separato | Leggere handoff C1; preparare C4 e segnalare regole gestionali mancanti. |
+| 13-14/11 | Definire/implementare C2-C3 e collaudo catalogo autorizzato | C4 approvato e implementato su file propri; nessuna assegnazione cross-merchant. |
+| 15-16/11 | Apertura esclusiva, revoca e prove concorrenti su DB reale di test | Backoffice sblocco manager solo dopo contratto master, UI/azioni protette. |
+| 17-18/11 | Primo flusso TTS locale: richiesta, QR, stato; nessun denaro reale | B0 BTCPay e provisioning se approvato; evidenziare blocchi di istanza/credenziali. |
+| 19-20/11 | Integrare esiti, storico/ricevuta minima e gestione rete/timeout | Regressioni Napay, provisioning e ownership remota in ambiente di test. |
+| 21-22/11 | Freeze funzionale, sicurezza/tenant/CSRF, recovery, persistenza e documentazione | Zero regressioni gravi, handoff e bug riproducibili; niente nuovi ambiti. |
+| 23/11 | Collaudo con utente e decisione di accettazione | Rilascio solo del perimetro verificato; blocchi espliciti, mai nascosti. |
+
+## Accettazione proposta per il 23/11
+
+- Stack Docker ripetibile, persistenza DB e bootstrap/import controllati; login,
+  email/password e flussi Napay concordati senza regressioni gravi.
+- Operatore di un solo merchant, grant espliciti a piu suoi negozi, catalogo
+  filtrato; secondo dispositivo non apre POS occupato, sblocco solo manager
+  autorizzato e vecchia apertura immediatamente inutilizzabile.
+- Primo pagamento TTS su chain locale con destinazione merchant risolta dal
+  backend, importo/idempotenza/stato verificati, esito e ricevuta minima coerenti.
+- Provisioning BTCPay automatico verificato su istanza di test se B0 risolto:
+  utenti distinti per merchant, store/POS corretti, retry e ownership dimostrati.
+- Nessuna promessa di incassi produzione, compliance o copertura di qualunque
+  vecchia pagina non censita: eventuali scostamenti vanno concordati col cliente.
+
+## Blocchi e escalation
+
+Dipendenze ancora da chiudere: contratto pagamenti/wallet TTS, chain e token di
+collaudo, semantica lock/fencing, contratto GET e C4, istanza BTCPay di test,
+identita tecnica distinta per merchant e privilegi provisioning. Identificarle
+entro 13/11; se non risolte entro 16/11, rivedere esplicitamente perimetro/date.
+Test simulati non sostituiscono un backend reale, ne un esito remoto ambiguo
+puo essere dichiarato riuscito. Trasferimenti tra merchant e wallet per negozio
+restano fuori dal perimetro attuale.
+
+## Integrazione
+
+Ogni handoff contiene commit, file, test eseguiti/non eseguiti e rischi. L'agente
+secondario non fa merge/cherry-pick sul branch di integrazione. Il master
+riesamina i commit, integra e riesegue le regressioni pertinenti. Nessuna
+migrazione/riaccensione della sandbox condivisa senza suo via libera.
+
+## Review C4 e assegnazione B0 - 2026-11-12
+
+- C4 A-C: 49 PASS rieseguiti dal master; integrazione sospesa per ownership
+  su snapshot obsoleto e D3/login concorrente. Correzioni classi C4 all'agente,
+  API/login/PosApi al master; dettagli in
+  [C4-REVIEW-MASTER](SIP-021/C4-REVIEW-MASTER.md).
+- Email: UNIQUE normalizzato definitivo, audit e schema utenti al master;
+  nessun GET_LOCK provvisorio. D inviti non parte prima della dipendenza.
+- B0: approvata preparazione stack regtest, non B1. Utente conferma
+  `btcpay-merchants.jamprojects.it` e riconciliazione legacy esplicita.
+  [B0-REVIEW-MASTER](SIP-022/B0-REVIEW-MASTER.md) assegna all'agente solo nuovi
+  file `docker/btcpay-regtest/*` in branch orchestratore dedicato; patch gateway,
+  rete, egress e launcher condivisi integrate esclusivamente dal master.
+- Ordine agente: fix C4 e test concorrenti, poi stack B0 indipendente.
+  Nessun riavvio gateway o provisioning senza integrazione/autorizzazione master.
+
+## Dipendenze R2/API consegnate - 2026-11-12
+
+Napay `121fe3a2` e `6487abbd`; POS docs `9984225`.
+[Handoff vincolante R2/D3](SIP-023/HANDOFF-R2-D3.md): cherry-pick nel worktree
+C4, niente edit ai file master. R2 supera 106 schema + 14 app; API/protocollo
+D3 119; C2 177; runtime completa, restart/no-op e regressioni recupero verdi.
+Gate email D rimosso, codice inviti autorizzato alle condizioni dell'handoff,
+non DDL sulla sandbox. C4 A-C e gara congiunta reale restano da chiudere.
+R3 (signup PF/PG, autoattivazione e portale soci/operatori) resta del master.
+Assegnazione stack B0 invariata. Nessun seed o riavvio condiviso eseguito.
+
+## Chiusura C4 A-C e review B0 - 2026-11-12
+
+- C4 A-C approvate e integrate nel master Napay: `038591f6`, `b27eb095`,
+  `e1bad84c`, `8a3c9cb4`, `e0132f64`, `2bc89049`. Runner finali 56 C4 e 59
+  C4/API; D3 sessioni chiusa, apertura/sblocco/pagamenti non ancora implementati.
+- Scostamento dipendenze agente C2 -> R2 -> API confermato: il master aveva
+  gia C2; `e54291b0` identico a `6487abbd` sugli otto file. `b6b1653d` non
+  duplicato: copertura presente nel runner congiunto master, con hook reali.
+- C4-BACKOFFICE.md lasciato all'agente (utente conferma aggiornamento parallelo);
+  ultimo contratto agente `3594f71`, nessuna modifica master a quel file.
+- B0 importata solo documentazione `2306fe9`; stack e patch condivise non
+  integrati. [Review B0](SIP-022/B0-REVIEW-INTEGRAZIONE.md): correzioni
+  filesystem, validazione rete, separazione backend/client e test discriminanti
+  all'agente, stesso write set/branch. Quattro casi filesystem riprodotti su
+  copia temporanea senza Docker reale. Nessun contatto con produzione.
+- Priorita agente: correggere B0 e consegnare nuova review, senza riavvii;
+  poi inviti D autorizzati, ancora senza codice. Master mantiene R3 e integrazione
+  rete/CA/launcher, separati dai file dell'agente. Nessun DDL condiviso autorizzato.

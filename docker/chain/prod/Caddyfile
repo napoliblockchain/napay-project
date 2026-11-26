@@ -1,0 +1,40 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$POA_DOMAIN} {
+	# JSON-RPC solo dagli IP ammessi (VPS app napay, server Fidelity); gli altri: connessione chiusa
+	@rpc {
+		remote_ip {$RPC_ALLOWED_IPS}
+		method POST
+	}
+	handle @rpc {
+		request_body {
+			max_size 1MB
+		}
+		# Host fisso: Besu accetta solo "besu" (--host-allowlist), qualunque sia il nome pubblico
+		reverse_proxy besu:8545 {
+			header_up Host besu
+		}
+	}
+	handle {
+		abort
+	}
+}
+
+# Block explorer (profilo "explorer"), sola lettura: API e websocket al backend Blockscout, il resto al frontend.
+{$EXPLORER_DOMAIN} {
+	encode gzip
+	# sola lettura: i blocchi handle sono esclusivi e valutati in ordine, questo per primo
+	@write not method GET HEAD OPTIONS
+	handle @write {
+		respond 405
+	}
+	@backend path /api /api/* /socket /socket/* /sitemap.xml
+	handle @backend {
+		reverse_proxy explorer-backend:4000
+	}
+	handle {
+		reverse_proxy explorer-frontend:3000
+	}
+}

@@ -1,0 +1,11 @@
+# SIP-036: backup giornaliero dei database della VPS A (backup-daily.sh). Copiare in /etc/systemd/system/ con il timer.
+[Unit]
+Description=Napay: backup giornaliero dei database
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /srv/napay-project/backup-daily.sh /srv/napay-private/napay.env
+Nice=10
+IOSchedulingClass=idle

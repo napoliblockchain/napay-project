@@ -1,0 +1,225 @@
+# Wallet: poawallet. Percorsi relativi alla root del repo (vedi docker-compose.yml).
+# Instradamento HTTP/WebSocket: docker/gateway/conf.d/wallet.caddy
+services:
+  wallet-web:
+    image: napay/poawallet:${WALLET_IMAGE_TAG:-dev}
+    # immagine costruita da poawallet/Dockerfile; deploy-wallet.sh usa il target prod
+    build:
+      context: ./poawallet
+      target: ${WALLET_BUILD_TARGET:-dev}
+    container_name: wallet-web
+    expose:
+      - "80"
+    # configurazione e segreti app (vedi poawallet/.env.example); environment sotto ha la precedenza
+    env_file:
+      # in produzione file privato fuori dal repository (WALLET_APP_ENV_FILE, imposto da deploy-wallet.sh)
+      - path: ${WALLET_APP_ENV_FILE:-./poawallet/.env}
+        required: false
+    environment:
+      APP_ENV: "${APP_ENV}"
+      DB_DSN: "mysql:host=mysql-main;dbname=${MYSQL_DATABASE}"
+      DB_USERNAME: "${MYSQL_USER}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+      WEBSOCKET_URL: "${WEBSOCKET_URL}"
+      WEBSOCKET_URL_LOCALHOST: "${WEBSOCKET_URL_LOCALHOST}"
+      # gateway Caddy fidato per X-Forwarded-Proto/For: wallet-web non espone porte,
+      # lo raggiungono solo i container della rete interna napay_net
+      TRUSTED_PROXIES: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      # realtime: NotificationService pubblica su Redis, ws-notify inoltra ai browser
+      REDIS_HOST: redis-main
+      NOTIFY_CHANNEL: poawallet:notify
+      # SIP-029 passo 2: chiave dei ticket del flusso /events (condivisa con wallet-realtime)
+      REALTIME_KEY_FILE: /run/secrets/wallet_realtime_key
+      # SIP-032: unica rete e unico token del wallet, mai scelti dagli utenti. Default = chain di sviluppo
+      # (indirizzo del token dal launcher); in produzione tutto dal file env passato a deploy-wallet.sh
+      CHAIN_RPC_URL: "${WALLET_CHAIN_RPC_URL:-http://besu:8545}"
+      CHAIN_ID: "${WALLET_CHAIN_ID:-2118}"
+      CHAIN_NAME: "${WALLET_CHAIN_NAME:-Besu QBFT (sviluppo)}"
+      CHAIN_SYMBOL: "${WALLET_CHAIN_SYMBOL:-ETH}"
+      CHAIN_ZERO_GAS: "${WALLET_CHAIN_ZERO_GAS:-1}"
+      CHAIN_EXPLORER_URL: "${WALLET_CHAIN_EXPLORER_URL:-}"
+      TTS_TOKEN_ADDRESS: "${WALLET_TTS_TOKEN_ADDRESS:-}"
+      TTS_TOKEN_NAME: "${WALLET_TTS_TOKEN_NAME:-TTS}"
+      TTS_TOKEN_SYMBOL: "${WALLET_TTS_TOKEN_SYMBOL:-TTS}"
+      TTS_TOKEN_DECIMALS: "${WALLET_TTS_TOKEN_DECIMALS:-2}"
+    secrets: [wallet_realtime_key]
+    volumes:
+      # email salvate su file (SMTP non disponibile): lette in sola lettura dalla pagina admin "Posta in uscita" di napay
+      - wallet_mail:/var/www/runtime/mail
+    depends_on:
+      mysql-main:
+        condition: service_healthy
+      redis-main:
+        condition: service_healthy
+    # Apache attivo (file statico, non dipende dal database)
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost/robots.txt"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    networks:
+      - napay_net
+
+  # Migration del wallet al deploy (deploy-wallet.sh): job una tantum prima di avviare wallet-web.
+  # Nella sandbox condivisa restano a mano (start-localhost.sh avvisa soltanto).
+  wallet-migrate:
+    image: napay/poawallet:${WALLET_IMAGE_TAG:-dev}
+    profiles: ["deploy"]
+    command: ["php", "yii", "migrate", "--interactive=0"]
+    restart: "no"
+    env_file:
+      # in produzione file privato fuori dal repository (WALLET_APP_ENV_FILE, imposto da deploy-wallet.sh)
+      - path: ${WALLET_APP_ENV_FILE:-./poawallet/.env}
+        required: false
+    environment:
+      APP_ENV: "${APP_ENV}"
+      DB_DSN: "mysql:host=mysql-main;dbname=${MYSQL_DATABASE}"
+      DB_USERNAME: "${MYSQL_USER}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+    depends_on:
+      mysql-main:
+        condition: service_healthy
+    networks:
+      - napay_net
+
+  ws-notify:
+    build:
+      context: ./poawallet/ws-notify
+      dockerfile: Dockerfile
+    container_name: wallet-ws-notify
+    profiles: ["realtime"]
+    environment:
+      NOTIFY_WS_PORT: 14800
+      REDIS_URL: redis://redis-main:6379
+      NOTIFY_CHANNEL: poawallet:notify
+      NOTIFY_BACKEND_URL: http://wallet-web
+      NOTIFY_INTERNAL_SECRET: "${NOTIFY_INTERNAL_SECRET}"
+      NOTIFY_ALLOWED_ORIGINS: "${NOTIFY_ALLOWED_ORIGINS}"
+    ports:
+      - "${WS_NOTIFY_HOST_PORT}:14800"
+    depends_on:
+      wallet-web:
+        condition: service_healthy
+      redis-main:
+        condition: service_healthy
+    networks:
+      - napay_net
+
+  # --- Chain di sviluppo (profilo "chain", solo locale) ---
+  # Besu QBFT a nodo singolo, chainId 2118, gas zero, come la rete POA di produzione.
+  # Chiavi generate al primo avvio nel volume chain_data, mai nel repository.
+  # RPC interno: http://besu:8545 ; contratto TTS in /data/tts.json (servizio chain-deploy).
+  chain-init:
+    build: ./docker/chain/tools
+    image: napay/chain-tools:dev
+    profiles: ["chain"]
+    command: ["node", "init.mjs"]
+    environment:
+      CHAIN_ID: "2118"
+    volumes:
+      - chain_data:/data
+    networks:
+      - napay_net
+
+  besu:
+    image: hyperledger/besu:26.9.0
+    container_name: wallet-besu
+    profiles: ["chain"]
+    user: "1000:1000"
+    command:
+      - --data-path=/data/db
+      - --genesis-file=/data/genesis.json
+      - --node-private-key-file=/data/key
+      - --rpc-http-enabled
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-api=ETH,NET,WEB3,QBFT
+      - --host-allowlist=*
+      - --min-gas-price=0
+      # nodo unico: niente discovery, nessun peer da attendere prima di produrre blocchi
+      - --discovery-enabled=false
+      - --sync-mode=FULL
+      - --sync-min-peers=0
+    volumes:
+      - chain_data:/data
+    # porta JSON-RPC aperta (l'immagine non ha curl)
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8545"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      chain-init:
+        condition: service_completed_successfully
+    networks:
+      - napay_net
+      # sola lettura dal backoffice napay per i pagamenti TTS del POS (rete interna, creata da start-localhost.sh)
+      - napay_local_chain
+
+  chain-deploy:
+    build: ./docker/chain/tools
+    image: napay/chain-tools:dev
+    profiles: ["chain"]
+    command: ["node", "deploy.mjs"]
+    environment:
+      CHAIN_RPC_URL: http://besu:8545
+      CHAIN_ID: "2118"
+    volumes:
+      - chain_data:/data
+    depends_on:
+      besu:
+        condition: service_healthy
+    networks:
+      - napay_net
+
+  # SIP-029: indicizzatore della chain per il wallet (Go). Nessuna porta; utente DB dedicato con password da file.
+  wallet-realtime:
+    build: ./poawallet/realtime
+    image: napay/wallet-realtime:dev
+    container_name: wallet-realtime
+    # chain: sandbox (con la chain di sviluppo); deploy: produzione (deploy-wallet.sh, chain esterna)
+    profiles: ["chain", "deploy"]
+    # stesso uid del proprietario del file segreto (0600), come besu
+    user: "1000:1000"
+    environment:
+      CHAIN_RPC_URL: "${WALLET_CHAIN_RPC_URL:-http://besu:8545}"
+      CHAIN_ID: "${WALLET_CHAIN_ID:-2118}"
+      DB_HOST: mysql-main
+      DB_NAME: "${MYSQL_DATABASE}"
+      DB_USER: wallet_indexer
+      DB_PASSWORD_FILE: /run/secrets/wallet_indexer_db_password
+      # SIP-032: token indicizzato, lo stesso del wallet (indirizzo dal launcher)
+      TTS_TOKEN_ADDRESS: "${WALLET_TTS_TOKEN_ADDRESS:-}"
+      TTS_TOKEN_DECIMALS: "${WALLET_TTS_TOKEN_DECIMALS:-2}"
+      TTS_TOKEN_SYMBOL: "${WALLET_TTS_TOKEN_SYMBOL:-TTS}"
+      # push SSE su /events (porta solo sulla rete interna, instradata dal gateway)
+      PUSH_KEY_FILE: /run/secrets/wallet_realtime_key
+      PUSH_ADDR: ":8080"
+    secrets: [wallet_indexer_db_password, wallet_realtime_key]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    depends_on:
+      mysql-main:
+        condition: service_healthy
+      # chain di sviluppo solo nella sandbox; in produzione la chain è esterna (WALLET_CHAIN_RPC_URL)
+      besu:
+        condition: service_healthy
+        required: false
+    networks:
+      - napay_net
+
+volumes:
+  chain_data:
+  wallet_mail:
+    name: napay_wallet_mail
+secrets:
+  # creato da start-localhost.sh (0600, cartella privata fuori dai repository)
+  wallet_indexer_db_password:
+    file: "${WALLET_INDEXER_SECRET_FILE:-../napay-local-data/wallet-indexer/db-password}"
+  # chiave HMAC dei ticket /events: 0644 perché la legge anche Apache (www-data), cartella privata 0700
+  wallet_realtime_key:
+    file: "${WALLET_REALTIME_KEY_FILE:-../napay-local-data/wallet-realtime/push-key}"
