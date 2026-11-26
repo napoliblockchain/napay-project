@@ -134,3 +134,9 @@ di porting. Lo stato OPEN non autorizza da solo l'implementazione.
 - Naming immagini Docker: `napay/<repo>:<versione>`.
 - Naming container service: `<dominio>-<ruolo>` (es. `wallet-web`, `wallet-worker`).
 - Naming docs tecniche: file markdown in questa cartella con formato `SIP-XXX-*`.
+
+## Nuovo perimetro (2026-11-26)
+
+- [SIP-041 - Comunicazioni ai soci e newsletter](SIP-041-comunicazioni-soci-newsletter.md):
+  OPEN; perimetro newsletter approvato, proposta tecnica da finalizzare prima
+  del codice. Consenso marketing distinto da comunicazioni associative e quote.
