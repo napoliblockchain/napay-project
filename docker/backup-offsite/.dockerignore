@@ -1,0 +1,6 @@
+*
+!Dockerfile
+!encrypt.sh
+!upload.sh
+!private-inputs.sh
+!tools.sh
