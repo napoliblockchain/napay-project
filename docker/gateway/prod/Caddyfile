@@ -1,0 +1,64 @@
+# Gateway di produzione (VPS A, SIP-036 parte C). Unico ingresso pubblico su 80/443, certificati Let's Encrypt.
+# Domini e indirizzi da variabili d'ambiente del container (deploy-gateway.sh); nessun segreto in questo file.
+#   GATEWAY_ACME_EMAIL       contatto Let's Encrypt
+#   NAPAY_DOMAIN, POS_DOMAIN, WALLET_DOMAIN
+#   POS_GATEWAY_SUBNET       rete interna dei POS: unica origine ammessa per /api/pos/*
+#   BTCPAY_SOURCE_IPS        IP pubblici del server BTCPay (VPS B): unica origine ammessa per i webhook BTCPay
+{
+    email {$GATEWAY_ACME_EMAIL}
+    admin off
+}
+
+(security_headers) {
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        -Server
+    }
+}
+
+# Backoffice napay: web senza porte, sulla rete del gateway (alias napay-web)
+{$NAPAY_DOMAIN} {
+    import security_headers
+    # API server-to-server dei POS (SIP-021): solo dalla rete interna dei POS
+    @posapi_outside {
+        path /api/pos/*
+        not remote_ip {$POS_GATEWAY_SUBNET}
+    }
+    respond @posapi_outside 404
+    # webhook firmati di BTCPay (quote e store dei negozi): solo dal server BTCPay
+    @btcpay_outside {
+        path /api/btcpay/*
+        not remote_ip {$BTCPAY_SOURCE_IPS}
+    }
+    respond @btcpay_outside 404
+    reverse_proxy napay-web:80
+}
+
+# POS v2 (SIP-036 parte B): app separata, nessun accesso al backoffice
+{$POS_DOMAIN} {
+    import security_headers
+    header {
+        X-Frame-Options DENY
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        Cache-Control "no-store"
+    }
+    reverse_proxy pos-v2-web:80
+}
+
+# Wallet poawallet: app, flusso SSE /events (wallet-realtime) e WebSocket notifiche
+{$WALLET_DOMAIN} {
+    import security_headers
+    handle /ws-notify {
+        reverse_proxy ws-notify:14800
+    }
+    handle /events {
+        reverse_proxy wallet-realtime:8080 {
+            flush_interval -1
+        }
+    }
+    handle {
+        reverse_proxy wallet-web:80
+    }
+}

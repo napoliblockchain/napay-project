@@ -1,0 +1,32 @@
+# Produzione (VPS A, SIP-036 parte C): gateway pubblico con i domini reali. Da usare solo tramite deploy-gateway.sh,
+# dopo docker-compose.yml. Nessuna rete della sandbox (regtest, chain locale): solo wallet (napay_net), backoffice
+# napay e POS su reti interne dedicate, create da deploy-gateway.sh con subnet fisse (usate per i proxy fidati e /api/pos).
+services:
+  gateway:
+    ports: !override
+      - "80:80"
+      - "443:443"
+    environment:
+      GATEWAY_ACME_EMAIL: ${GATEWAY_ACME_EMAIL:?Set Let's Encrypt contact}
+      NAPAY_DOMAIN: ${NAPAY_DOMAIN:?Set napay domain}
+      POS_DOMAIN: ${POS_DOMAIN:?Set POS domain}
+      WALLET_DOMAIN: ${WALLET_DOMAIN:?Set wallet domain}
+      POS_GATEWAY_SUBNET: ${POS_GATEWAY_SUBNET:?Set POS network CIDR}
+      BTCPAY_SOURCE_IPS: ${BTCPAY_SOURCE_IPS:?Set BTCPay server public IPs}
+    volumes: !override
+      - ./docker/gateway/prod/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: !override
+      napay_net: {}
+      napay_gateway: {}
+      # i POS chiamano le API napay dal gateway su questa rete interna (stesso certificato pubblico del dominio)
+      pos_gateway:
+        aliases: ["${NAPAY_DOMAIN:?Set napay domain}"]
+networks:
+  napay_gateway:
+    name: ${NAPAY_GATEWAY_NETWORK:?Set napay gateway network}
+    external: true
+  pos_gateway:
+    name: ${POS_GATEWAY_NETWORK:?Set POS gateway network}
+    external: true
