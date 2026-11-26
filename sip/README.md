@@ -59,7 +59,7 @@ Piano condiviso Napay/POS, ownership file e obiettivo 23/11/2026:
 | [SIP-037](SIP-037-rilascio-automatico-vps.md) | Rilascio automatico sulla VPS al merge in main/master | Rilascio / DevOps | OPEN |
 | [SIP-038](SIP-038-backup-fuori-macchina-object-storage.md) | Backup fuori macchina su Object Storage Contabo | Rilascio / DevOps / Backup | OPEN |
 | [SIP-039](SIP-039-gdpr-conservazione-cancellazione-account.md) | GDPR: conservazione massima dei dati e cancellazione dell'account | Privacy / GDPR / Account | OPEN |
-| [SIP-040](SIP-040-informativa-privacy-termini-cookie.md) | Informativa privacy, condizioni di utilizzo e cookie | Privacy / GDPR / Legale | OPEN |
+| [SIP-040](SIP-040-informativa-privacy-termini-cookie.md) | Informativa privacy, condizioni di utilizzo e cookie | Privacy / GDPR / Legale | IN_PROGRESS |
 
 Legenda stati: OPEN | VERIFY | IN_PROGRESS | COMPLETED | REJECTED
 

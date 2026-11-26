@@ -1,6 +1,6 @@
 # SIP-040 - Informativa privacy, condizioni di utilizzo e cookie
 
-- Stato: OPEN
+- Stato: IN_PROGRESS (fase A Napay pronta per review: napay f61d7cda, branch feature/v2-privacy-documents; fase A2 da fare)
 - Area: Privacy / GDPR / Legale
 - Repo: `napay`, `poawallet`, `pos`
 - Branch target: `feature/v2-*`
@@ -40,11 +40,30 @@ trasmettono l'IP del visitatore a quei servizi.
    granulare, da decidere con una SIP dedicata.
 4. Correzione dei link della registrazione verso le nuove pagine.
 
+5. **Fase A2 - storico e gestione dei consensi** (decisione utente 2026-11-26):
+   - Registro degli eventi di consenso in sola aggiunta: utente, voce (statuto, condizioni,
+     informativa, marketing), valore (dato / revocato / letto), versione del documento, data,
+     origine (registrazione, profilo, nuova accettazione, import v1). Nessuna modifica né
+     cancellazione degli eventi, salvo l'anonimizzazione della cancellazione account (SIP-039).
+     La riga di `user_consensus` resta lo stato corrente; il registro è la prova (art. 7.1 GDPR).
+   - Sezione "I miei consensi" nel profilo: marketing modificabile in qualsiasi momento, con la
+     stessa facilità con cui è stato dato (art. 7.3); versioni accettate di condizioni e
+     informativa consultabili; per statuto e condizioni rimando a uscita dall'associazione /
+     cancellazione dell'account (non sono consensi revocabili singolarmente).
+   - L'informativa è un'informazione, non un consenso: la casella "autorizzo il trattamento"
+     va rivista nel testo con il consulente (base giuridica: rapporto associativo).
+   - Eventi registrati anche per: registrazione, nuova accettazione delle condizioni (fase A),
+     consensi importati dalla v1 (un evento "import" con la data originale, senza versione).
+   - Admin: storico consultabile nella scheda del socio, sola lettura.
+
 ## Criteri di accettazione
 - Le pagine esistono in Napay, wallet e POS, senza login, e i link della registrazione funzionano.
 - I testi sono approvati dall'associazione e modificabili dall'admin con versione e data.
 - Il consenso registra la versione accettata; una nuova versione delle condizioni chiede una
   nuova accettazione.
+- Fase A2: ogni dato/revoca/accettazione lascia un evento immutabile; il socio cambia il
+  marketing dal profilo e vede lo storico; l'admin lo vede in sola lettura; test su revoca,
+  doppia modifica, utente altrui (vietato), CSRF.
 - Nessuna richiesta verso domini di terzi nelle pagine e nelle email (verificato con una scansione
   dei template e una prova nel browser), oppure banner di consenso se resta un servizio di terzi.
 
